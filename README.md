@@ -4,8 +4,8 @@ The GypsiLab project is a young open-sources matlab toolbox for fast numerical c
    GypsiLab is divided in five parts :
  
  - <b>OpenFEM</b> : Library for Finite Element Method.
- +  <i>Matthieu Aussal (Ecole Polytechnique)<i>
-  + François Alouges (Ecole Polytechnique)
+</br> <i>Matthieu Aussal (Ecole Polytechnique)<i>
+François Alouges (Ecole Polytechnique)
  
  - <b>OpenHmX</b>  : Library for H-Matrix computation and algebra.
  Matthieu Aussal (Ecole Polytechnique)
