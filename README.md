@@ -17,7 +17,7 @@ The GypsiLab project is a young open-sources matlab toolbox for fast numerical c
  
  - <b>Problems</b> : Scripts with standards problems to first step in gypsilab. 
                                                                         
- Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved. Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/). This software is the property from Centre de Mathematiques Appliquees de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    
+Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved. Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/). This software is the property from Centre de Mathematiques Appliquees de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    
                                                              
- Please acknowledge the GYPSILAB toolbox in programs or publications in which you use the code. Refer to each part for references.  
+Please acknowledge the GYPSILAB toolbox in programs or publications in which you use the code. Refer to each part for references.  
  
