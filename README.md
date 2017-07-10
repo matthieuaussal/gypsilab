@@ -3,7 +3,7 @@ The GypsiLab project is a young open-sources matlab toolbox for fast numerical c
 
    GypsiLab is divided in five parts :
  
- - OpenFEM : Library for Finite Element Method.
+ - <b>OpenFEM</b> : Library for Finite Element Method.
  Matthieu Aussal (Ecole Polytechnique)
  François Alouges (Ecole Polytechnique)
  
