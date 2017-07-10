@@ -9,7 +9,7 @@ The GypsiLab project is a young open-sources matlab toolbox for fast numerical c
  - <b> OpenHmX </b>  : Library for H-Matrix computation and algebra.
  </br> <i> By Matthieu Aussal (Ecole Polytechnique) </i>
  
- - <b> OpenMSH </b>  : Library for mesh management and numerical quadrature.  
+ - <b> OpenMSH </b>  : Library for mesh management and numerical quadrature.
  </br> <i> By Matthieu Aussal (Ecole Polytechnique) </i>
  
  - <b>NonRegressionTest</b> : Scripts for non regression testing. Usefull to evaluate
