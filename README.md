@@ -30,11 +30,7 @@ multiphysics problems can now be adressed.
  ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    
  This software is the property from Centre de Mathematiques Appliquees  
  de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    
-                                                            _   _   _   
- Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  
- or publications in which you use the code. Refer to        \ \| |/ /   
- each part for references.                                   \ | | /    
-                                                              \   /     
-                                                               | |      
-_______________________________________________________________|_|______
-
+                                                             
+ Please acknowledge the GYPSILAB toolbox in programs or publications 
+ in which you use the code. Refer to each part for references.  
+ 
