@@ -1,4 +1,4 @@
-# gypsilab
+# Gypsilab
 The gypsilab project is a young open-sources matlab toolbox for fast numerical computation with finite element and boundary element methods. Accessible with an high level programming langage, it's give a usefull framework for fast prototyping. Initially designed for numerical acoustics, multiphysics problems can now be adressed. 
 
    Gypsilab is divided in five parts :
