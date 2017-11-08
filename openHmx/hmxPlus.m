@@ -1,28 +1,32 @@
 function Ml = hmxPlus(Ml,Mr)
 %+========================================================================+
 %|                                                                        |
-%|               OPENHMX, H-MATRIX COMPRESSION AND ALGEBRA                |
-%|              openHmx is part of GYPSYLAB toolbox - v0.20               |
+%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
+%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For openHmx,    \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%| [2] : 13th International Conference on Mathematical           | |      |
-%| and Numerical Aspects of Wave Propagation, University of      | |      |
-%| Minnesota, may 2017. "OpenHmX, an open-source H-Matrix        | |      |
-%| toolbox in Matlab".                                           | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : Matrix summation with H-Matrix                            |
+%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : hmxPlus.m                                     |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%| ( === ) |   SYNOPSIS   : Sum of H-Matrix                               |
+%|  `---'  |                                                              |
 %+========================================================================+
 
 %%% H-Matrix + H-Matrix -> H-Matrix
@@ -160,62 +164,42 @@ elseif (Mh.typ == 1)
     
 % Full leaf   
 elseif (Mh.typ == 2)
+    % Summation
+    Mh.dat = Mh.dat + A*B;
+    
     % Recompression
-    rkMax        = ceil(sqrt(min(Mh.dim))-log(Mh.tol));
-    [Ah,Bh,flag] = hmxRSVD(Mh.dat,Mh.tol,rkMax);
-     
-    % Update
-    if flag
-        A      = [A,Ah];
-        B      = [B;Bh];
-        [A,B]  = hmxQRSVD(A,B,Mh.tol);        
+    [A,B] = hmxSVD(Mh.dat,Mh.tol);
+    if (size(A,2) < 0.5*(min(Mh.dim)))
         Mh.dat = {A,B};
         Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%%
-        
-    else
-        Mh.dat = Mh.dat + A*B;
-    end
+    end    
     
 % Sparse leaf
 elseif (Mh.typ == 3)
-    % Indices
-    [I,J,V] = find(Mh.dat);
-    r       = length(I);
-    
     % Empty + Compr -> Compr
-    if (r == 0)
+    if isempty(Mh.dat)
         Mh.dat = {A,B};
         Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%%
-        
-    % Sparse + Compr -> Compr
-    elseif (r > 0) && (r <= 1.1*size(A,2))
-        % Low-rank representation
-        Ah = zeros(Mh.dim(1),r,class(A));
-        Bh = zeros(r,Mh.dim(2),class(B));
-        K  = (1:r)';
-        
-        % Compression
-        Ah(sub2ind(size(Ah),I,K)) = ones(size(I),class(A));
-        Bh(sub2ind(size(Bh),K,J)) = V;
-        
-        % Addition
-        A = [Ah,A];
-        B = [Bh;B];
-        
-        % Recompression
-        [A,B] = hmxQRSVD(A,B,Mh.tol);
-        
-        % Update
-        Mh.dat = {A,B};
-        Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%% 
-        
-    % Sparse + Compr -> Full
-    else
-        Mh.dat = full(Mh.dat); 
-        Mh.typ = 2;                             %%%%%%% TYPE CHANGE %%%%%%%               
-        Mh     = hmxPlusAB(Mh,A,B);
-    end
 
+    % Sparse + Compr -> Compr
+    else 
+        % Compression
+        rk           = min(nnz(Mh.dat)+1,floor(0.5*(min(Mh.dim))));
+        [Ah,Bh,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
+
+        % Update
+        if flag
+            A      = [A,Ah];
+            B      = [B;Bh];
+            [A,B]  = hmxQRSVD(A,B,Mh.tol);
+            Mh.dat = {A,B};
+            Mh.typ = 1;                         %%%%%%% TYPE CHANGE %%%%%%%
+        else
+            Mh.dat = full(Mh.dat) + A*B;
+            Mh.typ = 2;                         %%%%%%% TYPE CHANGE %%%%%%%
+        end
+    end
+    
       
 % Unknown type
 else

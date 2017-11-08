@@ -1,146 +1,172 @@
-function [A,B,flag] = hmxACA(X,Y,green,tol)
+function [A,B,flag] = hmxACA(varargin)
 %+========================================================================+
 %|                                                                        |
-%|               OPENHMX, H-MATRIX COMPRESSION AND ALGEBRA                |
-%|              openHmx is part of GYPSYLAB toolbox - v0.20               |
+%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
+%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For openHmx,    \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%| [2] : 13th International Conference on Mathematical           | |      |
-%| and Numerical Aspects of Wave Propagation, University of      | |      |
-%| Minnesota, may 2017. "OpenHmX, an open-source H-Matrix        | |      |
-%| toolbox in Matlab".                                           | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : Adaptative Cross Approximation, partial & total pivoting  |
+%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : hmxACA.m                                      |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%| ( === ) |   SYNOPSIS   : Adaptative Cross Approximation, partial       |
+%|  `---'  |                & total pivoting                              |
 %+========================================================================+
 
-% Partial or total pivoting
-if isnumeric(green)
-    mtx = 1;
-else 
-    mtx = 0;
+% Total pivoting with full matrix
+if (nargin == 2)
+    M     = varargin{1};
+    tol   = varargin{2};
+    rkMax = 1e6;
+    row   = @(i) full(M(i,:));
+    col   = @(i) full(M(:,i));
+    
+% Total pivoting with full matrix and maximum rank
+elseif (nargin == 3)
+    M     = varargin{1};
+    tol   = varargin{2};
+    rkMax = varargin{3};
+    row   = @(i) full(M(i,:));
+    col   = @(i) full(M(:,i));
+    
+% Partial pivoting with handle function    
+elseif (nargin == 4) 
+    X     = varargin{1};
+    Y     = varargin{2};
+    green = varargin{3};
+    tol   = varargin{4};
+    rkMax = 1e6;
+    row = @(i) green(X(i,:),Y).';
+    col = @(i) green(X,Y(i,:));
+else
+    error('hmxACA : unavailable case')
 end
-
-% Dimensions
-Nx = size(X,1);
-Ny = size(Y,1);
 
 % First row
-if mtx
-    B = green(1,:).';
-else
-    B = green(X(1,:),Y);
-end
-
-% Maximum for pivoting
-[delta,j] = max(B);
-
-% First column
-if abs(delta) <= 10*eps(B(1))
-    A = zeros(Nx,1,class(B));
-elseif mtx
-    A = green(:,1) ./ delta;
-else
-    A = green(X,Y(j,:)) ./ delta;
-end
-
-% Sorted interactions
-X0     = mean(X,1);
-Y0     = mean(Y,1);
-[~,ix] = sort( (X-ones(Nx,1)*X0) * (Y0-X0)' );
-[~,iy] = sort( (Y-ones(Ny,1)*Y0) * (X0-Y0)' );
-
-% Length compatibility
-if Nx > Ny
-    iy = iy(mod(0:Nx-1,Ny)'+1);
-else
-    ix = ix(mod(0:Ny-1,Nx)'+1);
-end
-
-% Add random interactions
-ix  = [ix ; ceil(Nx*rand(max(Nx,Ny),1))];
-iy  = [iy ; ceil(Ny*rand(max(Nx,Ny),1))];
-
-% Reference
-if mtx
-    ref = green(sub2ind(size(green),ix,iy));
-else
-    ref = green(X(ix,:),Y(iy,:));
-end
-nrf = norm(ref,'inf');
-
-% Numerical solution
-sol = A(ix) .* B(iy);
-
-% Construction
-n = 1;
-while (norm(ref-sol,'inf')/nrf > tol)
-    % Initialisation
-    ind   = (1:Nx)';
-    i     = 0;
-    delta = 0;
+B = row(1).';
     
+% Maximum for pivoting
+[~,j] = max(abs(B));
+delta = B(j);
+if (abs(delta) <= 1e-12)
+    delta = 1e12;
+end
+
+% First column with pivot
+A = col(j) ./ delta;
+
+% Frobenius norm for the initial tensor product
+An2 = (A'*A);
+Bn2 = (B'*B);
+Rn2 = An2 * Bn2;
+
+% Left indices for row and columns pivot
+Ir = (2:size(A,1))';
+Ic = [1:j-1,j+1:size(B,1)]';
+
+% Iterative construction
+errFr = 1;
+n     = 1;
+while (errFr > tol)
+    % Reinitialize pivot
+    delta = 0;
+
     % Find non zeros pivot
-    while abs(delta) <= 10*eps(B(1))
-        % Extract void pivot
-        if i
-            ind = ind([1:i-1,i+1:end]);
-            if isempty(ind)
-                A = [];
-                B = [];
-                flag = 0;
-                return
-            end
+    while abs(delta) <= 1e-12
+        % No more pivots
+        if isempty(Ir)
+            A    = [];
+            B    = [];
+            flag = 0;
+%             warning('hmxACA.m : no more pivots')
+            return
         end
         
         % Row index
-        [~,i] = max(A(ind,n));
+        [~,i] = max(abs(A(Ir,n)));
         
         % Compute new row
-        if mtx
-            row = green(ind(i),:).' - B*A(ind(i),1:n).';
-        else
-            row = green(X(ind(i),:),Y) - B*A(ind(i),1:n).';
-        end
+        new = row(Ir(i)).' - B*A(Ir(i),1:n).';
         
         % Column index
-        [delta,j] = max(row);
+        [~,j] = max(abs(new(Ic)));
+        
+        % Pivot
+        delta = new(Ic(j));
+        
+        % Same with minimum
+        [~,iMin] = min(abs(A(Ir,n)));
+        rowMin   = row(Ir(iMin)).' - B*A(Ir(iMin),1:n).';
+        [~,jMin] = max(abs(rowMin(Ic)));
+        deltaMin = rowMin(Ic(jMin));
+
+        % Choose between min and max
+        if abs(deltaMin) > abs(delta)
+            i     = iMin;
+            j     = jMin;
+            new   = rowMin;
+            delta = deltaMin;
+        end
+
+        % Update row indices
+        Ir = [Ir(1:i-1);Ir(i+1:end)];
     end
-    
+
     % Update row
-    B(:,n+1) = row;
+    B(:,n+1) = new;
     
-    % Compute new column
-    if mtx
-        A(:,n+1) = (green(:,j) - A*B(j,1:n).') ./ delta;
-    else
-        A(:,n+1) = (green(X,Y(j,:)) - A*B(j,1:n).') ./ delta;
-    end
+    % Update column
+    A(:,n+1) = (col(Ic(j)) - A*B(Ic(j),1:n).') ./ delta;
+    
+    % Update column indices
+    Ic = [Ic(1:j-1);Ic(j+1:end)];
     
     % Incrementation
     n = n + 1;
-    
-    % Accuracy of the compression
-    sol = sol + A(ix,n) .* B(iy,n);
-    
+
+    % Recursive frobenius
+    An2 = A(:,n)'*A(:,n);
+    Bn2 = B(:,n)'*B(:,n);
+
+    u  = B(:,n)'*B(:,1:n-1);
+    v  = A(:,n)'*A(:,1:n-1);
+    AB = v*u.';
+
+    u  = B(:,1:n-1)'*B(:,n);
+    v  = A(:,1:n-1)'*A(:,n);
+    BA = u.'*v;
+
+    Rn2 = Rn2 + AB + BA + An2*Bn2;
+
+    % Relative Frobenius error with the residue
+    errFr = sqrt(An2)*sqrt(Bn2)/sqrt(Rn2);
+%     norm(A*B.' - A(:,1:n-1)*B(:,1:n-1).','fro')/norm(A*B.','fro')
+%     norm(A(:,n)*B(:,n).','fro')/norm(A*B.','fro')
+      
     % Compression failed
-    if (numel(A)+numel(B) > Nx*Ny)
-        A = [];
-        B = [];
+    if ( n*(size(A,1)+size(B,1)) > size(A,1)*size(B,1) ) || (n>=rkMax) 
+        A    = [];
+        B    = [];
         flag = 0;
+%         warning('hmxACA.m : compression failed')
         return
-    end
+    end    
 end
 
 % B transposition lead to  A * B

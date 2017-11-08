@@ -1,25 +1,32 @@
-function [fce2vtx,elt2fce] = mshFace(mesh)
+function [mesh,elt2fce] = mshFace(mesh)
 %+========================================================================+
 %|                                                                        |
-%|           OPENMSH, MESH MANAGEMENT AND NUMERICAL QUADRATURE            |
-%|              openMsh is part of GYPSYLAB toolbox - v0.20               |
+%|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
+%|           openMsh is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For openMsh,    \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%|                                                               | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : Compute face table                                        |
+%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : mshFace.m                                     |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%| ( === ) |   SYNOPSIS   : Submesh to face mesh                          |
+%|  `---'  |                                                              |
 %+========================================================================+
 
 % Particles mesh
@@ -34,12 +41,13 @@ elseif (size(mesh.elt,2) == 2)
 elseif (size(mesh.elt,2) == 3)
     fce2vtx = mesh.elt;
     elt2fce = (1:size(mesh.elt,1))';
+    col     = mesh.col;
     
-% Tetrahedron mesh
+% Tetrahedral mesh
 elseif (size(mesh.elt,2) == 4)
     % All faces
-    fce2vtx = [ mesh.elt(:,[1,2,3]) ; mesh.elt(:,[2,3,4]) ; ...
-        mesh.elt(:,[3,4,1]) ; mesh.elt(:,[4,1,2]) ];
+    fce2vtx = [ mesh.elt(:,[2,3,4]) ; mesh.elt(:,[3,4,1]) ; ...
+        mesh.elt(:,[4,1,2]) ; mesh.elt(:,[1,2,3]) ];
     
     % Faces unicity
     tmp           = sort(fce2vtx,2);
@@ -47,11 +55,22 @@ elseif (size(mesh.elt,2) == 4)
     
     % Final faces
     fce2vtx = fce2vtx(I,:);
-    elt2fce = reshape(elt2fce,size(mesh.elt,1),size(mesh.elt,2));
+    elt2fce = reshape(elt2fce,size(mesh.elt,1),4);
+    
+    % Colours
+    col             = zeros(size(fce2vtx,1),1);
+    tmp             = mesh.col * ones(1,4);
+    col(elt2fce(:)) = tmp(:);
+    
+    % Identify boundary
+    bnd      = ( accumarray(elt2fce(:),1).*col ~= accumarray(elt2fce(:),tmp(:)) );
+    col(bnd) = -1;
     
 % Unknown type
 else
-    error('mshEdge.m : unavailable case')
+    error('mshFace.m : unavailable case')
 end
 
+% Mesh format
+mesh = msh(mesh.vtx,fce2vtx,col);
 end

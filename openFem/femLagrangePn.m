@@ -1,59 +1,86 @@
-function M = femLagrangePn(fe,mesh)
+function M = femLagrangePn(fe,domain)
 %+========================================================================+
 %|                                                                        |
-%|                  OPENFEM, FINITE AND BOUNDARY ELEMENT                  |
-%|              openFem is part of GYPSYLAB toolbox - v0.20               |
+%|              OPENFEM - LIBRARY FOR FINITE ELEMENT METHOD               |
+%|           openFem is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For openFem,    \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%|                                                               | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%|              François Alouges - CMAP, Ecole Polytechnique              |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : Finite element matrices                                   |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%|             francois.alouges@polytechnique.edu                         |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : femLagrangePn.m                               |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%| ( === ) |   SYNOPSIS   : Lagrange finite element matrix (P0,P1,P2)     |
+%|  `---'  |                                                              |
 %+========================================================================+
 
 %%% FINITE ELEMENT MATRIX AND GRADIENT
 if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
     % Gaussian quadrature
-    x                = mshReference(mesh);
-    [Xqud,~,elt2qud] = mesh.qud;
+    Xgss             = domReference(domain);
+    [Xqud,~,elt2qud] = domain.qud;
     
     % Degrees of freedom
-    [Xdof,elt2dof] = fe.dof(mesh);
+    [Xdof,elt2dof] = fe.dof;
+    
+    % Intersect domain and finite element meshes
+    if isequal(fe.msh,domain.msh)
+        mesh = fe.msh;
+        Ife  = (1:size(fe.msh.elt,1))';
+        Idom = Ife;
+    else
+        [mesh,Ife,Idom] = intersect(fe.msh,domain.msh);
+    end
     
     % Dimensions
-    Nelt = size(mesh.elt,1);
+    Nelt = length(Ife);
     Nqud = size(Xqud,1);
-    Ngss = size(elt2qud,2);
+    Ngss = size(Xgss,1);
     Ndof = size(Xdof,1);
     Nbas = size(elt2dof,2);
+    dim  = size(fe.msh.elt,2);    
+        
+    % Numbering dof to quadrature
+    idx = zeros(Nelt,Nbas,Ngss);
+    jdx = zeros(Nelt,Nbas,Ngss);
+    for i = 1:Nbas
+        for j = 1:Ngss
+            idx(:,i,j) = elt2qud(Idom,j);
+            jdx(:,i,j) = elt2dof(Ife,i);
+        end
+    end
     
     % Basis fct constant per elements
     if strcmp(fe.typ,'P0')
         % Edge mesh
-        if (size(mesh.elt,2) == 2)
+        if (dim == 2)
             F   = ones(1,Ngss);
             dxF = zeros(1,Ngss);
 
         % Triangular mesh
-        elseif (size(mesh.elt,2) == 3)
+        elseif (dim == 3)
             F   = ones(1,Ngss);
             dxF = zeros(1,Ngss);
             dyF = zeros(1,Ngss);
             
         % Tetrahedron mesh
-        elseif (size(mesh.elt,2) == 4)
+        elseif (dim == 4)
             F   = ones(1,Ngss);
             dxF = zeros(1,Ngss);
             dyF = zeros(1,Ngss);
@@ -66,24 +93,24 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
     % Basis fct piecewise linear per element
     elseif strcmp(fe.typ,'P1')
         % Initialization
-        F   = zeros(size(mesh.elt,2),Ngss);
-        dxF = zeros(size(mesh.elt,2),Ngss);
-        dyF = zeros(size(mesh.elt,2),Ngss);
-        dzF = zeros(size(mesh.elt,2),Ngss) ;       
+        F   = zeros(dim,Ngss);
+        dxF = zeros(dim,Ngss);
+        dyF = zeros(dim,Ngss);
+        dzF = zeros(dim,Ngss) ;       
         
         % Edge mesh
-        if (size(mesh.elt,2) == 2)
-            F(1,:) = 1 - x(:,1);
-            F(2,:) = x(:,1);
+        if (dim == 2)
+            F(1,:) = 1 - Xgss(:,1);
+            F(2,:) = Xgss(:,1);
             
             dxF(1,:) = - 1;
             dxF(2,:) = 1;
 
         % Triangular mesh
-        elseif (size(mesh.elt,2) == 3)
-            F(1,:) = 1 - x(:,1) - x(:,2);
-            F(2,:) = x(:,1);
-            F(3,:) = x(:,2);            
+        elseif (dim == 3)
+            F(1,:) = 1 - Xgss(:,1) - Xgss(:,2);
+            F(2,:) = Xgss(:,1);
+            F(3,:) = Xgss(:,2);            
             
             dxF(1,:) = - 1;
             dxF(2,:) = 1;
@@ -92,11 +119,11 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             dyF(3,:) = 1;
             
         % Tetrahedron mesh
-        elseif (size(mesh.elt,2) == 4)
-            F(1,:) = 1 - x(:,1) - x(:,2) - x(:,3);
-            F(2,:) = x(:,1);
-            F(3,:) = x(:,2);
-            F(4,:) = x(:,3);
+        elseif (dim == 4)
+            F(1,:) = 1 - Xgss(:,1) - Xgss(:,2) - Xgss(:,3);
+            F(2,:) = Xgss(:,1);
+            F(3,:) = Xgss(:,2);
+            F(4,:) = Xgss(:,3);
             
             dxF(1,:) = - 1;
             dxF(2,:) = 1;
@@ -120,7 +147,7 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             dxF = zeros(3,Ngss);
             dyF = zeros(3,Ngss);
             dzF = zeros(3,Ngss);
-            X = x(:,1);
+            X = Xgss(:,1);
             
             F(1,:) = (1 - X).*(1 - 2*X);
             F(2,:) = X.*(2*X - 1);
@@ -137,27 +164,27 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             dxF = zeros(6,Ngss);
             dyF = zeros(6,Ngss);
             dzF = zeros(6,Ngss);
-            X = x(:,1);
-            Y = x(:,2);
+            X = Xgss(:,1);
+            Y = Xgss(:,2);
             
             F(1,:) = (1 - X - Y).*(1 - 2*X - 2*Y);
             F(2,:) = X.*(2*X - 1);
             F(3,:) = Y.*(2*Y - 1);
-            F(4,:) = 4*X.*(1 - X - Y);
-            F(5,:) = 4*X.*Y;
-            F(6,:) = 4*Y.*(1 - X - Y);
+            F(4,:) = 4*X.*Y;
+            F(5,:) = 4*Y.*(1 - X - Y);
+            F(6,:) = 4*X.*(1 - X - Y);
             
             dxF(1,:) = -3 + 4*(X + Y);
             dxF(2,:) = 4*X - 1;
-            dxF(4,:) = 4*(1 - 2*X - Y);
-            dxF(5,:) = 4*Y;
-            dxF(6,:) = -4*Y;
+            dxF(4,:) = 4*Y;
+            dxF(5,:) = -4*Y;
+            dxF(6,:) = 4*(1 - 2*X - Y);
             
             dyF(1,:) = -3 + 4*(X + Y);
             dyF(3,:) = 4*Y - 1;
-            dyF(4,:) = -4*X;
-            dyF(5,:) = 4*X;
-            dyF(6,:) = 4*(1 - X - 2*Y);
+            dyF(4,:) = 4*X;
+            dyF(5,:) = 4*(1 - X - 2*Y);
+            dyF(6,:) = -4*X;
             
         % Tetrahedron mesh
         elseif (size(mesh.elt,2) == 4)
@@ -166,19 +193,19 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             dxF = zeros(10,Ngss);
             dyF = zeros(10,Ngss);
             dzF = zeros(10,Ngss);
-            X = x(:,1);
-            Y = x(:,2);
-            Z = x(:,3);
+            X = Xgss(:,1);
+            Y = Xgss(:,2);
+            Z = Xgss(:,3);
             
-            F(1,:)  = (1 - X - Y - Z).*(1 - 2*X - 2*Y - 2*Z);
-            F(2,:)  = X.*(2*X - 1);
-            F(3,:)  = Y.*(2*Y - 1);
-            F(4,:)  = Z.*(2*Z - 1);
-            F(5,:)  = 4*X.*(1 - X - Y - Z);
-            F(6,:)  = 4*X.*Y;
-            F(7,:)  = 4*Y.*(1 - X - Y - Z);
-            F(8,:)  = 4*Z.*(1 - X - Y - Z);
-            F(9,:)  = 4*X.*Z;
+            F(1,:) = (1 - X - Y - Z).*(1 - 2*X - 2*Y - 2*Z);
+            F(2,:) = X.*(2*X - 1);
+            F(3,:) = Y.*(2*Y - 1);
+            F(4,:) = Z.*(2*Z - 1);
+            F(5,:) = 4*X.*(1 - X - Y - Z);
+            F(6,:) = 4*X.*Y;
+            F(7,:) = 4*Y.*(1 - X - Y - Z);
+            F(9,:) = 4*Z.*(1 - X - Y - Z);
+            F(8,:) = 4*X.*Z;
             F(10,:) = 4*Y.*Z;
              
             dxF(1,:) = -3 + 4*(X + Y + Z);
@@ -186,31 +213,23 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             dxF(5,:) = 4*(1 - 2*X - Y - Z);
             dxF(6,:) = 4*Y;
             dxF(7,:) = -4*Y;
-            dxF(8,:) = -4*Z;
-            dxF(9,:) = 4*Z;
-            
-            dzF(1,:)  = -3 + 4*(X + Y + Z);
-            dzF(4,:)  = 4*Z - 1;
-            dzF(5,:)  = -4*X;
-            dzF(7,:)  = -4*Y;
-            dzF(8,:)  = 4*(1 - X - Y - 2*Z);
-            dzF(9,:)  = 4*X;
-            dzF(10,:) = 4*Y;
-            
-            dyF(1,:)  = -3 + 4*(X + Y + Z);
-            dyF(3,:)  = 4*Y - 1;
-            dyF(5,:)  = -4*X;
-            dyF(6,:)  = 4*X;
-            dyF(7,:)  = 4*(1 - X - 2*Y - Z);
-            dyF(8,:)  = -4*Z;
+            dxF(9,:) = -4*Z;
+            dxF(8,:) = 4*Z;
+                        
+            dyF(1,:) = -3 + 4*(X + Y + Z);
+            dyF(3,:) = 4*Y - 1;
+            dyF(5,:) = -4*X;
+            dyF(6,:) = 4*X;
+            dyF(7,:) = 4*(1 - X - 2*Y - Z);
+            dyF(9,:) = -4*Z;
             dyF(10,:) = 4*Z;
 
-            dzF(1,:)  = -3 + 4*(X + Y + Z);
-            dzF(4,:)  = 4*Z - 1;
-            dzF(5,:)  = -4*X;
-            dzF(7,:)  = -4*Y;
-            dzF(8,:)  = 4*(1 - X - Y - 2*Z);
-            dzF(9,:)  = 4*X;
+            dzF(1,:) = -3 + 4*(X + Y + Z);
+            dzF(4,:) = 4*Z - 1;
+            dzF(5,:) = -4*X;
+            dzF(7,:) = -4*Y;
+            dzF(9,:) = 4*(1 - X - Y - 2*Z);
+            dzF(8,:) = 4*X;
             dzF(10,:) = 4*Y;
             
         else
@@ -221,31 +240,24 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
         error('femLagrangePn.m: unavailable case');
     end
     
-    % Numbering dof to quadrature
-    idx = zeros(Nbas*Nqud,1);
-    jdx = zeros(Nbas*Nqud,1);
-    for i = 1:Nbas
-        for j = 1:Ngss
-            ind = j+(i-1)*Ngss : Nbas*Ngss : Nbas*Nqud;
-            idx(ind) = elt2qud(:,j);
-            jdx(ind) = elt2dof(:,i);
-        end
-    end
-    
     % Finite element matrix
     if strcmp(fe.opr,'[psi]')
-        bas = reshape(F',[1,Ngss*Nbas]);
-        bas = kron(ones(1,Nelt),bas);
-        M   = sparse(idx,jdx,bas,Nqud,Ndof);
+        bas = zeros(Nelt,Nbas,Ngss);
+        for i = 1:Nbas
+            for j = 1:Ngss
+                bas(:,i,j) = F(i,j);
+            end
+        end
+        M = sparse(idx(:),jdx(:),bas(:),Nqud,Ndof);
         
     % Gradient of Finite element matrix
     elseif strcmp(fe.opr,'grad[psi]')
         % Edge mesh
-        if (size(mesh.elt,2) == 2)
+        if (dim == 2)
             notYet
             
         % Triangular mesh
-        elseif (size(mesh.elt,2) == 3)
+        elseif (dim == 3)
             % Vector basis
             E1 = mesh.vtx(mesh.elt(:,2),:) - mesh.vtx(mesh.elt(:,1),:);
             E2 = mesh.vtx(mesh.elt(:,3),:) - mesh.vtx(mesh.elt(:,1),:);
@@ -268,16 +280,18 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             % Gradient projection to integration points
             dbas = cell(1,3);
             for n = 1:3
-                dbas{n} = zeros(Nbas,Nqud);
-                for d = 1:Nbas
-                    DCVx         = Dx1.*E1(:,n) + Dx2.*E2(:,n);
-                    DCVy         = Dy1.*E1(:,n) + Dy2.*E2(:,n);
-                    dbas{n}(d,:) = kron(DCVx',dxF(d,:)) + kron(DCVy',dyF(d,:));
+                dbas{n} = zeros(Nelt,Nbas,Ngss);
+                DCVx    = Dx1.*E1(:,n) + Dx2.*E2(:,n);
+                DCVy    = Dy1.*E1(:,n) + Dy2.*E2(:,n);
+                for i = 1:Nbas
+                    for j = 1:Ngss
+                        dbas{n}(:,i,j) = DCVx(:)*dxF(i,j) + DCVy(:)*dyF(i,j); 
+                    end
                 end
             end
             
         % Tetrahedron mesh
-        elseif (size(mesh.elt,2) == 4)            
+        elseif (dim == 4)            
             % Vector basis
             E1 = mesh.vtx(mesh.elt(:,2),:) - mesh.vtx(mesh.elt(:,1),:);
             E2 = mesh.vtx(mesh.elt(:,3),:) - mesh.vtx(mesh.elt(:,1),:);
@@ -311,14 +325,14 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
             % Gradient projection to integration points
             dbas = cell(1,3);
             for n = 1:3
-                dbas{n} = zeros(Nbas,Nqud);
-                for d = 1:Nbas
-                    DCVx         = Dx1.*E1(:,n) + Dx2.*E2(:,n) + Dx3.*E3(:,n);
-                    DCVy         = Dy1.*E1(:,n) + Dy2.*E2(:,n) + Dy3.*E3(:,n);
-                    DCVz         = Dz1.*E1(:,n) + Dz2.*E2(:,n) + Dz3.*E3(:,n);
-                    dbas{n}(d,:) = kron(DCVx',dxF(d,:)) ...
-                        + kron(DCVy',dyF(d,:)) ...
-                        + kron(DCVz',dzF(d,:));
+                dbas{n} = zeros(Nelt,Nbas,Ngss);
+                DCVx    = Dx1.*E1(:,n) + Dx2.*E2(:,n) + Dx3.*E3(:,n);
+                DCVy    = Dy1.*E1(:,n) + Dy2.*E2(:,n) + Dy3.*E3(:,n);
+                DCVz    = Dz1.*E1(:,n) + Dz2.*E2(:,n) + Dz3.*E3(:,n);
+                for i = 1:Nbas
+                    for j = 1:Ngss
+                        dbas{n}(:,i,j) = DCVx(:)*dxF(i,j) + DCVy(:)*dyF(i,j) + + DCVz(:)*dzF(i,j);
+                    end
                 end
             end
         end
@@ -326,46 +340,37 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
         % Dof to quadrature matrix
         M = cell(1,3);
         for n = 1:3
-            % Basis functions values
-            val = zeros(Nbas*Nqud,1);
-            for i = 1:Nbas
-                for j = 1:Ngss
-                    indl      = j+(i-1)*Ngss : Nbas*Ngss : Nbas*Nqud;
-                    indr      = j:Ngss:Nqud;
-                    val(indl) = dbas{n}(i,indr);
-                end
-            end
-            
-            % Sparse format
-            M{n} = sparse(idx,jdx,val,Nqud,Ndof);
+            M{n} = sparse(idx(:),jdx(:),dbas{n}(:),Nqud,Ndof);
         end
     end
 
-    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 %%% NORMALS * DQM
 elseif strcmp(fe.opr,'n*[psi]')
     % Finite element
-    fe.opr = '[psi]';
-    dqm    = fe.dqm(mesh);
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = '[psi]';
+    dqm     = tmp.dqm(domain);
     
     % Normals
-    N = mesh.nrmQud;
+    nrm = domain.qudNrm;
     
     % Dot product
-    m    = size(N,1);
-    M{1} = spdiags(N(:,1),0,m,m) * dqm;
-    M{2} = spdiags(N(:,2),0,m,m) * dqm;
-    M{3} = spdiags(N(:,3),0,m,m) * dqm;
+    m    = size(nrm,1);
+    M{1} = spdiags(nrm(:,1),0,m,m) * dqm;
+    M{2} = spdiags(nrm(:,2),0,m,m) * dqm;
+    M{3} = spdiags(nrm(:,3),0,m,m) * dqm;
 
     
 %%%% NORMAL x DQM
 elseif strcmp(fe.opr,'nxgrad[psi]')
     % Finite elements
-    fe.opr = 'grad[psi]';
-    dqm    = fe.dqm(mesh);
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = 'grad[psi]';
+    dqm     = tmp.dqm(domain);
     
     % Normals
-    nrm  = mesh.nrmQud;
+    nrm  = domain.qudNrm;
     m    = size(nrm,1);
     N{1} = spdiags(nrm(:,1),0,m,m);
     N{2} = spdiags(nrm(:,2),0,m,m);
@@ -386,8 +391,9 @@ elseif strcmp(fe.opr(1:end-1),'grad[psi]')
     j = str2double(fe.opr(end));
     
     % Finite elements
-    fe.opr = 'grad[psi]';
-    dqm    = fe.dqm(mesh);
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = 'grad[psi]';
+    dqm     = tmp.dqm(domain);
     
     % Gradient (j)
     M  = dqm{j};
@@ -399,11 +405,12 @@ elseif strcmp(fe.opr(1:end-1),'n*[psi]')
     j = str2double(fe.opr(end));
     
     % Finite element
-    fe.opr = '[psi]';
-    dqm    = fe.dqm(mesh);
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = '[psi]';
+    dqm     = tmp.dqm(domain);
     
     % Normal (component j)
-    N = mesh.nrmQud;
+    N = domain.qudNrm;
     
     % Dot product (j)
     m = size(N,1);
@@ -416,11 +423,12 @@ elseif strcmp(fe.opr(1:end-1),'nxgrad[psi]')
     j = str2double(fe.opr(end));
     
     % Finite element
-    fe.opr = 'grad[psi]';
-    dqm    = fe.dqm(mesh);
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = 'grad[psi]';
+    dqm     = tmp.dqm(domain);
     
     % Normals
-    N = mesh.nrmQud;
+    N = domain.qudNrm;
     m = size(N,1);
     
     % Cross component 

@@ -1,140 +1,120 @@
 function Mh = hmxBuilder(X,Y,green,tol)
 %+========================================================================+
 %|                                                                        |
-%|               OPENHMX, H-MATRIX COMPRESSION AND ALGEBRA                |
-%|              openHmx is part of GYPSYLAB toolbox - v0.20               |
+%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
+%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For openHmx,    \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%| [2] : 13th International Conference on Mathematical           | |      |
-%| and Numerical Aspects of Wave Propagation, University of      | |      |
-%| Minnesota, may 2017. "OpenHmX, an open-source H-Matrix        | |      |
-%| toolbox in Matlab".                                           | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : Particles builder with direct and low-rank separation     |
+%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : hmxBuilder.m                                  |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%| ( === ) |   SYNOPSIS   : Parallel particles builder with low-rank      |
+%|  `---'  |                approximation                                 |
 %+========================================================================+
 
-% Initialisation
-Mh = hmx(size(X,1),size(Y,1),tol);
+% Recursive binary tree
+Mh = hmxTree(X,Y,tol);
 
-% Rectangular box for X
-Xmin = min(X,[],1);   
-Xmax = max(X,[],1);
-Xctr = 0.5*(Xmin+Xmax);
-Xdgl = Xmax-Xmin;
+% Recursive leaves blocks
+Ml = hmxLeafOut(Mh);
 
-% Rectangular box for Y
-Ymin = min(Y,[],1);   
-Ymax = max(Y,[],1);
-Yctr = 0.5*(Ymin+Ymax);
-Ydgl = Ymax-Ymin;
+% Randomize block repartition
+Iprm = randperm(length(Ml));
+Ml   = Ml(Iprm);
 
-% Compression for separated boxes
-if sum( abs(Yctr-Xctr) > max(Xdgl+Ydgl) ) 
-    Mh.typ = 1;
-
-% Full computation for small box (stopping criterion)
-elseif sum(Mh.dim < 100)
-    Mh.typ = 2;
-
-% H-Matrix
+% Parallel computing for partial pivoting only
+if isnumeric(green)
+    Nlab = 1;
 else
-    Mh.typ = 0;    
+    Nlab = length(Composite);
 end
 
-% H-Matrix (recursion)
-if (Mh.typ == 0)
-    % Subdivision for X
-    ind    = hmxSubdivide(X);
-    Mh.row = {find(ind),find(ind),find(~ind),find(~ind)};
-    
-    % Subdivision for Y
-    ind    = hmxSubdivide(Y);
-    Mh.col = {find(ind),find(~ind),find(ind),find(~ind)};
-    
-    % Single class
-    if isa(X,'single')
-        for i = 1:4
-            Mh.row{i} = single(Mh.row{i});
-            Mh.col{i} = single(Mh.col{i});
+% Parallel computation for partial pivoting
+parfor (n = 1:length(Ml),Nlab)
+    % Leaf data
+    I   = Ml{n}{1};
+    J   = Ml{n}{2};
+    dat = Ml{n}{3};
+    typ = Ml{n}{4};
+        
+    % ACA for compressed leaf
+    if (typ == 1)
+        % Partial pivoting
+        if isa(green,'function_handle')
+            [A,B,flag] = hmxACA(X(I,:),Y(J,:),green,tol);
+            
+        % Total pivoting
+        elseif isnumeric(green) && ~issparse(green)
+            [A,B,flag] = hmxACA(green(I,J),tol);
+
+        % No compression
+        else
+            A    = [];
+            B    = [];
+            flag = 0;
+        end
+        
+        % Update
+        if flag
+            dat = {A,B};
+        else
+            typ = 2;
         end
     end
-
-    % H-Matrix (recursion)
-    for i = 1:4
+    
+    % No compression for full or sparse leaf 
+    if (typ == 2)
         if isa(green,'function_handle')
-            Mh.chd{i} = hmxBuilder(X(Mh.row{i},:),Y(Mh.col{i},:),green,tol);
+            [idx,jdx] = ndgrid(I,J);
+            dat       = green(X(idx,:),Y(jdx,:));
+            dat       = reshape(dat,length(I),length(J));
         elseif isnumeric(green)
-            Mh.chd{i} = hmxBuilder(X(Mh.row{i},:),Y(Mh.col{i},:), ...
-                green(Mh.row{i},Mh.col{i}),tol);
+            dat = green(I,J);
         else
             error('hmxBuilder.m : unavailable case')
         end
     end
     
-    % Fusion
-    Mh = hmxFusion(Mh);    
-
-% Compressed leaf
-elseif (Mh.typ == 1)
-    % ACA with partial pivoting
-    if isa(green,'function_handle')
-        [A,B,flag] = hmxACA(X,Y,green,tol);
-
-    % ACA with total pivoting
-    elseif isnumeric(green) && ~issparse(green)
-        [A,B,flag] = hmxACA(X,Y,green,tol);
-        
-    % No compressor
-    else
-        flag = 0;
+    % Sparse matrix
+    if issparse(dat)
+        typ = 3;
+    end
+    
+    % Full matrix recompression
+    if (typ == 2)        
+        [A,B] = hmxSVD(dat,tol);
+        if (size(A,2) < 0.5*min(size(dat)))
+            dat = {A,B}
+            typ = 1;
+        end
     end
     
     % Update
-    if flag
-        Mh.dat{1} = A;
-        Mh.dat{2} = B;
-    else
-        Mh.typ = 2;
-    end
+    Ml{n}{3} = dat;
+    Ml{n}{4} = typ;
+    Ml{n}{5} = tol;
 end
 
-% Full or sparse leaf
-if (Mh.typ == 2)
-    % Matrix
-    if isa(green,'function_handle')
-        [I,J]  = ndgrid(1:size(X,1),1:size(Y,1));
-        Mh.dat = green(X(I,:),Y(J,:));
-        Mh.dat = reshape(Mh.dat,size(X,1),size(Y,1));
-    elseif isnumeric(green)
-        Mh.dat = green;
-    else
-        error('hmxBuilder.m : unavailable case')
-    end
-    
-    % Sparse matrix
-    if issparse(Mh.dat)
-        Mh.typ = 3;
-    
-    % Full matrix recompression
-    else
-        rkMax      = ceil(sqrt(min(Mh.dim))-log(Mh.tol));
-        [A,B,flag] = hmxRSVD(Mh.dat,Mh.tol,rkMax);
-        if flag
-            Mh.dat = {A,B};
-            Mh.typ = 1;
-        end
-    end
-end
+% Reorder block
+Ml(Iprm) = Ml;
+
+% Block repartition
+Mh = hmxLeafIn(Mh,Ml);
 end

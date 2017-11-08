@@ -1,30 +1,34 @@
 classdef hmx
 %+========================================================================+
 %|                                                                        |
-%|               OPENHMX, H-MATRIX COMPRESSION AND ALGEBRA                |
-%|              openHmx is part of GYPSYLAB toolbox - v0.20               |
+%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
+%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For libFem,     \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%| [2] : 13th International Conference on Mathematical           | |      |
-%| and Numerical Aspects of Wave Propagation, University of      | |      |
-%| Minnesota, may 2017. "OpenHmX, an open-source H-Matrix        | |      |
-%| toolbox in Matlab".                                           | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : H-Matrix class definition                                 |
+%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : hmx.m                                         |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%| ( === ) |   SYNOPSIS   : H-Matrix class definition and functions       |
+%|  `---'  |                                                              |
 %+========================================================================+
-    
+
 properties
     dim = [];         % H-MATRIX DIMENSIONS 
     chd = [];         % CHILDREN (M11 M12 M21 M22)
@@ -48,6 +52,16 @@ methods
             Mh.dat = [];
             Mh.typ = [];
             Mh.tol = Min.tol;
+            
+        % Initialization with dimension 
+        elseif (length(varargin) == 2)
+            Mh.dim = [varargin{1},varargin{2}];
+            Mh.chd = cell(1,4);
+            Mh.row = cell(1,4);
+            Mh.col = cell(1,4);
+            Mh.dat = [];
+            Mh.typ = [];
+            Mh.tol = [];
         
         % Initialization with dimension and accuracy    
         elseif (length(varargin) == 3)
@@ -59,21 +73,21 @@ methods
             Mh.typ = [];
             Mh.tol = varargin{3};
        
-        % Particles builder with partial abd total pivoting   
+        % Particles builder with partial and total pivoting   
         elseif (length(varargin) == 4)
             X     = varargin{1};
             Y     = varargin{2};
             green = varargin{3};
             acc   = varargin{4};
-            Mh = hmxBuilder(X,Y,green,acc);
-              
+            Mh    = hmxBuilder(X,Y,green,acc);
+            
         % Compressed builder    
         elseif (length(varargin) == 5)
-            X   = varargin{1};
-            Y   = varargin{2};
-            A   = varargin{3};
-            B   = varargin{4};
-            acc = varargin{5};
+            X      = varargin{1};
+            Y      = varargin{2};
+            A      = varargin{3};
+            B      = varargin{4};
+            acc    = varargin{5};
             Mh     = hmx(size(X,1),size(Y,1),acc);
             Mh.dat = {A,B};
             Mh.typ = 1;
@@ -88,16 +102,12 @@ methods
             Y     = varargin{6};
             My    = varargin{7};
             acc   = varargin{8};
-            if exist('matlabpool','file') || exist('parpool','file')
-                Mh = femHmatrixParallel(Xdof,Ydof,Mx,X,green,Y,My,acc);
-            else
-                Mh = femHmatrix(Xdof,Ydof,Mx,X,green,Y,My,acc);
-            end
+            Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,acc);
 
         else
             error('hmx.m : undefined constructor case')
         end
-    end        
+    end    
     
     % FULL CONVERSION
     function M = full(Mh)
@@ -160,6 +170,11 @@ methods
         end
     end
     
+    % PARALLEL MATRIX VECTOR PRODUCT
+    function MV = mvfun(Mh)
+        MV = hmxLeafProduct(Mh);
+    end
+
     % INVERSION
     function Mh = inv(Mh)
         Mh = hmxInv(Mh);
@@ -184,20 +199,15 @@ methods
     function B = mldivide(Mh,B)
         if Mh.typ > 0
             B = Mh.dat \ B;
-        elseif (Mh.chd{2}.typ == 3)
+        elseif (Mh.chd{2}.typ == 3) && (nnz(Mh.chd{2}.dat) == 0)
             B = hmxSolveLower(Mh,B);
-        elseif (Mh.chd{3}.typ == 3)
+        elseif (Mh.chd{3}.typ == 3) && (nnz(Mh.chd{3}.dat) == 0)
             B = hmxSolveUpper(Mh,B);
         else
             [Lh,Uh] = lu(Mh);
             B = hmxSolveLower(Lh,B);
             B = hmxSolveUpper(Uh,B);
         end
-    end
-    
-    % ITERATIVE SOLVER 
-    function B = gmres(Mh,B,restart,tol,maxit)
-        B = gmres(@(V) Mh*V,B,restart,tol,maxit);
     end
     
     % STRUCTURE VISUALISATION

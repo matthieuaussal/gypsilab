@@ -1,77 +1,85 @@
-function mshPlot(data)
+function mshPlot(mesh,V)
 %+========================================================================+
 %|                                                                        |
-%|           OPENMSH, MESH MANAGEMENT AND NUMERICAL QUADRATURE            |
-%|              openMsh is part of GYPSYLAB toolbox - v0.20               |
+%|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
+%|           openMsh is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| Copyright (c) 20015-2017, Ecole polytechnique, all rights reserved.    |
-%| Licence Creative Commons BY-NC-SA 4.0, Attribution, NonCommercial and  |
-%| ShareAlike (see http://creativecommons.org/licenses/by-nc-sa/4.0/).    |
-%| This software is the property from Centre de Mathematiques Appliquees  |
-%| de l'Ecole polytechnique, route de Saclay, 91128 Palaiseau, France.    |
-%|                                                            _   _   _   |
-%| Please acknowledge the GYPSILAB toolbox in programs       | | | | | |  |
-%| or publications in which you use the code. For openMsh,    \ \| |/ /   |
-%| we suggest as reference :                                   \ | | /    |
-%| [1] : www.cmap.polytechnique.fr/~aussal/gypsilab             \   /     |
-%|                                                               | |      |
-%|_______________________________________________________________|_|______|
-%| Author(s)  : Matthieu Aussal - CMAP, Ecole polytechnique               |
-%| Creation   : 14.03.17                                                  |
-%| Last modif : 21.06.17                                                  |
-%| Synopsis   : Plot mesh with or without data                            |
+%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
+%| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
+%| LICENCE   : This program is free software, distributed in the hope that|
+%| it will be useful, but WITHOUT ANY WARRANTY. Natively, you can use,    |
+%| redistribute and/or modify it under the terms of the GNU General Public|
+%| License, as published by the Free Software Foundation (version 3 or    |
+%| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
+%| is available, please contact us to activate a "pay for remove" option. |
+%| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%|                                                                        |
+%| Please acknowledge the gypsilab toolbox in programs or publications in |
+%| which you use it.                                                      |
+%|________________________________________________________________________|
+%|   '&`   |                                                              |
+%|    #    |   FILE       : mshPlot.m                                     |
+%|    #    |   VERSION    : 0.30                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%| ( === ) |   SYNOPSIS   : Plot mesh and data                            |
+%|  `---'  |                                                              |
 %+========================================================================+
 
-% Mesh 
-mesh = data{1};
+% Patch 
+H = patch('Faces',mesh.elt, 'Vertices',mesh.vtx,'Marker','o',...
+    'MarkerFaceColor','none','EdgeColor','none','FaceColor','none');
+
+% For single numerical values
+if (numel(V) == 1) && ~ischar(V)
+    V = V * ones(size(mesh.vtx,1),1);
+end
 
 % Particles mesh
 if (size(mesh.elt,2) == 1)
-    x = mesh.vtx(mesh.elt,1);
-    y = mesh.vtx(mesh.elt,2);
-    z = mesh.vtx(mesh.elt,3);
-    if (length(data)==1)
-        plot3(x,y,z,'.k');
+    if isempty(V)
+        mlt = accumarray(mesh.elt,1);
+        col = accumarray(mesh.elt,mesh.col)./mlt;
+        set(H,'MarkerFaceColor','flat','FaceVertexCData',col);
+    elseif ischar(V)
+        set(H,'MarkerFaceColor',V);
     else
-        plot3(x,y,z,data{2});
-    end
+        set(H,'MarkerFaceColor','flat','FaceVertexCData',V);
+    end   
 
 % Edge mesh
 elseif (size(mesh.elt,2) == 2)
-    x = [mesh.vtx(mesh.elt(:,1),1) mesh.vtx(mesh.elt(:,2),1)]';
-    y = [mesh.vtx(mesh.elt(:,1),2) mesh.vtx(mesh.elt(:,2),2)]';
-    z = [mesh.vtx(mesh.elt(:,1),3) mesh.vtx(mesh.elt(:,2),3)]';
-    if (length(data)==1)
-        plot3(x,y,z,'.-k');
+    if isempty(V)
+        Nelt = size(mesh.elt,1);
+        vtx  = [mesh.vtx(mesh.elt(:,1),:) ; mesh.vtx(mesh.elt(:,2),:)];
+        elt  = [(1:Nelt)' (Nelt+1:2*Nelt)'];
+        col  = [mesh.col ; mesh.col];
+        delete(H);
+        patch('Faces',elt, 'Vertices',vtx,'Marker','o',...
+            'MarkerFaceColor','k','EdgeColor','flat','FaceColor','none',...
+            'FaceVertexCData',col);
+    elseif ischar(V)
+        set(H,'MarkerFaceColor','k','EdgeColor',V);
     else
-        plot3(x,y,z,data{2})
+        set(H,'Marker','none','EdgeColor','interp','FaceVertexCData',V);
     end
     
 % Triangular mesh
 elseif (size(mesh.elt,2) == 3)
-    if (length(data) == 1)
-        V = zeros(size(mesh.elt,1),1);
-    elseif (numel(data{2}) == 1)
-        V = data{2} * ones(size(mesh.elt,1),1);
+    if isempty(V)
+        set(H,'Marker','.','MarkerFaceColor','k','EdgeColor','k','FaceColor','flat','CData',mesh.col)
+    elseif ischar(V)
+        set(H,'Marker','.','MarkerFaceColor','k','EdgeColor','k','FaceColor',V)
     else
-        V = data{2};
-    end
-    h = trisurf(mesh.elt,mesh.vtx(:,1),mesh.vtx(:,2),mesh.vtx(:,3),V);
-    if (length(data) == 1)
-        set(h,'EdgeColor','k');
-        set(h,'FaceColor','w');
-        hold on
-        plot3(mesh.vtx(:,1),mesh.vtx(:,2),mesh.vtx(:,3),'.k')
-        hold off
-    else
-        set(h,'EdgeColor','none');
-    end   
+        set(H,'Marker','none','EdgeColor','none','FaceColor','interp','FaceVertexCData',V)
+    end    
     
 % Tetrahedron mesh
 elseif (size(mesh.elt,2) == 4)
-    fce2vtx = mesh.fce;
-    data{1} = msh(mesh.vtx,fce2vtx);
-    mshPlot(data);
+    mshPlot(mesh.fce,V);
     
 % Unknown type    
 else
