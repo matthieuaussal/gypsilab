@@ -98,13 +98,17 @@ toc
 disp(' ')
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CALCUL RAPIDE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FAST PRODUCT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('~~~~~~~~~~~~~ FAST PRODUCT ~~~~~~~~~~~~~')
 
 % Hierarchical Matrix
 tic
 Mh = hmx(X,Y,Gxy,tol);
 toc
+
+% Size
+tmp = whos('Mh');
+tmp.bytes/1e6
 
 % Graphical representation
 figure
@@ -132,5 +136,19 @@ norm(ref-sol(ind))/norm(ref)
 disp(' ')
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LU FACTORIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%
+disp('~~~~~~~~~~~~~ LU FACTORIZATION ~~~~~~~~~~~~~')
+
+% Factorization LU
+tic
+[L,U] = lu(Mh);
+toc
+
+% Matrix vector product
+sol = L * (U * V);
+norm(ref-sol(ind))/norm(ref)
+disp(' ')
+
 
 disp('~~> Michto gypsilab !')
+

@@ -1,4 +1,4 @@
-function [A,B] = hmxSVD(M,tol)
+function [A,B,flag] = hmxSVD(M,tol)
 %%+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -38,11 +38,18 @@ else
     % Singular value decomposition
     [U,S,V] = svd(full(M),'econ');
     
-    % Valid indices 
-    I = find(abs(diag(S)/S(1)) >= tol);
-    
-    % Low-rank representation
-    A    = U(:,I);    
-    B    = S(I,I)*V(:,I)';
+    % No rank default
+    if (sum(abs(diag(S)/S(1)) >= 1e-12) == size(S,1))
+        A    = [];
+        B    = [];
+        flag = 0;
+        
+    % Rank default
+    else
+        I    = find(abs(diag(S)/S(1)) >= tol);
+        A    = U(:,I);
+        B    = S(I,I)*V(:,I)';
+        flag = 1;
+    end
 end
 end

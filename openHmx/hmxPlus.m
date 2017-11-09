@@ -168,8 +168,8 @@ elseif (Mh.typ == 2)
     Mh.dat = Mh.dat + A*B;
     
     % Recompression
-    [A,B] = hmxSVD(Mh.dat,Mh.tol);
-    if (size(A,2) < 0.5*(min(Mh.dim)))
+    [A,B,flag] = hmxSVD(Mh.dat,Mh.tol);
+    if flag && (size(A,2) < 0.5*(min(Mh.dim)))
         Mh.dat = {A,B};
         Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%%
     end    

@@ -99,8 +99,8 @@ parfor (n = 1:length(Ml),Nlab)
     
     % Full matrix recompression
     if (typ == 2)        
-        [A,B] = hmxSVD(dat,tol);
-        if (size(A,2) < 0.5*min(size(dat)))
+        [A,B,flag] = hmxSVD(dat,tol);
+        if flag && (size(A,2) < 0.5*min(size(dat)))
             dat = {A,B}
             typ = 1;
         end

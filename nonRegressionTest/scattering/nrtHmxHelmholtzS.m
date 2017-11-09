@@ -144,7 +144,7 @@ norm(lambda-lambda2)/norm(lambda)
 
 % Solve with GMRES with HLU preconditionning
 tic
-[Lh,Uh] = lu(hmxRecompress(LHS,0.05));
+[Lh,Uh] = lu(hmxRecompress(LHS,0.1));
 Mhm1V   = @(V) Uh\(Lh\V);
 toc
 tic
