@@ -8,7 +8,7 @@
         ( === )
          `---'
 
-   The gypsilab project is a young open-source MATLAB toolbox for fast 
+   The gypsilab project is a young open-source MATLAB toolbox for fast   
 numerical computation with finite element and boundary element methods. 
 Accessible with a high-level programming language, it gives a useful 
 framework for fast prototyping. Initially designed for numerical acoustics, 
@@ -45,5 +45,5 @@ is available, please contact us to activate a "pay for remove" option.
 Please acknowledge the gypsilab toolbox in programs or publications in
 which you use it.
 
-                                                         Michto gypsilab !
+        Michto gypsilab !
 
