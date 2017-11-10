@@ -1,7 +1,12 @@
-                    THE GYPSILAB TOOLBOX FOR MATLAB
-                        VERSION 0.30 - GPL 3.0
-                   matthieu.aussal@polytechnique.edu
-               www.cmap.polytechnique.fr/~aussal/gypsilab
+
+          '&`
+           #               THE GYPSILAB TOOLBOX FOR MATLAB
+           #                   VERSION 0.30 - GPL 3.0
+          _#_             
+         ( # )           matthieu.aussal@polytechnique.edu
+         / 0 \       www.cmap.polytechnique.fr/~aussal/gypsilab
+        ( === )
+         `---'
 
    The gypsilab project is a young open-source MATLAB toolbox for fast 
 numerical computation with finite element and boundary element methods. 
@@ -40,13 +45,5 @@ is available, please contact us to activate a "pay for remove" option.
 Please acknowledge the gypsilab toolbox in programs or publications in
 which you use it.
 
-
-   '&`
-    # 
-    # 
-   _#_ 
-  ( # ) 
-  / 0 \  Michto gypsilab !
- ( === )
-  `---'
+                                                         Michto gypsilab !
 
