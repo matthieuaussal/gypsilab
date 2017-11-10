@@ -1,10 +1,10 @@
 
           '&`
-           #               THE GYPSILAB TOOLBOX FOR MATLAB
-           #                   VERSION 0.30 - GPL 3.0
+           #                THE GYPSILAB TOOLBOX FOR MATLAB
+           #                    VERSION 0.30 - GPL 3.0
           _#_             
-         ( # )           matthieu.aussal@polytechnique.edu
-         / 0 \       www.cmap.polytechnique.fr/~aussal/gypsilab
+         ( # )            matthieu.aussal@polytechnique.edu
+         / 0 \        www.cmap.polytechnique.fr/~aussal/gypsilab
         ( === )
          `---'
 
@@ -45,5 +45,5 @@ is available, please contact us to activate a "pay for remove" option.
 Please acknowledge the gypsilab toolbox in programs or publications in
 which you use it.
 
-                                                       Michto gypsilab !
+        Michto gypsilab !
 
