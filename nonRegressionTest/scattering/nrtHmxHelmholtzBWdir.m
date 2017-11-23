@@ -130,10 +130,7 @@ toc
 
 % Solve with SPMD product for GMRES
 tic
-MV = mvfun(LHS);
-toc
-tic
-mu = gmres(MV,RHS,[],tol,100,L,U);
+mu = gmres(@(V) LHS*V,RHS,[],tol,100,L,U);
 toc
 
 % Jump for derivative

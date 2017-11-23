@@ -27,34 +27,6 @@
 %| ( === ) |   SYNOPSIS   : Solve PEC scatering problem with MFIE         |
 %|  `---'  |                                                              |
 %+========================================================================+
-%
-% Domaine Omega de frontiere Sigma et de normale sortante n = n^-
-%
-% Equation :
-% Nabla x E - 1i k H = 0 dans Omega^+
-% Nabla x H + 1i k E = 0 dand Omega^+
-%
-% Formulation integrales physiques :
-% J = n x H^+       M = E^+ x n
-% E(x) = Einc(x) + [T] J(x) + [K] M(x)
-% H(x) = Hinc(x) + [T] J(x) - [K] M(x)
-%
-% Operateurs integraux :
-% [T]i,j = 1i k (\int_Ti \int_Tj G(x,y) Jj(y) dot Ji(x)) +
-%     - 1i / k (\int_Ti \int_Tj G(x,y) Nabla_y dot Jj(y) Nabla_x dot Ji(x)
-%     dx dy
-%
-% [nxK]i,j = \int_Tj Ji(x) dot n(x) x (\int_Ti \Nabla_y(G(x,y)) x Jj(y)dy) dx
-%
-% Noyau de Green : G(r) = exp(1i k |r|)/(4 pi |r|) et |r| = |x-y|
-%
-% Condition aux limites : conducteur parfait sur la frontiere
-% E^+ x n = 0 sur \Sigma
-%
-% EFIE : [T] J = - Einc_tan sur \Sigma
-% MFIE : [Id/2 + nxK] J = nxHinc
-% CFIE1 : a EFIE + (1-a) MFIE
-% CFIE2 : a EFIE + MFIE
 
 % Cleaning
 clear all
@@ -199,6 +171,24 @@ plot(theta,20*log10(abs(sol)),'b',theta,20*log10(abs(refInf)),'r--')
 subplot(1,2,2)
 plot(theta,real(sol),'--b', theta,imag(sol),'--r', theta, real(refInf),':b', theta,imag(refInf),':r');
 drawnow
+
+
+%%% SURFACIC RADIATION
+disp('~~~~~~~~~~~~~ SURFACIC RADIATION ~~~~~~~~~~~~~')
+
+% Mesh Interpolation
+Jmsh = feval(u,J,sphere);
+V    = sqrt(sum(real(cell2mat(Jmsh)).^2,2));
+
+% Graphical representation
+figure
+plot(sphere)
+hold on
+plot(sphere,V)
+axis equal
+title('|J| surfacic')
+xlabel('X');   ylabel('Y');   zlabel('Z');
+colorbar
 
 
 

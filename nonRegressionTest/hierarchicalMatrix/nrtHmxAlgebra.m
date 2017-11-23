@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxAlgebra.m                               |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Evaluate each hmx class function              |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -128,32 +128,6 @@ tic
 figure
 spy(Ih);
 toc
-
-disp(' ')
-
-
-%%% Matrix-Vector Product
-disp('~~~~~~~~~~~~~ MATRIX-VECTOR PRODUCT ~~~~~~~~~~~~~')
-tic
-prod = mvfun(Mh);
-sol  = prod(V);
-toc
-ref = M * V;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-tic
-prod = mvfun(Mh2);
-sol  = prod(V);
-toc
-ref = M * V;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-tic
-prod = mvfun(Ih);
-sol  = prod(V);
-toc
-ref = I * V;
-norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
 
@@ -617,9 +591,8 @@ disp(' ')
 disp('~~~~~~~~~~~~~ ITERATIVE SOLVER ~~~~~~~~~~~~~')
 tic
 sol = zeros(Nx,size(V,2),type);
-MV  = mvfun(Mh);
 for i = 1:size(V,2)
-    sol(:,i) = gmres(MV,V(:,i),[],tol,100);
+    sol(:,i) = gmres(@(V) Mh*V,V(:,i),[],tol,100);
 end
 toc
 ref = zeros(Nx,size(V,2),type);
@@ -640,9 +613,8 @@ Mhm1V   = @(V) Uh\(Lh\V);
 toc
 tic
 sol = zeros(Nx,size(V,2),type);
-MV  = mvfun(Mh);
 for i = 1:size(V,2)
-    sol(:,i) = gmres(MV,V(:,i),[],tol,100,Mhm1V);
+    sol(:,i) = gmres(@(V) Mh*V,V(:,i),[],tol,100,Mhm1V);
 end
 toc
 norm(ref-sol,'inf')/norm(ref,'inf')

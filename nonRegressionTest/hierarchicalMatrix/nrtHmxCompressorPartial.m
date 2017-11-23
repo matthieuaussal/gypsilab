@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxCompressorPartial.m                     |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Compare compressor with partial pivoting      |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -32,17 +32,16 @@ close all
 clc
 
 % Library path
+addpath('../../openMsh')
 addpath('../../openHmx')
 
-% Regular cube
-n       = ceil((1e3)^(1/3));
-x       = 0:1/(n-1):1;
-[x,y,z] = meshgrid(x,x,x);
-X       = [x(:),y(:),z(:)];
-Nx      = size(X,1);
+% Fibonacci sphere 
+N    = 1e3;
+mesh = mshSphere(N,1);
+X    = mesh.vtx;
 
 % Potentiel aleatoire aux emmeteurs
-V  = (-1-1i) + (2+2i)*rand(Nx,1);
+V  = (-1-1i) + (2+2i)*rand(N,1);
 
 % Representation graphique
 figure(1)
@@ -50,27 +49,24 @@ plot3(X(:,1),X(:,2),X(:,3),'*b')
 grid on
 axis equal
 
-% Noyau de green regulier
-rxy = @(X,Y) sqrt( ...
-    (X(:,1)-Y(:,1)).^2 + ...
-    (X(:,2)-Y(:,2)).^2 + ...
-    (X(:,3)-Y(:,3)).^2 ) + 1e-12;
-green = @(X,Y,k) sin(k*rxy(X,Y))./(rxy(X,Y));
+% Noyau de Fourier
+xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3);
+green = @(X,Y,k) exp(1i*k*xdoty(X,Y));
 
 % Initialisation
-K   = 1:2:20;
+K   = 1:5;
 rnk = zeros(6,length(K));
 
 % Boucle sur k
 for i = 1:length(K)
     % Nombre d'onde
-    k = K(i)
-    
+    k = K(i);
+   
     % Full green kernel
     tic
-    [I,J] = ndgrid(1:Nx,1:Nx);
+    [I,J] = ndgrid(1:N,1:N);
     Gxy   = green(X(I,:),X(J,:),k);
-    Gxy   = reshape(Gxy,Nx,Nx);
+    Gxy   = reshape(Gxy,N,N);
     toc
 
     % SVD
@@ -84,6 +80,7 @@ for i = 1:length(K)
     tic
     [A,B] = hmxSVD(Gxy,1e-6);
     toc
+    size(A)
     rnk(2,i) = size(A,2);
     norm(A*B-Gxy,'fro')./norm(Gxy,'fro')
     

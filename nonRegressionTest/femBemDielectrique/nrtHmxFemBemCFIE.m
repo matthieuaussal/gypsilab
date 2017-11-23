@@ -19,13 +19,13 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtHmxMaxwellCFIE.m                           |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   FILE       : nrtHmxFemBemCFIE.m                            |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
-%| ( === ) |   SYNOPSIS   : Solve PEC scatering problem with  CFIE        |
-%|  `---'  |                                                              |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%| ( === ) |   SYNOPSIS   : Solve fem/bem with PEC scatering problem      |
+%|  `---'  |                Volumic ans surfacic CFIE formulation         |
 %+========================================================================+
 
 % Cleaning
@@ -39,30 +39,54 @@ addpath('../../openFem')
 addpath('../../openHmx')
 addpath('../../openMsh')
 
+
+%%% PREPARATION
+disp('~~~~~~~~~~~~~ PREPARATION ~~~~~~~~~~~~~')
+
 % Mise en route du calcul parallele 
 % matlabpool; 
 % parpool
 
-% Parameters
-N    = 1e3
-tol  = 1e-3
-typ  = 'RWG'
-gss  = 3
-beta = 0.5;
-
 % Spherical mesh
-sphere = mshSphere(N,1);
-sigma  = dom(sphere,gss);
+mesh = msh('sphere_1e3.msh');
+
+% Normalisation sphere unite interieure
+mesh.vtx = mesh.vtx/0.8;
+
+% Frontieres surfaciques
+bound = mesh.bnd;
+Iint  = (sum(bound.ctr.*bound.nrm,2) < 0); 
+int   = bound.sub(Iint);
+ext   = bound.sub(~Iint);
+
+% Domaine volumique
+omega = dom(mesh,4);
+
+% Domaine exterieur
+sigma = dom(ext,3);
+
+% Graphical representation
 figure
-plot(sphere)
+plot(int,'r')
+hold on
+plot(ext,'b')
+alpha(0.5)
 axis equal
 
 % Frequency adjusted to maximum esge size
-stp = sphere.stp;
+stp = mesh.stp;
 k   = 1/stp(2);
 c   = 299792458;
 f   = (k*c)/(2*pi);
 disp(['Frequency : ',num2str(f/1e6),' MHz']);
+
+% Accuracy
+tol = 1e-3;
+disp(['Accuracy : ',num2str(tol)]);
+
+% Coupling factor
+beta = 0.5;
+disp(['CFIE factor : ',num2str(beta)]);
 
 % Incident direction and field
 X0 = [0 0 -1]; 
@@ -74,72 +98,119 @@ PWE{1} = @(X) exp(1i*k*X*X0') * E(1);
 PWE{2} = @(X) exp(1i*k*X*X0') * E(2);
 PWE{3} = @(X) exp(1i*k*X*X0') * E(3);
 
+% Incident Plane wave (electromagnetic field)
 PWH{1} = @(X) exp(1i*k*X*X0') * H(1);
 PWH{2} = @(X) exp(1i*k*X*X0') * H(2);
 PWH{3} = @(X) exp(1i*k*X*X0') * H(3);
 
 % Incident wave representation
-plot(sphere,real(PWH{1}(sphere.vtx)))
+figure
+plot(mesh,real(PWE{2}(mesh.vtx)))
+alpha(0.1)
 title('Incident wave')
 xlabel('X');   ylabel('Y');   zlabel('Z');
-hold off
+axis equal
 view(0,10)
 
+
+%%% FORMUMATIONS
+disp('~~~~~~~~~~~~~ FORMULATIONS ~~~~~~~~~~~~~')
+
+% Green kernel
+Gxy    = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
+Hxy{1} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]1',k) ;
+Hxy{2} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]2',k) ;
+Hxy{3} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]3',k) ;
+Ixy{1} = @(X,Y) femGreenKernel(X,Y,'gradx[exp(ikr)/r]1',k) ;
+Ixy{2} = @(X,Y) femGreenKernel(X,Y,'gradx[exp(ikr)/r]2',k) ;
+Ixy{3} = @(X,Y) femGreenKernel(X,Y,'gradx[exp(ikr)/r]3',k) ;
+
+% Surfacic finite elements for magnetic current
+Jh = fem(ext,'RWG');
+N1 = size(Jh.unk,1);
+
+% Volumique finite elements for electric field
+Eh = fem(mesh,'NED');
+Eh = dirichlet(Eh,int);
+N2 = size(Eh.unk,1);
+
+% Restriction matrix for regularization
+[~,I1,I2] = intersect(Jh.unk,Eh.unk,'rows');
+P         = sparse(I1,I2,1,size(Jh.unk,1),size(Eh.unk,1));
+
+% Vectors
+JEi   = integral(sigma,Jh,PWE);
+JnxHi = integral(sigma,nx(Jh),PWH);
+
+% Sparse operators
+tic
+rotErotE = integral(omega,curl(Eh),curl(Eh));
+EE       = integral(omega,Eh,Eh);
+JE       = integral(sigma,Jh,Eh);
+JJ       = integral(sigma,Jh,Jh);
+toc
+
+% Full operators
+tic
+JTJ  = 1/(4*pi) .* integral(sigma, sigma, Jh, Gxy, Jh,tol) ...
+    - 1/(4*pi*k^2) * integral(sigma, sigma, div(Jh), Gxy, div(Jh),tol) ;
+JTJr = 1/(4*pi) * regularize(sigma, sigma, Jh, '[1/r]', Jh) ...
+      - 1/(4*pi*k^2) * regularize(sigma, sigma, div(Jh), '[1/r]', div(Jh));
+JTJ = JTJ + JTJr;
+toc
+
+tic
+JnxKJ  = 1/(4*pi) * integral(sigma, sigma, nx(Jh), Hxy, Jh, tol); 
+JnxKJr = 1/(4*pi) * regularize(sigma, sigma, nx(Jh), 'grady[1/r]', Jh);
+JnxKJ  = JnxKJ + JnxKJr;
+toc
+
+tic
+JKExn  = - 1/(4*pi) * integral(sigma, sigma, Jh, Hxy, nx(Eh),tol); 
+JKExnr = - 1/(4*pi) * regularize(sigma, sigma, Jh, 'grady[1/r]', Jh) * P; 
+JKExn  = JKExn + JKExnr;
+toc
+
+tic
+JnxTExn  = 1/(4*pi) .* integral(sigma, sigma, nx(Jh), Gxy, nx(Eh),tol) ...
+    + 1/(4*pi*k^2) * integral(sigma, sigma, nx(Jh), Ixy, divnx(Eh),tol);
+JnxTExnr = 1/(4*pi) * regularize(sigma, sigma, nx(Jh), '[1/r]', Jh) * P ;
+JnxTExn  = JnxTExn + JnxTExnr;
+toc
+
+% LHS = [A B ; C D]
+A  = beta * (1i*k*JTJ) + (1-beta) * (0.5*JJ - JnxKJ);
+Ar = beta * (1i*k*JTJr) + (1-beta) * (0.5*JJ - JnxKJr);
+size(A)
+
+B  = beta * (JKExn - 0.5*JE) + (1-beta) * (-1i*k*JnxTExn);
+Br = beta * (JKExnr - 0.5*JE) + (1-beta) * (-1i*k*JnxTExnr);
+size(B)
+
+C = JE.';
+size(C)
+
+D = 1/(1i*k) * (rotErotE - k^2*EE);
+size(D)
+
+% Right hand side
+Y   = beta * (-JEi) + (1-beta) * (-JnxHi); 
+RHS = [Y;zeros(size(D,1),1)];
 
 
 %%% SOLVE LINEAR PROBLEM
 disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
-% Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
-Gxy    = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
-Hxy{1} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]1',k) ;
-Hxy{2} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]2',k) ;
-Hxy{3} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]3',k) ;
-
-% Finite elements
-u = fem(sphere,'RWG');
-v = fem(sphere,'RWG');
-
-% Finite element mass matrix --> \int_Sx psi(x)' psi(x) dx
-Id = integral(sigma,u,v);
-
-% Finite element boundary operator
+% Factorization LU H-Matrix
 tic
-T = 1i*k/(4*pi)*integral(sigma, sigma, v, Gxy, u, tol) ...
-    - 1i/(4*pi*k)*integral(sigma, sigma, div(v), Gxy, div(u), tol) ;
+[L,U] = ilu(Ar);
 toc
 
-% Regularization
+% Shurr complement resolution
 tic
-Tr = 1i*k/(4*pi)*regularize(sigma, sigma, v, '[1/r]', u) ...
-      - 1i/(4*pi*k)*regularize(sigma, sigma, div(v), '[1/r]', div(u));
-T  = T + Tr; 
-toc
-
-% Finite element boundary operator
-tic
-nxK = 1/(4*pi) * integral(sigma, sigma, nx(v), Hxy, u, tol); 
-toc
-
-% Regularization
-tic
-nxKr = 1/(4*pi) * regularize(sigma, sigma, nx(v), 'grady[1/r]', u);
-nxK  = nxK + nxKr;
-toc
-
-% Left hand side
-LHS  = beta * T  + (1-beta) * (0.5*Id - nxK);
-LHSr = beta * Tr + (1-beta) * (0.5*Id - nxKr);
-
-% Right hand side
-RHS = beta*(-integral(sigma,v,PWE)) + (1-beta)*(-integral(sigma,nx(v),PWH));
-
-% Solve linear system (iterative)
-tic
-[L,U] = ilu(LHSr);
-toc
-tic
-J = gmres(@(V) LHS*V,RHS,[],tol,1000,L,U);
+SV   = @(V) A*V - B*(D\(C*V));
+J    = gmres(SV,Y,[],tol,100,L,U);
+E    = - D\(C*J);
 toc
 
 
@@ -155,9 +226,16 @@ nu    = [sin(theta),zeros(size(theta)),cos(theta)];
 xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3); 
 Ginf  = @(X,Y) exp(-1i*k*xdoty(X,Y));
 
-% Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Tinf = integral(nu,sigma,Ginf,v, tol);
-sol  = 1i*k/(4*pi)*cross(nu, cross([Tinf{1}*J, Tinf{2}*J, Tinf{3}*J], nu));
+% Magnetic current radiation
+Tinf = integral(nu,sigma,Ginf,Jh);
+Jinf = 1i*k/(4*pi)*cross(nu, cross([Tinf{1}*J, Tinf{2}*J, Tinf{3}*J], nu));
+
+% Electric field radiation 
+Kinf = integral(nu,sigma,Ginf,nx(Eh));
+Einf = 1i*k/(4*pi) * cross(nu, [-Kinf{1}*E, -Kinf{2}*E, -Kinf{3}*E] );
+
+% Total electric field radiation
+sol = Jinf - Einf;   
 
 % Radiation infinie de reference, convention e^(+ikr)/r
 nMax = 100; refInf = zeros(Ninf,1);
@@ -191,24 +269,6 @@ plot(theta,20*log10(abs(sol)),'b',theta,20*log10(abs(refInf)),'r--')
 subplot(1,2,2)
 plot(theta,real(sol),'--b', theta,imag(sol),'--r', theta, real(refInf),':b', theta,imag(refInf),':r');
 drawnow
-
-
-%%% SURFACIC RADIATION
-disp('~~~~~~~~~~~~~ SURFACIC RADIATION ~~~~~~~~~~~~~')
-
-% Mesh Interpolation
-Jmsh = feval(u,J,sphere);
-V    = sqrt(sum(real(cell2mat(Jmsh)).^2,2));
-
-% Graphical representation
-figure
-plot(sphere)
-hold on
-plot(sphere,V)
-axis equal
-title('|J| surfacic')
-xlabel('X');   ylabel('Y');   zlabel('Z');
-colorbar
 
 
 

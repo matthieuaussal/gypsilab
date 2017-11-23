@@ -1,10 +1,10 @@
-function Mh = hmxRecompress(Mh,tol)
+function [M,J] = femSubdivideCell(M,I,type)
 %+========================================================================+
 %|                                                                        |
-%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
-%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
+%|              OPENFEM - LIBRARY FOR FINITE ELEMENT METHOD               |
+%|           openFem is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -14,53 +14,72 @@ function Mh = hmxRecompress(Mh,tol)
 %| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
 %| is available, please contact us to activate a "pay for remove" option. |
 %| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%|             francois.alouges@polytechnique.edu                         |
 %| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
 %|                                                                        |
 %| Please acknowledge the gypsilab toolbox in programs or publications in |
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxRecompress.m                               |
+%|    #    |   FILE       : femSubdivideCell.m                            |
 %|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
-%| ( === ) |   SYNOPSIS   : Recompreesion of H-Matrix with new accuracy   |
+%| ( === ) |   SYNOPSIS   : Subdivide finite elements cells and matrix    |
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% H-Matrix (recursion)
-if (Mh.typ == 0)
-    for i = 1:4
-        Mh.chd{i} = hmxRecompress(Mh.chd{i},tol);
-        Mh.tol    = max(tol,Mh.tol);
-    end
-    Mh = hmxFusion(Mh);
-    
-% Compressed leaf
-elseif (Mh.typ == 1)
-    if (Mh.tol < tol)
-        [A,B]     = hmxQRSVD(Mh.dat{1},Mh.dat{2},tol);
-        Mh.dat{1} = A;
-        Mh.dat{2} = B;
-        Mh.tol    = tol;
-    end
-    
-% Full leaf
-elseif (Mh.typ == 2)
-    if (Mh.tol < tol)
-        [A,B,flag] = hmxSVD(Mh.dat,tol);
-        if flag && (size(A,2) < 0.5*min(size(Mh.dat)))
-            Mh.dat = {A,B};
-            Mh.typ = 1;
-            Mh.tol = tol;
-        end
+% Left integration
+if strcmp(type,'left')
+    % Left integration indices
+    if iscell(M)
+        Vx = (1+rand(1,length(I))) * M{1}(I,:) + ...
+            (1+rand(1,length(I))) * M{2}(I,:) + ...
+            (1+rand(1,length(I))) * M{3}(I,:);
     else
-        Mh.tol = max(tol,Mh.tol); 
+        Vx = (1+rand(1,length(I))) * M(I,:);
+    end
+    J = find(Vx);
+    if isempty(J)
+        J = [1;2]';
     end
     
-% Others leaves
+    % Left matrix subdivision
+    if iscell(M)
+        M{1} = M{1}(I,J);
+        M{2} = M{2}(I,J);
+        M{3} = M{3}(I,J);
+    else
+        M = M(I,J);
+    end
+
+% Right integration
+elseif strcmp(type,'right')
+    % Right integration indices
+    if iscell(M)
+        Vy = M{1}(:,I) * (1+rand(length(I),1)) + ...
+            M{2}(:,I) * (1+rand(length(I),1)) + ...
+            M{3}(:,I) * (1+rand(length(I),1)) ;
+    else
+        Vy = M(:,I) * (1+rand(length(I),1));
+    end
+    J = find(Vy);
+    if isempty(J)
+        J = [1;2]';
+    end
+    
+    % Right matrix subdivision
+    if iscell(M)
+        M{1} = M{1}(J,I);
+        M{2} = M{2}(J,I);
+        M{3} = M{3}(J,I);
+    else
+        M = M(J,I);
+    end
+
+% Unknown case     
 else
-    Mh.tol = max(tol,Mh.tol); 
+    error('femSubdivideCell.m : unavailable case');
 end
 end

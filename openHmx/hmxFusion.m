@@ -21,10 +21,10 @@ function Mh = hmxFusion(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxFusion.m                                   |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Fusion and recompress for full, sparse and    |
 %|  `---'  |                low-rank leaves                               |
 %+========================================================================+
@@ -59,7 +59,7 @@ if (Mh.typ == 0)
         [A,B] = hmxQRSVD(A,B,Mh.tol);
         
         % Update
-        if (sum(Mh.dim)*size(A,2) < nk)
+        if (sum(Mh.dim)*size(A,2) <= nk)
             Mh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
             Mh.dat = {A,B};
             Mh.typ = 1;

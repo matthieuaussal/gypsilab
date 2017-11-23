@@ -21,10 +21,10 @@ function [A,B] = hmxLowrank(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxLowrank.m                                  |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Convert H-Matrix to low-rank approximation    |
 %|  `---'  |                                                              |
 %+========================================================================+

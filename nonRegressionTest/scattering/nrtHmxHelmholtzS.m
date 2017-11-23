@@ -132,13 +132,10 @@ toc
 
 % Solve with GMRES with ILU preconditionning
 tic
-MV = mvfun(LHS);
-toc
-tic
 [L,U] = ilu(Sr);
 toc
 tic
-lambda2 = gmres(MV,RHS,[],tol,100,L,U);
+lambda2 = gmres(@(V) LHS*V,RHS,[],tol,100,L,U);
 toc
 norm(lambda-lambda2)/norm(lambda)
 
@@ -148,7 +145,7 @@ tic
 Mhm1V   = @(V) Uh\(Lh\V);
 toc
 tic
-lambda2 = gmres(MV,RHS,[],tol,100,Mhm1V);
+lambda2 = gmres(@(V) LHS*V,RHS,[],tol,100,Mhm1V);
 toc
 norm(lambda-lambda2)/norm(lambda)
 

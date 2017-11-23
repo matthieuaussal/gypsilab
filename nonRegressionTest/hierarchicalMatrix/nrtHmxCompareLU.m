@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxCompareLU.m                             |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Compar sparse LU and H-Matrix sparse LU       |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -40,7 +40,7 @@ addpath('../../openHmx')
 
 % Parameters
 Nvtx = 1e4;
-L    = [1 0.1 0.1];
+L    = [0.1 0.1 1];
 
 % Cube mesh
 mesh = mshCube(Nvtx,L);

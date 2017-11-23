@@ -1,4 +1,4 @@
-function Ml = hmxLeafOut(varargin)
+function [Mh,num] = hmxDistribution(Mh,Mp,ind,stp,num)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -20,38 +20,38 @@ function Ml = hmxLeafOut(varargin)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxLeafOut.m                                  |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   FILE       : hmxDistribution.m                             |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
-%| ( === ) |   SYNOPSIS   : Convert H-Matrix format to leaf format        |
-%|  `---'  |                                                              |
+%| ( === ) |   SYNOPSIS   : Distribute H-Matrix parallel leaf to final    |
+%|  `---'  |                H-Matrix structure                            |
 %+========================================================================+
 
-% Input analysis
-Mh = varargin{1};
-if (nargin == 1)
-    I = (1:Mh.dim(1))';
-    J = (1:Mh.dim(2))';
-elseif (nargin == 3)
-    I = varargin{2};
-    J = varargin{3};
-else
-    error('hmxLeafOut.m : unavailable case.')
-end
-
 % H-Matrix (recursion)
-if (Mh.typ == 0)
-    Ml = cell(0,1);
+if stp && (Mh.typ == 0)
+    % Recursion
     for i = 1:4
-        tmp       = hmxLeafOut(Mh.chd{i},I(Mh.row{i}),J(Mh.col{i}));
-        ind       = size(Ml,1) + (1:length(tmp));
-        Ml(ind,1) = tmp(:);
+        [Mh.chd{i},num] = hmxDistribution(Mh.chd{i},Mp,ind,stp-1,num);
     end
     
-% Leaf
+    % Fusion
+    Mh = hmxFusion(Mh);
+
+% Fusioned leaf 
+elseif stp
+    num = num + 4^stp;
+    
+% Leaf    
 else
-    Ml{1} = {I,J,Mh.dat,Mh.typ,Mh.tol};
+    if (num == ind)
+        if (Mh.typ == -1)
+            Mh = Mp;
+        else
+            error('hmxDistribution.m : unavailable case.');
+        end
+    end
+    num = num + 1;
 end
 end

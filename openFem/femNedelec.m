@@ -22,10 +22,10 @@ function M = femNedelec(fe,domain)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femNedelec.m                                  |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Nedelec finite element matrix                 |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -69,7 +69,7 @@ if size(fe.msh.elt,2)==3 % Triangular elements
             end
         end
     end
-    % Vectorial operator [PSI]
+    % Vectorial operator nx[PSI]
     if strcmp(fe.opr,'nx[psi]')
         M = cell(1,3);
         for n = 1:3

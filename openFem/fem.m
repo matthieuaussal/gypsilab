@@ -22,10 +22,10 @@ classdef fem
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : fem.m                                         |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Finite element class definition               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -134,7 +134,7 @@ methods
     end
     
     % DIVERGENCE NORMAL CROSS OF THE BASIS FUNCTION
-    function fe = divnx(varargin)
+    function fe = divnx(fe)
         fe.opr = 'curl[psi]';
     end    
     

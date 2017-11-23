@@ -22,10 +22,10 @@ function Ms = domRegularize(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domRegularize.m                               |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Finite element regularization matrix for      |
 %|  `---'  |                singularities with Laplace kernel             |
 %+========================================================================+
@@ -76,7 +76,7 @@ Mx          = cell(Nelt,1);
 
 
 %%% RIGHT INTEGRATION WITH REGULARIZATION
-for el = 1:Nelt
+parfor el = 1:Nelt
     % Triangular data for Y
     Sel  = vtx(elt(el,:),:);
     Nel  = nrm(el,:);

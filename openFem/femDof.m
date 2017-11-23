@@ -22,10 +22,10 @@ function [X,elt2dof,col] = femDof(fe)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femDof.m                                      |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Define degrees of freedom                     |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -92,13 +92,13 @@ for i = 1:length(c)
     Nx         = Nx + size(X{i},1);
 end
 
-% Vectoriel format
+% Vectorial format
 X       = cell2mat(X);
 elt2dof = cell2mat(elt2dof);
 col     = cell2mat(col);
 Ic      = cell2mat(Ic);
 
-% Security for losted elements
+% Security for lost elements
 if (norm(sort(Ic) - (1:size(elt2dof,1))','inf') > 1e-12)
    error('femDom.m : unavailable case') 
 end

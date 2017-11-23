@@ -21,10 +21,10 @@ function [A,B,flag] = hmxSVD(M,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSVD.m                                      |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : SVD compression for full matrix               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -37,9 +37,14 @@ if isempty(M)
 else
     % Singular value decomposition
     [U,S,V] = svd(full(M),'econ');
+    s       = diag(S);
+
+    % Rank estimation at machine precision
+    acc = max(size(M)) * eps(max(s));
+    rk  = sum(s > acc);
     
     % No rank default
-    if (sum(abs(diag(S)/S(1)) >= 1e-12) == size(S,1))
+    if (rk == length(s))
         A    = [];
         B    = [];
         flag = 0;

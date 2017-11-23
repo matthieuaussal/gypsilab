@@ -21,10 +21,10 @@ function Ml = hmxPlus(Ml,Mr)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxPlus.m                                     |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Sum of H-Matrix                               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -164,15 +164,19 @@ elseif (Mh.typ == 1)
     
 % Full leaf   
 elseif (Mh.typ == 2)
-    % Summation
-    Mh.dat = Mh.dat + A*B;
-    
     % Recompression
-    [A,B,flag] = hmxSVD(Mh.dat,Mh.tol);
-    if flag && (size(A,2) < 0.5*(min(Mh.dim)))
+    [Ah,Bh,flag] = hmxSVD(Mh.dat,Mh.tol);
+    if flag && (size(Ah,2) < 0.5*(min(Mh.dim)))
+        A      = [Ah,A];
+        B      = [Bh;B];
+        [A,B]  = hmxQRSVD(A,B,Mh.tol);
         Mh.dat = {A,B};
         Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%%
-    end    
+    
+    % Summation
+    else
+        Mh.dat = Mh.dat + A*B;
+    end
     
 % Sparse leaf
 elseif (Mh.typ == 3)
@@ -198,8 +202,7 @@ elseif (Mh.typ == 3)
             Mh.dat = full(Mh.dat) + A*B;
             Mh.typ = 2;                         %%%%%%% TYPE CHANGE %%%%%%%
         end
-    end
-    
+    end    
       
 % Unknown type
 else

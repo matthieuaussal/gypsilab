@@ -21,10 +21,10 @@ classdef hmx
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmx.m                                         |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : H-Matrix class definition and functions       |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -79,7 +79,11 @@ methods
             Y     = varargin{2};
             green = varargin{3};
             acc   = varargin{4};
-            Mh    = hmxBuilder(X,Y,green,acc);
+            if exist('parpool','file')
+                Mh = hmxBuilderParallel(X,Y,green,acc);
+            else
+                Mh = hmxBuilder(X,Y,green,acc);
+            end
             
         % Compressed builder    
         elseif (length(varargin) == 5)
@@ -102,8 +106,12 @@ methods
             Y     = varargin{6};
             My    = varargin{7};
             acc   = varargin{8};
-            Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,acc);
-
+            if exist('parpool','file')
+                Mh = femHmxBuilderParallel(Xdof,Ydof,Mx,X,green,Y,My,acc);
+            else
+                Mh = femHmxBuilder(Xdof,Ydof,Mx,X,green,Y,My,acc);
+            end
+            
         else
             error('hmx.m : undefined constructor case')
         end
@@ -170,11 +178,6 @@ methods
         end
     end
     
-    % PARALLEL MATRIX VECTOR PRODUCT
-    function MV = mvfun(Mh)
-        MV = hmxLeafProduct(Mh);
-    end
-
     % INVERSION
     function Mh = inv(Mh)
         Mh = hmxInv(Mh);

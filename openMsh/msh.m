@@ -21,10 +21,10 @@ classdef msh
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : msh.m                                         |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.31                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
 %| ( === ) |   SYNOPSIS   : Mesh class definition                         |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -98,6 +98,16 @@ methods
             mesh.elt = Ivtx(mesh.elt)';
         else
             mesh.elt = Ivtx(mesh.elt);
+        end
+        
+        % Sort vertices in ascending order
+        [mesh.vtx,tmp] = sortrows(mesh.vtx);
+        I              = zeros(size(mesh.vtx,1),1);
+        I(tmp)         = 1:size(mesh.vtx,1);
+        if (size(mesh.elt,1) == 1)
+            mesh.elt = I(mesh.elt)';
+        else
+            mesh.elt = I(mesh.elt);
         end
     end
     
@@ -253,7 +263,7 @@ methods
         end
         M = sort(cell2mat(M),2);
         M = [M,mesh.ctr];
-        M = round(1e12*M)/1e12;
+        M = single(M);
     end
     
     % UNICITY
