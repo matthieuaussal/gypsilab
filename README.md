@@ -43,7 +43,7 @@ later, http://www.gnu.org/licenses). For private use, dual licencing
 is available, please contact us to activate a "pay for remove" option. 
 
 Please acknowledge the gypsilab toolbox in programs or publications in
-which you use it.
+which you use it. 
 
         Michto gypsilab !
 
