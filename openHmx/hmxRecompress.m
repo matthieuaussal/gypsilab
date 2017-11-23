@@ -49,14 +49,13 @@ elseif (Mh.typ == 1)
 % Full leaf
 elseif (Mh.typ == 2)
     if (Mh.tol < tol)
-        [A,B,flag] = hmxSVD(Mh.dat,tol);
-        if flag && (size(A,2) < 0.5*min(size(Mh.dat)))
+        rk         = ceil(1/4*min(size(Mh.dat)));
+        [A,B,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
+        if flag
             Mh.dat = {A,B};
             Mh.typ = 1;
             Mh.tol = tol;
         end
-    else
-        Mh.tol = max(tol,Mh.tol); 
     end
     
 % Others leaves

@@ -171,8 +171,9 @@ if (Mh.typ == 2)
     Mh.dat = femMultiplyCell(Mx,Gxy,My);
     
     % Recompression
-    [A,B,flag] = hmxSVD(Mh.dat,tol);
-    if flag && (size(A,2) < 0.5*min(size(Mh.dat)))
+    rk         = ceil(1/4*min(size(Mh.dat)));
+    [A,B,flag] = hmxRSVD(Mh.dat,tol,rk);
+    if flag
         Mh.dat = {A,B};
         Mh.typ = 1;
     end

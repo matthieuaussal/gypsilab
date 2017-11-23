@@ -143,8 +143,9 @@ if (Mh.typ == 2)
     
     % Full matrix recompression
     if (Mh.typ == 2)        
-        [A,B,flag] = hmxSVD(Mh.dat,tol);
-        if flag && (size(A,2) < 0.5*min(size(Mh.dat)))
+        rk         = ceil(1/4*min(size(Mh.dat)));
+        [A,B,flag] = hmxRSVD(Mh.dat,tol,rk);
+        if flag
             Mh.dat = {A,B};
             Mh.typ = 1;
         end

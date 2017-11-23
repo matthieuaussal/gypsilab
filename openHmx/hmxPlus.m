@@ -165,8 +165,9 @@ elseif (Mh.typ == 1)
 % Full leaf   
 elseif (Mh.typ == 2)
     % Recompression
-    [Ah,Bh,flag] = hmxSVD(Mh.dat,Mh.tol);
-    if flag && (size(Ah,2) < 0.5*(min(Mh.dim)))
+    rk           = ceil(1/4*min(size(Mh.dat)));
+    [Ah,Bh,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
+    if flag
         A      = [Ah,A];
         B      = [Bh;B];
         [A,B]  = hmxQRSVD(A,B,Mh.tol);
@@ -188,7 +189,7 @@ elseif (Mh.typ == 3)
     % Sparse + Compr -> Compr
     else 
         % Compression
-        rk           = min(nnz(Mh.dat)+1,floor(0.5*(min(Mh.dim))));
+        rk           = min(nnz(Mh.dat)+1,ceil(1/4*(min(Mh.dim))));
         [Ah,Bh,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
 
         % Update
