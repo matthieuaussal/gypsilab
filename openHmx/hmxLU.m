@@ -21,10 +21,10 @@ function [Lh,Uh] = hmxLU(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxLU.m                                       |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : LU factorization of H-Matrix                  |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -32,26 +32,26 @@ function [Lh,Uh] = hmxLU(Mh)
 % H-Matrix (recursion)
 if (Mh.typ == 0)
     % Lower initialisation    
-    Lh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
+    Lh     = hmx(Mh.pos{1},Mh.pos{2},Mh.tol);
     Lh.row = Mh.row;
     Lh.col = Mh.col;
     Lh.typ = 0;
     
     % Nullify upper corner
-    Lh.chd{2}     = hmx(Mh.chd{2}.dim(1),Mh.chd{2}.dim(2),Mh.tol);
-    Lh.chd{2}.dat = sparse(Lh.chd{2}.dim(1),Lh.chd{2}.dim(2));
-    Lh.chd{2}.typ = 3;
+    Lh.chd{2}     = hmx(Mh.chd{2}.pos{1},Mh.chd{2}.pos{2},Mh.tol);
+    Lh.chd{2}.dat = {zeros(Lh.chd{2}.dim(1),0),zeros(0,Lh.chd{2}.dim(2))};
+    Lh.chd{2}.typ = 1;
 
     % Upper initialisation
-    Uh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
+    Uh     = hmx(Mh.pos{1},Mh.pos{2},Mh.tol);
     Uh.row = Mh.row;
     Uh.col = Mh.col;
     Uh.typ = 0;
     
     % Nullify lower corner    
-    Uh.chd{3}     = hmx(Mh.chd{3}.dim(1),Mh.chd{3}.dim(2),Mh.tol);
-    Uh.chd{3}.dat = sparse(Uh.chd{3}.dim(1),Uh.chd{3}.dim(2));
-    Uh.chd{3}.typ = 3;
+    Uh.chd{3}     = hmx(Mh.chd{3}.pos{1},Mh.chd{3}.pos{2},Mh.tol);
+    Uh.chd{3}.dat = {zeros(Uh.chd{3}.dim(1),0),zeros(0,Uh.chd{3}.dim(2))};
+    Uh.chd{3}.typ = 1;
     
     % [L11,U11] -> M11
     [Lh.chd{1},Uh.chd{1}] = hmxLU(Mh.chd{1});
@@ -78,23 +78,18 @@ elseif (Mh.typ == 1)
     
 % Full leaf
 elseif (Mh.typ == 2)
+    % Factorization
     [L,U]  = lu(Mh.dat);
-    Lh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
+    
+    % L -> H-Matrix
+    Lh     = hmx(Mh.pos{1},Mh.pos{2},Mh.tol);
     Lh.dat = L;
     Lh.typ = 2;
-    Uh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
+    
+    % U -> H-Matrix
+    Uh     = hmx(Mh.pos{1},Mh.pos{2},Mh.tol);
     Uh.dat = U;
     Uh.typ = 2;    
-
-% Sparse leaf
-elseif (Mh.typ == 3)
-    [L,U]  = lu(Mh.dat);
-    Lh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
-    Lh.dat = L;
-    Lh.typ = 3;
-    Uh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
-    Uh.dat = U;
-    Uh.typ = 3;    
 
 % Unknown type
 else

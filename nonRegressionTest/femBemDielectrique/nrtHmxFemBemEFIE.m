@@ -20,7 +20,7 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxFemBemEFIE.m                            |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
@@ -42,10 +42,6 @@ addpath('../../openMsh')
 
 %%% PREPARATION
 disp('~~~~~~~~~~~~~ PREPARATION ~~~~~~~~~~~~~')
-
-% Mise en route du calcul parallele 
-% matlabpool; 
-% parpool
 
 % Spherical mesh
 mesh = msh('sphere_1e3.msh');
@@ -168,24 +164,51 @@ RHS = [Y;zeros(size(D,1),1)];
 %%% SOLVE LINEAR PROBLEM
 disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
-% Factorization LU H-Matrix
+% Final linear system
 tic
-[La,Ua] = lu(A);
+Ch  = hmx(Eh.unk,Jh.unk,C,tol);
+Dh  = hmx(Eh.unk,Eh.unk,D,tol);
+toc
+tic
+LHS = [A B ; Ch Dh];
+toc
+figure
+spy(LHS)
+
+% LU factorization
+tic
+[Lh,Uh] = lu(LHS);
 toc
 
 figure
-subplot(1,2,1)
-spy(La)
-subplot(1,2,2)
-spy(Ua)
+spy(Lh)
 
-% Shurr complement resolution
+% Solve
 tic
-Sm1V = @(V) Ua\(La\V);
-SV   = @(V) A*V - B*(D\(C*V));
-J    = gmres(SV,Y,[],tol,100,Sm1V);
-E    = - D\(C*J);
+X = Uh \ (Lh \ RHS);
+J = X(1:size(A,1));
+E = X(size(A,1)+1:end);
 toc
+
+
+% % Factorization LU H-Matrix
+% tic
+% [La,Ua] = lu(A);
+% toc
+% 
+% figure
+% subplot(1,2,1)
+% spy(La)
+% subplot(1,2,2)
+% spy(Ua)
+% 
+% % Shurr complement resolution
+% tic
+% Sm1V = @(V) Ua\(La\V);
+% SV   = @(V) A*V - B*(D\(C*V));
+% J    = gmres(SV,Y,[],tol,100,Sm1V);
+% E    = - D\(C*J);
+% toc
 
 % tic
 % Ch = hmx(Eh.unk,Jh.unk,C,tol);

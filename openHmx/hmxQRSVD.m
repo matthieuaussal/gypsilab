@@ -21,16 +21,19 @@ function [A,B] = hmxQRSVD(A,B,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxQRSVD.m                                    |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : QR factorization and SVD recompression for    |
 %|  `---'  |                low-rank matrices                             |
 %+========================================================================+
 
-% For non-empty matrix
 if ~isempty(A)
+    % Full conversion
+    A = full(A);
+    B = full(B);
+    
     % QR Factorisation A = QA * RA;
     [QA,RA] = qr(A,0);
     
@@ -38,7 +41,7 @@ if ~isempty(A)
     [QB,RB] = qr(B.',0);
     
     % SVD : U*S*V = RA * RB.'
-    [U,S,V] = svd(full(RA * RB.'),'econ');
+    [U,S,V] = svd(RA * RB.','econ');
     
     % Indices singular values > tol
     ind = find(abs(diag(S)./S(1)) >= tol);

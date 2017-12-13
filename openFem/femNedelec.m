@@ -22,7 +22,7 @@ function M = femNedelec(fe,domain)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femNedelec.m                                  |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.11.2017                                    |

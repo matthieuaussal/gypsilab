@@ -21,10 +21,10 @@ function Mh = hmxTimes(Ml,Mr)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxTimes.m                                    |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Scalar product with H-Matrix                  |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -60,10 +60,6 @@ else
         
     % Full leaf
     elseif (Mh.typ == 2)
-        Mh.dat = x .* Mh.dat;
-       
-    % Sparse leaf
-    elseif (Mh.typ == 3)
         Mh.dat = x .* Mh.dat;
 
     % Unknown type

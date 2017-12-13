@@ -21,23 +21,74 @@ function Mh = hmxFusion(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxFusion.m                                   |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Fusion and recompress for full, sparse and    |
 %|  `---'  |                low-rank leaves                               |
 %+========================================================================+
 
 % H-Matrix
 if (Mh.typ == 0)
-    % Leaves type
+    % Check and convert leaf data
     typ = zeros(1,4);
     for i = 1:4
+        % Children data        
+        dim    = Mh.chd{i}.dim;
+        dat    = Mh.chd{i}.dat;
         typ(i) = Mh.chd{i}.typ;
+        tol    = Mh.chd{i}.tol;
+        flag   = 0;
+
+        % Full or sparse matrix
+        if (typ(i) == 2)
+            % Non zeros terms
+            n = nnz(dat);
+            
+            % Empty -> Compr
+            if issparse(dat) && (n == 0)
+                A    = zeros(dim(1),0);
+                B    = zeros(0,dim(2));
+                flag = 1;
+            end
+            
+            % Full - > Sparse
+            if ~issparse(dat) && (n <= 1/4*prod(dim))
+                dat  = sparse(dat);
+                flag = 2;
+            end
+            
+            % Sparse - > Full
+            if issparse(dat) && (n > 1/4*prod(dim))
+                dat  = full(dat);
+                flag = 2;
+            end
+            
+            % Full -> Compr
+            if ~issparse(dat) && hmxFar(Mh.chd{i})
+                [A,B,flag] = hmxACA(dat,tol);
+            end
+            
+            % Update
+            if (flag == 1)
+                Mh.chd{i}.dat = {A,B};
+                Mh.chd{i}.typ = 1;
+                typ(i)        = 1;
+            
+            elseif (flag == 2)
+                Mh.chd{i}.dat = dat;
+            end
+        
+        % Compressed matrix
+        elseif (typ(i) == 1)
+            if issparse(dat{1})
+               error('hmxFusion.m : unavailable case') 
+            end
+        end
     end
     
-    % Low-rank fusion
+    % Low-rank fusion (QRSVD)
     if (sum(typ==1) == 4)
         % Rank for each leaf
         rk = zeros(1,4);
@@ -56,37 +107,15 @@ if (Mh.typ == 0)
             B(j+(1:rk(i)),Mh.col{i}) = Mh.chd{i}.dat{2};            
             j = j + rk(i);
         end
+        
+        % Recompression
         [A,B] = hmxQRSVD(A,B,Mh.tol);
         
         % Update
         if (sum(Mh.dim)*size(A,2) <= nk)
-            Mh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
+            Mh     = hmx(Mh.pos{1},Mh.pos{2},Mh.tol);
             Mh.dat = {A,B};
             Mh.typ = 1;
-        end
-    end
-    
-    % Sparse fusion
-    if (sum(typ==3) == 4)
-        % Emptyness for each leaf
-        emp = 0;
-        for i = 1:4
-            emp = emp + isempty(find(Mh.chd{i}.dat,1));
-        end
-        
-        % Update empty
-        if (emp == 4)
-            Mh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
-            Mh.dat = sparse(Mh.dim(1),Mh.dim(2));
-            Mh.typ = 3;
-        end
-        
-        % Update sparse
-        if (emp == 0)
-            M      = sparse(Mh);
-            Mh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
-            Mh.dat = M;
-            Mh.typ = 3;
         end
     end
     

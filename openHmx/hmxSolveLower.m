@@ -21,12 +21,12 @@ function Bh = hmxSolveLower(Lh,Bh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSolveLower.m                               |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
-%| ( === ) |   SYNOPSIS   : Solve lower H-Matrix system                   |
-%|  `---'  |                                                              |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%| ( === ) |   SYNOPSIS   : Solve lower H-Matrix with the rule            |
+%|  `---'  |                Compr > Full > H-Matrix                       |
 %+========================================================================+
 
 %%% Security
@@ -60,39 +60,44 @@ if isa(Lh,'hmx') && isa(Bh,'hmx')
         
         % X22 -> L22 \ (B22 - L21 * X12)
         Bh.chd{4} = Bh.chd{4} - Lh.chd{3} * Bh.chd{2};
-        Bh.chd{4} = hmxSolveLower(Lh.chd{4},Bh.chd{4});
+        Bh.chd{4} = hmxSolveLower(Lh.chd{4},Bh.chd{4}); 
+        
+        % Fusion
+        Bh = hmxFusion(Bh);
+        
+    % H-Matrix \ Compr -> Compr  
+    elseif (Lh.typ == 0) && (Bh.typ == 1) 
+        Bh.dat = { hmxSolveLower(Lh,Bh.dat{1}) , Bh.dat{2} };
+        
+    % H-Matrix \ Full -> Full
+    elseif (Lh.typ == 0) && (Bh.typ == 2) 
+        Bh.dat = hmxSolveLower(Lh,Bh.dat);
+        
+     % Compr \ --- -> ---
+    elseif (Lh.typ == 1) 
+        error('hmxSolveLower : unavailable case')
+                
         
     % Full \ H-Matrix -> Full
     elseif (Lh.typ == 2) && (Bh.typ == 0)
         B      = Lh.dat \ full(Bh);
-        Bh     = hmx(size(B,1),size(B,2),Bh.tol);
+        Bh     = hmx(Lh.pos{2},Bh.pos{2},Lh.tol);
         Bh.dat = B;
         Bh.typ = 2;
-    
-    % Sparse \ H-Matrix -> Sparse
-    elseif (Lh.typ == 3) && (Bh.typ == 0)
-        B      = Lh.dat \ sparse(Bh);
-        Bh     = hmx(size(B,1),size(B,2),Bh.tol);
-        Bh.dat = B;
-        Bh.typ = 3;        
         
-    % --- \ Compr -> Compr
-    elseif (Bh.typ == 1)
-        Bh.dat = { hmxSolveLower(Lh,Bh.dat{1}) , Bh.dat{2} };
-                
-    % --- \ Full -> Full
+    % Full \ Compr -> Compr
+    elseif (Lh.typ == 2) && (Bh.typ == 1)
+        Bh.dat = { Lh.dat\Bh.dat{1} , Bh.dat{2} };
+        
+    % Full \ Full -> Full
     elseif (Bh.typ == 2)
-        Bh.dat = hmxSolveLower(Lh,Bh.dat);
-    
-    % --- \ Sparse -> Sparse
-    elseif (Bh.typ == 3)
-        Bh.dat = hmxSolveLower(Lh,Bh.dat);
+        Bh.dat = Lh.dat \ Bh.dat;
         
     else
         error('hmxSolveLower : unavailable case')
     end
-    
-    
+
+
 %%% H-Matrix \ Matrix -> Matrix   
 elseif isa(Lh,'hmx')
     % Check dimensions
@@ -124,10 +129,6 @@ elseif isa(Lh,'hmx')
         
     % Full leaf
     elseif (Lh.typ == 2)
-        Bh = Lh.dat \ Bh;
-
-    % Sparse leaf
-    elseif (Lh.typ == 3)
         Bh = Lh.dat \ Bh;
 
     % Unknown type    

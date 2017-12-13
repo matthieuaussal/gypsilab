@@ -21,10 +21,10 @@ function [A,B,flag] = hmxRSVD(varargin)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxRSVD.m                                     |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : RSVD from Halko et al. 'finding structure with|
 %|  `---'  |                randomness'. Adapted from Antoine Liutkus.    |
 %+========================================================================+

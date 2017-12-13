@@ -22,10 +22,10 @@ function Ms = domRegularize(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domRegularize.m                               |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Finite element regularization matrix for      |
 %|  `---'  |                singularities with Laplace kernel             |
 %+========================================================================+
@@ -158,6 +158,10 @@ parfor el = 1:Nelt
             elseif strcmp(green,'grady[1/r]') && strcmp(v.opr,'n*[psi]')
                 V = gradRm1 * Nel';
                 
+            elseif strcmp(green(1:end-1),'grady[1/r]') && strcmp(v.opr,'[psi]')
+                ii = str2double(green(end));
+                V  = gradRm1(:,ii);
+                
             else
                 error('domRegularize : unavailable case')
             end
@@ -196,6 +200,10 @@ parfor el = 1:Nelt
                     
                 elseif strcmp(green,'grady[1/r]') && strcmp(v.opr,'n*[psi]')
                     V(:,j) = tmp .* (gradRm1 * Nel');
+                    
+                elseif strcmp(green(1:end-1),'grady[1/r]') && strcmp(v.opr,'[psi]')
+                    ii     = str2double(green(end));
+                    V(:,j) = tmp .* gradRm1(:,ii);
                     
                 else
                     error('domRegularize : unavailable case')

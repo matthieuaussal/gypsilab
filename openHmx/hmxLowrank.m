@@ -21,10 +21,10 @@ function [A,B] = hmxLowrank(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxLowrank.m                                  |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Convert H-Matrix to low-rank approximation    |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -61,11 +61,12 @@ elseif (Mh.typ == 1)
 
 % Full leaf
 elseif (Mh.typ == 2)
-    [A,B,flag] = hmxACA(Mh.dat,Mh.tol);
-    if ~flag
-        A = Mh.dat;
-        B = eye(Mh.dim(2));
-    end
+    % Low-Rank conversion
+    A = full(Mh.dat);
+    B = eye(Mh.dim(2));
+    
+    % Recompression
+    [A,B] = hmxQRSVD(A,B,Mh.tol);
 
 % Others    
 else

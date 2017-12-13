@@ -1,7 +1,7 @@
 
           '&`
            #                THE GYPSILAB TOOLBOX FOR MATLAB
-           #                    VERSION 0.31 - GPL 3.0
+           #                    VERSION 0.32 - GPL 3.0
           _#_             
          ( # )            matthieu.aussal@polytechnique.edu
          / 0 \        www.cmap.polytechnique.fr/~aussal/gypsilab

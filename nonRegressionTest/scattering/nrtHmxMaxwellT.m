@@ -20,10 +20,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxMaxwellT.m                              |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Solve PEC scatering problem with EFIE         |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -38,10 +38,6 @@ addpath('../../openDom')
 addpath('../../openFem')
 addpath('../../openHmx')
 addpath('../../openMsh')
-
-% Mise en route du calcul parallele 
-% matlabpool; 
-% parpool
 
 % Parameters
 N   = 1e3
@@ -106,6 +102,9 @@ tic
 LHS = LHS + 1i*k/(4*pi)*regularize(sigma, sigma, v, '[1/r]', u) ...
       - 1i/(4*pi*k)*regularize(sigma, sigma, div(v), '[1/r]', div(u));
 toc
+
+% % Convert to single
+% LHS = single(LHS);
 
 figure
 spy(LHS)

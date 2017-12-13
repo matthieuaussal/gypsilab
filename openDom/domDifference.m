@@ -22,7 +22,7 @@ function err = domDifference(domain,fe,Uh,Uex,type )
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domDifference.m                               |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : François Alouges                              |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2017                                    |

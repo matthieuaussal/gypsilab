@@ -21,10 +21,10 @@ function [Mh,num] = hmxDistribution(Mh,Mp,ind,stp,num)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxDistribution.m                             |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Distribute H-Matrix parallel leaf to final    |
 %|  `---'  |                H-Matrix structure                            |
 %+========================================================================+

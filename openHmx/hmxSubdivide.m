@@ -1,4 +1,4 @@
-function ind = hmxSubdivide(X)
+function [I1,I2] = hmxSubdivide(X)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -21,10 +21,10 @@ function ind = hmxSubdivide(X)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSubdivide.m                                |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Subdivide particles with median repartition   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -38,11 +38,7 @@ Xdgl = Xmax-Xmin;
 [~,i] = max(Xdgl);
 
 % Median repartition on largest dimension
-ind = (X(:,i)<=median(X(:,i)));
-
-% Recursion for worst cases
-if (sum(ind)<0.25*size(X,1)) || (sum(ind)>0.75*size(X,1))
-    I   = setdiff(1:size(X,2),i);
-    ind = hmxSubdivide(X(:,I));
-end
+[~,I] = sort(X(:,i));
+I1    = I(1:floor(end/2));
+I2    = I(floor(end/2)+1:end);
 end

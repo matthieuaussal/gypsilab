@@ -20,7 +20,7 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtFemOperators.m                             |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
 %|  ( # )  |   CREATION   : 15.11.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.11.2017                                    |

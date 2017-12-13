@@ -21,13 +21,16 @@ function Mh = hmxSingle(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSingle.m                                   |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Convert H-Matrix to single precision          |
 %|  `---'  |                                                              |
 %+========================================================================+
+
+% Position
+Mh.pos = {single(Mh.pos{1}),single(Mh.pos{2})};
 
 % H-Matrix (recursion)
 if (Mh.typ == 0)
@@ -45,10 +48,6 @@ elseif (Mh.typ == 1)
 % Full leaf
 elseif (Mh.typ == 2)
     Mh.dat = single(Mh.dat);
-    
-% Sparse leaf
-elseif (Mh.typ == 3)
-    Mh.dat = Mh.dat;
     
 % Unknown type
 else

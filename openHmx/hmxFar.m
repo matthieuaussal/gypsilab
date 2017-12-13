@@ -1,4 +1,4 @@
-function M = hmxFull(Mh)
+function bool = hmxFar(Mh)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -20,33 +20,29 @@ function M = hmxFull(Mh)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxFull.m                                     |
+%|    #    |   FILE       : hmxFar.m                                      |
 %|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
-%| ( === ) |   SYNOPSIS   : Convert H-Matrix to full matrix               |
+%| ( === ) |   SYNOPSIS   : H-Matrix far boolean                          |
 %|  `---'  |                                                              |
 %+========================================================================+
-    
-% H-Matrix (recursion)
-if (Mh.typ == 0)
-    M = zeros(Mh.dim(1),Mh.dim(2),class(Mh.row{1}));
-    for i = 1:4
-        M(Mh.row{i},Mh.col{i}) = hmxFull(Mh.chd{i});
-    end
-    
-% Compressed leaf
-elseif (Mh.typ == 1)
-    M = Mh.dat{1} * Mh.dat{2};
-    
-% Full leaf
-elseif (Mh.typ == 2)
-    M = full(Mh.dat);
 
-% Unknown type
-else
-    error('hmxFull.m : unavailable case')
-end
+% Particles box X
+X    = Mh.pos{1};
+Xmin = min(X,[],1);
+Xmax = max(X,[],1);
+Xctr = 0.5*(Xmin+Xmax);
+Xdgl = Xmax-Xmin;
 
+% Particles box Y
+Y    = Mh.pos{2};
+Ymin = min(Y,[],1);
+Ymax = max(Y,[],1);
+Yctr = 0.5*(Ymin+Ymax);
+Ydgl = Ymax-Ymin;
+
+% Separated particles set
+bool = sum( abs(Yctr-Xctr) >= 0.75*(Xdgl+Ydgl) );
 end

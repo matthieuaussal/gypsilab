@@ -21,12 +21,12 @@ function Bh = hmxSolveUpper(Bh,Uh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSolveUpper.m                               |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
-%| ( === ) |   SYNOPSIS   : Solve upper H-Matrix system                   |
-%|  `---'  |                                                              |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%| ( === ) |   SYNOPSIS   : Solve upper H-Matrix wit the rule             |
+%|  `---'  |                Compr > Full > H-Matrix                       |
 %+========================================================================+
 
 %%% Security
@@ -62,36 +62,50 @@ if isa(Bh,'hmx') && isa(Uh,'hmx')
         Bh.chd{4} = Bh.chd{4} - Bh.chd{3} * Uh.chd{2};
         Bh.chd{4} = hmxSolveUpper(Bh.chd{4},Uh.chd{4});
         
-    % H-Matrix / Full -> Full
-    elseif (Bh.typ == 0) && (Uh.typ == 2)
+        % Fusion
+        Bh = hmxFusion(Bh);
+        
+    % H-Matrix / Compr -> ---    
+    elseif (Bh.typ == 0) && (Uh.typ == 1)   
+        error('hmxSolveUpper : unavailable case')
+        
+    % H-Matrix / Full -> Full   
+    elseif (Bh.typ == 0) && (Uh.typ == 2)   
         B      = full(Bh) / Uh.dat;
-        Bh     = hmx(size(B,1),size(B,2),Bh.tol);
+        Bh     = hmx(Bh.pos{1},Uh.pos{1},Uh.tol);
         Bh.dat = B;
         Bh.typ = 2;
         
-    % H-Matrix / Sparse -> Sparse
-    elseif (Bh.typ == 0) && (Uh.typ == 3)
-        B      = sparse(Bh) / Uh.dat;
-        Bh     = hmx(size(B,1),size(B,2),Bh.tol);
-        Bh.dat = B;
-        Bh.typ = 3;
-
-    % Compr / --- -> Compr
-    elseif (Bh.typ == 1)
-        Bh.dat = {Bh.dat{1} , hmxSolveUpper(Bh.dat{2},Uh)};
         
-    % Full / --- -> Full
-    elseif (Bh.typ == 2)
+    % Compr / H-Matrix -> Compr
+    elseif (Bh.typ == 1) && (Uh.typ == 0) 
+        Bh.dat = {Bh.dat{1} , hmxSolveUpper(Bh.dat{2},Uh)};    
+        
+    % Compr / Compr -> ---
+    elseif (Bh.typ == 1) && (Uh.typ == 1) 
+        error('hmxSolveUpper : unavailable case') 
+        
+    % Compr / Full -> Compr
+    elseif (Bh.typ == 1) && (Uh.typ == 2) 
+        Bh.dat = {Bh.dat{1} , Bh.dat{2}/Uh.dat}; 
+        
+        
+    % Full / H-Matrix -> Full
+    elseif (Bh.typ == 2) && (Uh.typ == 0) 
         Bh.dat = hmxSolveUpper(Bh.dat,Uh);
         
-    % Sparse / --- -> Sparse
-    elseif (Bh.typ == 3)
-        Bh.dat = hmxSolveUpper(Bh.dat,Uh);
-
+    % Full / Compr -> ---
+    elseif (Bh.typ == 2) && (Uh.typ == 1) 
+        error('hmxSolveUpper : unavailable case') 
+        
+    % Full / Full -> Full
+    elseif (Bh.typ == 2) && (Uh.typ == 2) 
+        Bh.dat = Bh.dat / Uh.dat;    
+        
     else        
         error('hmxSolveUpper : unavailable case')
     end
-        
+     
     
 %%% Matrix / H-Matrix -> Matrix   
 elseif isa(Uh,'hmx')
@@ -124,10 +138,6 @@ elseif isa(Uh,'hmx')
 
     % Full leaf
     elseif (Uh.typ == 2)
-        Bh =  Bh / Uh.dat;
-        
-    % Sparse leaf
-    elseif (Uh.typ == 3)
         Bh =  Bh / Uh.dat;
     
     % Unknown type    
@@ -169,10 +179,6 @@ elseif isa(Bh,'hmx')
 
     % Full leaf
     elseif (Bh.typ == 2)
-        Bh =  Bh.dat \ Uh;
-    
-    % Sparse leaf
-    elseif (Bh.typ == 3)
         Bh =  Bh.dat \ Uh;
     
     % Unknown type    

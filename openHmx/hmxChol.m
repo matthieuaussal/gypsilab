@@ -21,10 +21,10 @@ function Mh = hmxChol(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxChol.m                                     |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Cholesky factorization of H-Matrix            |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -38,8 +38,8 @@ if (Mh.typ == 0)
     Mh.chd{2} = hmxSolveLower(Mh.chd{1}',Mh.chd{2});
     
     % U21 -> 0
-    Mh.chd{3}.dat = sparse(Mh.chd{3}.dim(1),Mh.chd{3}.dim(2));
-    Mh.chd{3}.typ = 3;
+    Mh.chd{3}.dat = {zeros(Mh.chd{3}.dim(1),0),zeros(0,Mh.chd{3}.dim(2))};
+    Mh.chd{3}.typ = 1;
     
     % M22 -> M22 - U12'*U12
     Mh.chd{4} = Mh.chd{4} - Mh.chd{2}' * Mh.chd{2};
@@ -57,10 +57,6 @@ elseif (Mh.typ == 1)
 % Full leaf
 elseif (Mh.typ == 2)
     Mh.dat = chol(Mh.dat);    
-
-% Sparse leaf
-elseif (Mh.typ == 3)
-    Mh.dat = chol(Mh.dat);
    
 % Unknown type
 else

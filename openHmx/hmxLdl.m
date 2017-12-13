@@ -21,38 +21,38 @@ function [Mh,Dh] = hmxLdl(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxLdl.m                                      |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : LDLt factorization of H-Matrix                |
 %|  `---'  |                                                              |
 %+========================================================================+
 
 % H-Matrix (recursion)
 if (Mh.typ == 0)
-    % Digaonal initialisation
-    Dh     = hmx(Mh.dim(1),Mh.dim(2),Mh.tol);
+    % Diagonal initialisation
+    Dh     = hmx(Mh.pos{1},Mh.pos{2},Mh.tol);
     Dh.row = Mh.row;
     Dh.col = Mh.col;
     Dh.typ = 0;
     
     % Nullify upper corner    
-    Dh.chd{2}     = hmx(Mh.chd{2}.dim(1),Mh.chd{2}.dim(2),Mh.tol);
-    Dh.chd{2}.dat = sparse(Dh.chd{2}.dim(1),Dh.chd{2}.dim(2));
-    Dh.chd{2}.typ = 3;
+    Dh.chd{2}     = hmx(Mh.chd{2}.pos{1},Mh.chd{2}.pos{2},Mh.tol);
+    Dh.chd{2}.dat = {zeros(Dh.chd{2}.dim(1),0),zeros(0,Dh.chd{2}.dim(2))};
+    Dh.chd{2}.typ = 1;
     
     % Nullify lower corner    
-    Dh.chd{3}     = hmx(Mh.chd{3}.dim(1),Mh.chd{3}.dim(2),Mh.tol);
-    Dh.chd{3}.dat = sparse(Dh.chd{3}.dim(1),Dh.chd{3}.dim(2));
-    Dh.chd{3}.typ = 3;
+    Dh.chd{3}     = hmx(Mh.chd{3}.pos{1},Mh.chd{3}.pos{2},Mh.tol);
+    Dh.chd{3}.dat = {zeros(Dh.chd{3}.dim(1),0),zeros(0,Dh.chd{3}.dim(2))};
+    Dh.chd{3}.typ = 1;
     
     % [L11,D11] -> M11
     [Mh.chd{1},Dh.chd{1}] = hmxLdl(Mh.chd{1});
 
     % L12 -> 0
-    Mh.chd{2}.dat = sparse(Mh.chd{2}.dim(1),Mh.chd{2}.dim(2));
-    Mh.chd{2}.typ = 3;
+    Mh.chd{2}.dat = {zeros(Mh.chd{2}.dim(1),0),zeros(0,Mh.chd{2}.dim(2))};
+    Mh.chd{2}.typ = 1;
     
     % L21 -> M21 / U11
     Mh.chd{3} = hmxSolveUpper(Mh.chd{3},Dh.chd{1}*Mh.chd{1}');
@@ -72,16 +72,11 @@ elseif (Mh.typ == 1)
     
 % Full leaf
 elseif (Mh.typ == 2)
-    Dh              = Mh;
-    [Mh.dat,Dh.dat] = ldl(Mh.dat);      
-
-% Sparse leaf
-elseif (Mh.typ == 3)
     Dh      = Mh;
     [L,D,P] = ldl(Mh.dat);
     L       = P * L;
     Mh.dat  = L;
-    Dh.dat  = D;    
+    Dh.dat  = D;     
 
 % Unknown type
 else

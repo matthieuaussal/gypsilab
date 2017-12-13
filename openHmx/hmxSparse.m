@@ -21,10 +21,10 @@ function M = hmxSparse(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSparse.m                                   |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Convert H-Matrix to sparse matrix             |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -43,10 +43,6 @@ elseif (Mh.typ == 1)
 % Full leaf
 elseif (Mh.typ == 2)
     M = sparse(Mh.dat);
-
-% Sparse leaf
-elseif (Mh.typ == 3)
-    M = Mh.dat;
 
 % Unknown type
 else

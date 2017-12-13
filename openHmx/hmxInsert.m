@@ -1,4 +1,4 @@
-function M = hmxFull(Mh)
+function Mh = hmxInsert(Mh,S)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -20,33 +20,39 @@ function M = hmxFull(Mh)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxFull.m                                     |
+%|    #    |   FILE       : hmxInsert.m                                   |
 %|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
-%| ( === ) |   SYNOPSIS   : Convert H-Matrix to full matrix               |
+%| ( === ) |   SYNOPSIS   : Insert sparse matrix inside H-Matrix          |
 %|  `---'  |                                                              |
 %+========================================================================+
-    
+
+% Check input
+if ~issparse(S)
+    error('hmxInsert.m : unavailable case')
+end
+
 % H-Matrix (recursion)
 if (Mh.typ == 0)
-    M = zeros(Mh.dim(1),Mh.dim(2),class(Mh.row{1}));
     for i = 1:4
-        M(Mh.row{i},Mh.col{i}) = hmxFull(Mh.chd{i});
+        Mh.chd{i} = hmxInsert(Mh.chd{i},S(Mh.row{i},Mh.col{i}));
     end
     
 % Compressed leaf
-elseif (Mh.typ == 1)
-    M = Mh.dat{1} * Mh.dat{2};
+elseif (Mh.typ == 1) 
+    if (nnz(S) > 0)
+        error('hmxInsert.m : unavailable case')
+    end
     
 % Full leaf
 elseif (Mh.typ == 2)
-    M = full(Mh.dat);
-
+    [I,J,V] = find(S);
+    Mh.dat(sub2ind(size(Mh.dat),I,J)) = V;
+    
 % Unknown type
 else
-    error('hmxFull.m : unavailable case')
+    error('hmxInsert.m : unavailable case')
 end
-
 end

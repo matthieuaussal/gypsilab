@@ -45,7 +45,7 @@ else
 end
 
 % Initialisation
-Mh = hmx(size(X,1),size(Y,1),tol);
+Mh = hmx(X,Y,tol);
 
 % Cores availables for computation
 Nlabs = max(1,length(Composite()));
@@ -60,13 +60,13 @@ end
 
 % H-Matrix (recursion)
 if (Nlabs >= 2*Nsub)
-     % Subdivision for Xdof
-    ind    = hmxSubdivide(X);
-    Mh.row = {find(ind),find(ind),find(~ind),find(~ind)};
+    % Subdivision for X
+    [I1,I2] = hmxSubdivide(X);
+    Mh.row  = {I1 , I1 , I2 , I2};
     
-    % Subdivision for Ydof
-    ind    = hmxSubdivide(Y);
-    Mh.col = {find(ind),find(~ind),find(ind),find(~ind)};
+    % Subdivision for Y
+    [I1,I2] = hmxSubdivide(Y);
+    Mh.col  = {I1 , I2 , I1 , I2};
     
     % Single class
     if isa(X,'single')

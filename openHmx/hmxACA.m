@@ -21,10 +21,10 @@ function [A,B,flag] = hmxACA(varargin)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxACA.m                                      |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Adaptative Cross Approximation, partial       |
 %|  `---'  |                & total pivoting                              |
 %+========================================================================+
@@ -52,6 +52,16 @@ elseif (nargin == 4)
     green = varargin{3};
     tol   = varargin{4};
     rkMax = 1e6;
+    row = @(i) green(X(i,:),Y).';
+    col = @(i) green(X,Y(i,:));
+    
+% Partial pivoting with handle function and maximum rank   
+elseif (nargin == 5) 
+    X     = varargin{1};
+    Y     = varargin{2};
+    green = varargin{3};
+    tol   = varargin{4};
+    rkMax = varargin{5};
     row = @(i) green(X(i,:),Y).';
     col = @(i) green(X,Y(i,:));
 else

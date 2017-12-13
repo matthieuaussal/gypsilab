@@ -21,10 +21,10 @@ function [A,B,flag] = hmxSVD(M,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSVD.m                                      |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : SVD compression for full matrix               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -51,10 +51,21 @@ else
         
     % Rank default
     else
-        I    = find(abs(diag(S)/S(1)) >= tol);
-        A    = U(:,I);
-        B    = S(I,I)*V(:,I)';
-        flag = 1;
+        % Compression rank
+        n = sum( s./s(1) >= tol );
+        
+        % Precision not reached
+        if (n*sum(size(M)) > numel(M))
+            A    = [];
+            B    = [];
+            flag = 0;
+            
+        % Compression    
+        else
+            A    = U(:,1:n);
+            B    = S(1:n,1:n)*V(:,1:n)';
+            flag = 1;
+        end
     end
 end
 end

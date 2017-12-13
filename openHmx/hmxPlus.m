@@ -21,12 +21,12 @@ function Ml = hmxPlus(Ml,Mr)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxPlus.m                                     |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
-%| ( === ) |   SYNOPSIS   : Sum of H-Matrix                               |
-%|  `---'  |                                                              |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%| ( === ) |   SYNOPSIS   : Sum of H-Matrix with the rule                 |
+%|  `---'  |                Full > H-Matrix > Compr                       |
 %+========================================================================+
 
 %%% H-Matrix + H-Matrix -> H-Matrix
@@ -35,7 +35,7 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     if sum(Ml.dim ~= Mr.dim)
         error('hmxPlus.m : matrix dimensions must agree.')
     end
-    
+
     % H-Matrix + H-Matrix --> H-Matrix (recursion)
     if (Ml.typ == 0) && (Mr.typ == 0)
         % Construction
@@ -45,97 +45,49 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
 
         % Fusion
         Ml = hmxFusion(Ml);
+    
+    % H-Matrix + Compr -> H-Matrix    
+    elseif (Ml.typ == 0) && (Mr.typ == 1)
+        Ml = hmxPlusAB(Ml,Mr.dat{1},Mr.dat{2});
+             
+    % H-Matrix + Full -> Full
+    elseif (Ml.typ == 0) && (Mr.typ == 2)
+        Mr.dat = full(Ml) + Mr.dat;
+        Ml     = Mr;
+
+        
+    % Compr + --- -> ---
+    elseif (Ml.typ == 1)
+        Ml = hmxPlusAB(Mr,Ml.dat{1},Ml.dat{2});
+        
+        
+    % Full + H-Matrix -> Full
+    elseif (Ml.typ == 2) && (Mr.typ == 0)
+        Ml.dat = Ml.dat + full(Mr);
+        
+    % Full + Compr -> Full
+    elseif (Ml.typ == 2) && (Mr.typ == 1)
+        Ml = hmxPlusAB(Ml,Mr.dat{1},Mr.dat{2});
+
+    % Full + Full -> Full                              
+    elseif (Ml.typ == 2) && (Mr.typ == 2)
+        Ml.dat = Ml.dat + Mr.dat;
         
     else
-        % Empty + --- ---> ---
-        if issparse(Ml.dat) && isempty(find(Ml.dat,1))
-            Ml = Mr;
-            
-        % --- + Empty ---> ---
-        elseif issparse(Mr.dat) && isempty(find(Mr.dat,1))
-        
-        % H-Matrix + Compr -> H-Matrix
-        elseif (Ml.typ == 0) && (Mr.typ == 1)
-            Ml = hmxPlusAB(Ml,Mr.dat{1},Mr.dat{2});
-             
-        % H-Matrix + --- -> ---  
-        elseif (Ml.typ == 0) 
-            Ml = hmxPlus(Ml,Mr.dat);
-    
-        % Compr + --- -> --- 
-        elseif (Ml.typ == 1)
-            Ml = hmxPlusAB(Mr,Ml.dat{1},Ml.dat{2});
-            
-        % Full + --- -> Full
-        elseif (Ml.typ == 2)
-            Ml = hmxPlus(Mr,Ml.dat);
-            
-        % Sparse + --- -> Sparse
-        elseif (Ml.typ == 3)
-            Ml = hmxPlus(Mr,Ml.dat);
-            
-        else
-            error('hmxPlus : unvailable case')
-        end
+        error('hmxPlus : unvailable case')
     end
+
     
     
 %%% H-Matrix + Matrix -> H-Matrix
 elseif isa(Ml,'hmx') 
-    % Check dimensions
-    if sum(Ml.dim ~= size(Mr))
-        error('hmxPlus.m : matrix dimensions must agree.')
-    end
-    
-    % H-Matrix (recursion)
-    if (Ml.typ == 0)
-        % Construction
-        for i = 1:4
-            Ml.chd{i} = hmxPlus(Ml.chd{i},Mr(Ml.row{i},Ml.col{i}));
-        end
-        
-        % Fusion
-        Ml = hmxFusion(Ml);
-
-    % Compressed leaf                             
-    elseif (Ml.typ == 1)
-        % Save compressed data 
-        A = Ml.dat{1};
-        B = Ml.dat{2};
-        
-        % Exchange with matrix
-        Ml.dat = Mr;
-        if ~issparse(Mr)
-            Ml.typ = 2;                         %%%%%%% TYPE CHANGE %%%%%%%
-        else
-            Ml.typ = 3;                         %%%%%%% TYPE CHANGE %%%%%%%
-        end
-        
-        % Update
-        Ml = hmxPlusAB(Ml,A,B);
-        
-    % Full leaf
-    elseif (Ml.typ == 2)
-        Ml.dat = Ml.dat + full(Mr);
-        
-    % Sparse leaf                           
-    elseif (Ml.typ == 3)                       
-        if issparse(Mr)
-            Ml.dat = Ml.dat + Mr;
-        else
-            Ml.dat = full(Ml.dat) + Mr;
-            Ml.typ = 2;                         %%%%%%% TYPE CHANGE %%%%%%%
-        end
-        
-    % Unknown type
-    else
-        error('hmxPlus.m : unavailable case')
-    end
+    Ml = Ml + hmxBuilder(Ml.pos{1},Ml.pos{2},Mr,Ml.tol);
 
     
 %%% Matrix + H-Matrix -> Matrix
 elseif isa(Mr,'hmx')
-    Ml = hmxPlus(Mr,Ml);
+    Ml = hmxBuilder(Mr.pos{1},Mr.pos{2},Ml,Mr.tol) + Mr;
+
     
 %%% Unavailable  
 else
@@ -164,47 +116,10 @@ elseif (Mh.typ == 1)
     
 % Full leaf   
 elseif (Mh.typ == 2)
-    % Recompression
-    rk           = ceil(1/4*min(size(Mh.dat)));
-    [Ah,Bh,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
-    if flag
-        A      = [Ah,A];
-        B      = [Bh;B];
-        [A,B]  = hmxQRSVD(A,B,Mh.tol);
-        Mh.dat = {A,B};
-        Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%%
-    
-    % Summation
-    else
+    if (size(A,2) > 0)
         Mh.dat = Mh.dat + A*B;
     end
     
-% Sparse leaf
-elseif (Mh.typ == 3)
-    % Empty + Compr -> Compr
-    if isempty(Mh.dat)
-        Mh.dat = {A,B};
-        Mh.typ = 1;                             %%%%%%% TYPE CHANGE %%%%%%%
-
-    % Sparse + Compr -> Compr
-    else 
-        % Compression
-        rk           = min(nnz(Mh.dat)+1,ceil(1/4*(min(Mh.dim))));
-        [Ah,Bh,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
-
-        % Update
-        if flag
-            A      = [A,Ah];
-            B      = [B;Bh];
-            [A,B]  = hmxQRSVD(A,B,Mh.tol);
-            Mh.dat = {A,B};
-            Mh.typ = 1;                         %%%%%%% TYPE CHANGE %%%%%%%
-        else
-            Mh.dat = full(Mh.dat) + A*B;
-            Mh.typ = 2;                         %%%%%%% TYPE CHANGE %%%%%%%
-        end
-    end    
-      
 % Unknown type
 else
     error('hmxPlus.m : unavailable case')

@@ -21,16 +21,25 @@ function M = hmxSpy(varargin)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSpy.m                                      |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Spy H-Matrix architecture                     |
 %|  `---'  |                                                              |
 %+========================================================================+
 
 % Input data
 Mh = varargin{1};
+
+% Initialize visu block
+if (Mh.typ > 0)
+    M        = sparse(Mh.dim(1),Mh.dim(2));
+    M(:,1)   = 1;
+    M(:,end) = 1;
+    M(1,:)   = 1;
+    M(end,:) = 1;
+end
 
 % H-Matrix (recursion)
 if (Mh.typ == 0)
@@ -41,36 +50,23 @@ if (Mh.typ == 0)
     M = [A,B;C,D];
 
 % Compressed leaf
-elseif (Mh.typ == 1)
-    M = sparse(Mh.dim(1),Mh.dim(2));
-    if iscell(Mh.dat)
-        rk = max(1,size(Mh.dat{1},2));
+elseif (Mh.typ == 1)      
+    rk = size(Mh.dat{1},2);
+    if (rk > 0)
+        M(:,rk) = 1;
+        M(rk,:) = 1;
     else
-        rk = 1;
+        M = 3 .* M;
     end
-    M(:,1)  = 1;
-    M(:,rk) = 1;
-    M(1,:)  = 1;
-    M(rk,:) = 1;
        
 % Full leaf
 elseif (Mh.typ == 2)
-    M        = sparse(Mh.dim(1),Mh.dim(2));
-    M(:,1)   = 2;
-    M(:,end) = 2;
-    M(1,:)   = 2;
-    M(end,:) = 2;
-    
-% Sparse leaf
-elseif (Mh.typ == 3)
-    M = 3*(abs(Mh.dat)>0);
-    if isempty(find(M,1))
-        M(:,1)   = 4;
-        M(:,end) = 4;
-        M(1,:)   = 4;
-        M(end,:) = 4;
+    if issparse(Mh.dat)
+        M = 4 .* (M + (abs(Mh.dat)>0));
+    else
+        M = 2 .* M;
     end
-
+    
 % Unknown type    
 else
     error('hmxSpy.m : unavailable case')
@@ -81,8 +77,8 @@ if (length(varargin) == 1)
     spy(M==1,'b')
     hold on
     spy(M==2,'r')
-    spy(M==3,'m')
-    spy(M==4,'g')
+    spy(M==3,'g')
+    spy(M==4,'m')
     hold off
     title('openHmx : H-Matrix structure');
 end

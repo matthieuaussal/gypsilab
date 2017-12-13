@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxAlgebra.m                               |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Evaluate each hmx class function              |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -42,11 +42,11 @@ type = 'double';
 tol = 1e-3
 
 % Wave number or frequency (Hz)
-k = 5
+k = 1
 f = (k*340)/(2*pi);
 
 % Particles receptors X (sphere)
-Nx      = 1e3;
+Nx      = 2e3;
 [x,y,z] = sphere(ceil(sqrt(Nx)));
 X       = unique([x(:),y(:),z(:)],'rows');
 Nx      = size(X,1)
@@ -184,7 +184,6 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 disp(' ')
 
 
-
 %%% Low-rank conversion
 disp('~~~~~~~~~~~~~ LOW-RANK CONVERSION ~~~~~~~~~~~~~')
 tic
@@ -196,6 +195,32 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
 
+
+%%% Concatenation
+disp('~~~~~~~~~~~~~ CONCATENATION ~~~~~~~~~~~~~')
+AB = hmx(X,Y,A,B,tol);
+tic
+tmp = [AB,Mh,Mh,AB];
+toc
+sol = full(tmp);
+ref = [M,M,M,M];
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+tmp = [AB;Mh;Mh;AB];
+toc
+sol = full(tmp);
+ref = [M;M;M;M];
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+tmp = [Ih,Ih];
+toc
+sol = full(tmp);
+ref = [I,I];
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+disp(' ')
 
 
 %%% Transposition

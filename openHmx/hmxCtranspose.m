@@ -21,16 +21,17 @@ function Mh = hmxCtranspose(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxCtranspose.m                               |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Conjugate transposition of H-Matrix           |
 %|  `---'  |                                                              |
 %+========================================================================+
 
 % Dimensions
 Mh.dim = [Mh.dim(2) Mh.dim(1)];
+Mh.pos = {Mh.pos{2} Mh.pos{1}};
 
 % H-Matrix (recursion)
 if (Mh.typ == 0)
@@ -53,10 +54,6 @@ elseif (Mh.typ == 1)
     
 % Full leaf
 elseif (Mh.typ == 2)
-    Mh.dat = Mh.dat';
-
-% Sparse leaf
-elseif (Mh.typ == 3)
     Mh.dat = Mh.dat';
 
 % Unknown type

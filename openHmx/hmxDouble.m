@@ -21,13 +21,16 @@ function Mh = hmxDouble(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxDouble.m                                   |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Convert H-Matrix to double precision          |
 %|  `---'  |                                                              |
 %+========================================================================+
+
+% Position
+Mh.pos = {double(Mh.pos{1}),double(Mh.pos{2})};
 
 % H-Matrix (recursion)
 if (Mh.typ == 0)
@@ -45,10 +48,6 @@ elseif (Mh.typ == 1)
 % Full leaf
 elseif (Mh.typ == 2)
     Mh.dat = double(Mh.dat);
-    
-% Sparse leaf
-elseif (Mh.typ == 3)
-    Mh.dat = Mh.dat;
     
 % Unknown type
 else

@@ -21,10 +21,10 @@ function [Mh,A,B] = hmxSherMorr(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxSherMorr.m                                 |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Convert H-Matrix to Shermann Morrison form    |
 %|  `---'  |                Sh + A*B                                      |
 %+========================================================================+
@@ -64,11 +64,6 @@ elseif (Mh.typ == 1)
 elseif (Mh.typ == 2)
     A = zeros(Mh.dim(1),0,class(Mh.dat)); 
     B = zeros(0,Mh.dim(2),class(Mh.dat));
-
-% Sparse leaf
-elseif (Mh.typ == 3)
-    A = zeros(Mh.dim(1),0); 
-    B = zeros(0,Mh.dim(2));
 
 % Unknown type
 else

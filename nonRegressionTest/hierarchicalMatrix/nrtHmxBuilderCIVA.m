@@ -18,12 +18,12 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtHmxBuilder.m                               |
+%|    #    |   FILE       : nrtHmxBuilderCIVA.m                           |
 %|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
-%| ( === ) |   SYNOPSIS   : Build H-Matrix and compare to full product    |
+%| ( === ) |   SYNOPSIS   : Build H-Matrix for CIVA                       |
 %|  `---'  |                                                              |
 %+========================================================================+
 
@@ -33,78 +33,138 @@ close all
 clc
 
 % Library path
+addpath('../../openMsh')
+addpath('../../openDom')
 addpath('../../openFem')
 addpath('../../openHmx')
 
-% Spheres unitaires
-unit = @(u) u ./ sqrt(sum(u.^2,2)*ones(1,size(u,2)));
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEFINITIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Type de donnees
-type = 'double'
+% Parametres
+N   = 1e3;
+fe  = 'P1';
+gss = 3;
+tol = 1e-3;
 
-% Precision
-tol = 1e-3
+% Mesh
+mesh = mshSphere(N,1);
 
 % Nombre d'onde et frequence (Hz)
-k = 0
-f = (k*340)/(2*pi);
-
-% Nuage de point recepteurs X
-Nx = 1e4
-X  = -1 + 2*rand(Nx,3,type);
-X  = unit(X);
-
-% Nuage de point emmeteurs Y
-% Ny = 2e3 
-% Y  = -1 + 2*rand(Ny,3);
-% Y  = -5 + Y;
-Ny = Nx
-Y  = X;
-
-% Potentiel en Y
-V = -(1+1i) + 2*(rand(Ny,1,type) + 1i*rand(Ny,1,type));
+stp = mesh.stp;
+k   = 0;%1/stp(2);
+f   = (k*340)/(2*pi);
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
-Gxy = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
+Gxy = @(X,Y) femGreenKernel(X,Y,'[1/r]',k);
 
-% Representation graphique
+% Quadrature
+omega = dom(mesh,gss);
+X     = omega.qud;
+Y     = X;
+
+% Elements finis
+u    = fem(mesh,fe);
+DQx  = u.dqm(omega)';
+QDy  = DQx';
+
+% Inconnues
+ctr  = mesh.ctr;
+half = mesh.sub(ctr(:,1)>=-0.5);
+UDx  = restriction(u,half);
+DUy  = UDx';
+
+% Interactions boolennes inconnues <-> quadratures 
+Bx = (abs(UDx*DQx) > 0);
+By = (abs(QDy*DUy) > 0)';
+
+% Interactions proches
+Dxy = integral(omega,u,u);
+
+% Potentiel en Uy
+V = -(1+1i) + 2*(rand(size(UDx,1),1) + 1i*rand(size(UDx,1),1));
+
+% Graphical representation
 figure
-plot3(X(:,1),X(:,2),X(:,3),'*b',Y(:,1),Y(:,2),Y(:,3),'*r')
-axis equal 
-
+plot(mesh)
+hold on
+plot(half,'r')
+axis equal
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CALCUL DIRECT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('~~~~~~~~~~~~~ FULL PRODUCT ~~~~~~~~~~~~~')
+
+% Full matrix at gauss points
 tic
-
-% Recepteurs au hasard
-Nt   = 100;
-ind  = 1:ceil(Nx/Nt):Nx;
-Xloc = X(ind,:);
-
-% Produit Matrice-Vecteur sur tous les emeteurs
-ref = zeros(length(ind),1,type);
-for i = 1:length(ind)
-    ref(i) = Gxy(Xloc(i,:),Y).' * V;
+Mxy = zeros(size(X,1),size(Y,1));
+for j = 1:size(Y,1)
+    Mxy(:,j) = Gxy(X,Y(j,:));
 end
 toc
+
+% Quadrature -> dof
+M = DQx * Mxy * QDy;
+
+% Replace close operator
+[I,J,S] = find(Dxy);
+M(sub2ind(size(M),I,J)) = S;
+
+% Dof -> unknowns
+M = UDx * M * DUy;
+
+% Matrix-vector product
+ref = M*V;
+
+% Facorisation LU
+tic
+[L,U] = lu(M);
+toc
+sol = L*(U*V);
+
+% Erreur
+norm(ref-sol)/norm(ref)
 disp(' ')
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FAST PRODUCT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-disp('~~~~~~~~~~~~~ FAST PRODUCT ~~~~~~~~~~~~~')
+%%%%%%%%%%%%%%%%%%%%%%%%%%% ORIGINAL CONSTRUCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp('~~~~~~~~~~~~~ ORIGINAL CONSTRUCTION ~~~~~~~~~~~~~')
+
+'FULL'
 
 % Hierarchical Matrix
 tic
-Mh = hmx(X,Y,Gxy,tol);
+Dh = hmx(u.dof,u.dof,DQx,X,Gxy,Y,QDy,tol); %%%%%% 
 toc
 
-% % Size
-% tmp = whos('Mh');
-% tmp.bytes/1e6
+% Correct close part
+tic
+Dh = hmxInsert(Dh,Dxy);
+toc
+
+% Graphical representation
+figure
+spy(Dh)
+
+'SPARSE'
+
+% Hierarchical sparse matrix
+tic
+Uh = hmxBuilder(UDx*u.dof,u.dof,UDx,tol);
+toc
+
+% Graphical representation
+figure
+spy(Uh)
+
+'PRODUCT'
+
+% Dof -> unknowns
+tic
+Mh = Uh * Dh;
+toc
+tic
+Mh = Mh * Uh.';
+toc
 
 % Graphical representation
 figure
@@ -116,7 +176,7 @@ sol = Mh * V;
 toc
 
 % Erreur
-norm(ref-sol(ind))/norm(ref)
+norm(ref-sol)/norm(ref)
 disp(' ')
 
 
@@ -125,12 +185,19 @@ disp('~~~~~~~~~~~~~ LU FACTORIZATION ~~~~~~~~~~~~~')
 
 % Factorization LU
 tic
-[L,U] = lu(Mh);
+[Lh,Uh] = lu(Mh);
 toc
 
+% Graphical representation
+figure
+subplot(1,2,1)
+spy(Lh)
+subplot(1,2,2)
+spy(Uh)
+
 % Matrix vector product
-sol = L * (U * V);
-norm(ref-sol(ind))/norm(ref)
+sol = Lh * (Uh * V);
+norm(ref-sol)/norm(ref)
 disp(' ')
 
 

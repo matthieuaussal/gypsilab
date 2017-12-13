@@ -21,16 +21,17 @@ classdef hmx
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmx.m                                         |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : H-Matrix class definition and functions       |
 %|  `---'  |                                                              |
 %+========================================================================+
 
 properties
     dim = [];         % H-MATRIX DIMENSIONS 
+    pos = [];         % COORDINATES POSITIONS (X,Y)
     chd = [];         % CHILDREN (M11 M12 M21 M22)
     row = [];         % CHILDREN ROWS INDICES
     col = [];         % CHILDREN COLUMNS INDICES
@@ -42,30 +43,10 @@ end
 methods
     % CONSTRUCTOR
     function Mh = hmx(varargin)
-        % Empty initialization
-        if (length(varargin) == 1)
-            Min    = varargin{1};
-            Mh.dim = Min.dim;
-            Mh.chd = cell(1,4);
-            Mh.row = Min.row;
-            Mh.col = Min.col;
-            Mh.dat = [];
-            Mh.typ = [];
-            Mh.tol = Min.tol;
-            
-        % Initialization with dimension 
-        elseif (length(varargin) == 2)
-            Mh.dim = [varargin{1},varargin{2}];
-            Mh.chd = cell(1,4);
-            Mh.row = cell(1,4);
-            Mh.col = cell(1,4);
-            Mh.dat = [];
-            Mh.typ = [];
-            Mh.tol = [];
-        
         % Initialization with dimension and accuracy    
-        elseif (length(varargin) == 3)
-            Mh.dim = [varargin{1},varargin{2}];
+        if (length(varargin) == 3)
+            Mh.dim = [length(varargin{1}),length(varargin{2})];
+            Mh.pos = {varargin{1},varargin{2}};
             Mh.chd = cell(1,4);
             Mh.row = cell(1,4);
             Mh.col = cell(1,4);
@@ -92,7 +73,7 @@ methods
             A      = varargin{3};
             B      = varargin{4};
             acc    = varargin{5};
-            Mh     = hmx(size(X,1),size(Y,1),acc);
+            Mh     = hmx(X,Y,acc);
             Mh.dat = {A,B};
             Mh.typ = 1;
             
@@ -107,9 +88,9 @@ methods
             My    = varargin{7};
             acc   = varargin{8};
             if exist('parpool','file')
-                Mh = femHmxBuilderParallel(Xdof,Ydof,Mx,X,green,Y,My,acc);
+                Mh = hmxBuilderFemParallel(Xdof,Ydof,Mx,X,green,Y,My,acc);
             else
-                Mh = femHmxBuilder(Xdof,Ydof,Mx,X,green,Y,My,acc);
+                Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,acc);
             end
             
         else
@@ -200,11 +181,11 @@ methods
     
     % EXACT SOLVER 
     function B = mldivide(Mh,B)
-        if Mh.typ > 0
+        if (Mh.typ == 2)
             B = Mh.dat \ B;
-        elseif (Mh.chd{2}.typ == 3) && (nnz(Mh.chd{2}.dat) == 0)
+        elseif (Mh.chd{2}.typ == 1) && isempty(Mh.chd{2}.dat{1})
             B = hmxSolveLower(Mh,B);
-        elseif (Mh.chd{3}.typ == 3) && (nnz(Mh.chd{3}.dat) == 0)
+        elseif (Mh.chd{3}.typ == 1) && isempty(Mh.chd{3}.dat{1})
             B = hmxSolveUpper(Mh,B);
         else
             [Lh,Uh] = lu(Mh);
@@ -218,6 +199,12 @@ methods
         hmxSpy(Mh);
     end
     
+    % PLOT POSITIONS
+    function plot3(Mh)
+        plot3(Mh.pos{1}(:,1),Mh.pos{1}(:,2),Mh.pos{1}(:,3),'bo',...
+            Mh.pos{2}(:,1),Mh.pos{2}(:,2),Mh.pos{2}(:,3),'*r');
+    end
+    
     % DIMENSIONS
     function dim = size(varargin)
         if length(varargin) == 1
@@ -226,6 +213,28 @@ methods
             dim = varargin{1}.dim(varargin{2});
         end
     end
+    
+    % VERTICAL CONCATENATION
+    function Mh = vertcat(varargin)
+        Mh = varargin{1};
+        for i = 2:nargin
+            Mh = cat(1,Mh,varargin{i});
+        end
+    end
+
+    % HORIZONTAL CONCATENATION
+    function Mh = horzcat(varargin)
+        Mh = varargin{1};
+        for i = 2:nargin
+            Mh = cat(2,Mh,varargin{i});
+        end
+    end
+    
+    % CONCATENATION
+    function Mh = cat(dim,Ml,Mr)
+        Mh = hmxCat(dim,Ml,Mr);
+    end
+
     
     % NORM(S)
     

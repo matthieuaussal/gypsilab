@@ -19,7 +19,7 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxHelmholtzS.m                            |
-%|    #    |   VERSION    : 0.30                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
@@ -37,10 +37,6 @@ addpath('../../openDom')
 addpath('../../openFem')
 addpath('../../openMsh')
 addpath('../../openHmx')
-
-% Mise en route du calcul paralelle 
-% matlabpool; 
-% parpool;
 
 % Parameters
 N   = 1e3
@@ -108,6 +104,9 @@ tic
 Sr  = 1/(4*pi) .* regularize(sigma,sigma,u,'[1/r]',v);
 LHS = LHS + Sr;
 toc
+
+% % Convert to single
+% LHS = single(LHS);
 
 % Structure
 figure

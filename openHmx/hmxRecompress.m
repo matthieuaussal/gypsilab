@@ -21,10 +21,10 @@ function Mh = hmxRecompress(Mh,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxRecompress.m                               |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Recompreesion of H-Matrix with new accuracy   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -40,22 +40,9 @@ if (Mh.typ == 0)
 % Compressed leaf
 elseif (Mh.typ == 1)
     if (Mh.tol < tol)
-        [A,B]     = hmxQRSVD(Mh.dat{1},Mh.dat{2},tol);
-        Mh.dat{1} = A;
-        Mh.dat{2} = B;
-        Mh.tol    = tol;
-    end
-    
-% Full leaf
-elseif (Mh.typ == 2)
-    if (Mh.tol < tol)
-        rk         = ceil(1/4*min(size(Mh.dat)));
-        [A,B,flag] = hmxRSVD(Mh.dat,Mh.tol,rk);
-        if flag
-            Mh.dat = {A,B};
-            Mh.typ = 1;
-            Mh.tol = tol;
-        end
+        [A,B]  = hmxQRSVD(Mh.dat{1},Mh.dat{2},tol);
+        Mh.dat = {A,B};
+        Mh.tol = tol;
     end
     
 % Others leaves

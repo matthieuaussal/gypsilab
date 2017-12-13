@@ -21,58 +21,72 @@ function Mh = hmxBuilder(X,Y,green,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxBuilder.m                                  |
-%|    #    |   VERSION    : 0.31                                          |
+%|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
 %| ( === ) |   SYNOPSIS   : Particles builder with low-rank approximation |
-%|  `---'  |                                                              |
+%|  `---'  |                for full, sparse and handle function          |
 %+========================================================================+
 
 % Initialisation
-Mh = hmx(size(X,1),size(Y,1),tol);
+Mh = hmx(X,Y,tol);
 
-% Centroids for each particles set
-X0 = mean(X,1);
-Y0 = mean(Y,1);
-
-% Unitary direction vector 
-U = Y0 - X0;
-if (norm(U) > 1e-6)
-    U = U./norm(U);
+% Compression for far distances
+if ~issparse(green) && hmxFar(Mh)
+    % ACA with partial pivoting for handle function
+    if isa(green,'function_handle')
+        [A,B,flag] = hmxACA(X,Y,green,tol);
+        
+    % ACA with total pivoting for full matrix
+    else
+        [A,B,flag] = hmxACA(green,tol);
+    end
+    
+% Compression for empty box
+elseif issparse(green) && (nnz(green) == 0)
+    A    = zeros(size(green,1),0);
+    B    = zeros(0,size(green,2));
+    flag = 1;
+    
+% No compression    
 else
-    U = [1 0 0];
+    flag = 0;
 end
 
-% Projection along the box separation
-Xu = (X-ones(size(X,1),1)*X0) * U';
-Yu = (Y-ones(size(Y,1),1)*X0) * U';
 
-% Distances for particles X
-Xr = sqrt(sum(  (X-ones(size(X,1),1)*X0).^2 , 2) );
-
-% Compression for separated boxes
-if (min(Yu) - max(Xu) > max(Xr))
+%%% Compression
+if flag
+    Mh.dat = {A,B};
     Mh.typ = 1;
-
-% Full computation for small box (stopping criterion)
-elseif sum(Mh.dim < 100)
+    
+    
+%%%% Full or sparse for smallest box (stopping criterion)
+elseif sum(Mh.dim < 200)
+    % Handle function
+    if isa(green,'function_handle')
+        [I,J]  = ndgrid(1:size(X,1),1:size(Y,1));
+        Mh.dat = green(X(I,:),Y(J,:));
+        Mh.dat = reshape(Mh.dat,size(X,1),size(Y,1));
+    
+    % Full or sparse matrix
+    else
+        Mh.dat = green;
+    end
+    
+    % Type
     Mh.typ = 2;
-
-% H-Matrix
+    
+    
+%%% H-Matrix (recursion)
 else
-    Mh.typ = 0;    
-end
-
-% H-Matrix (recursion)
-if (Mh.typ == 0)
     % Subdivision for X
-    ind    = hmxSubdivide(X);
-    Mh.row = {find(ind),find(ind),find(~ind),find(~ind)};
+    [I1,I2] = hmxSubdivide(X);
+    Mh.row  = {I1 , I1 , I2 , I2};
     
     % Subdivision for Y
-    ind    = hmxSubdivide(Y);
-    Mh.col = {find(ind),find(~ind),find(ind),find(~ind)};
+    [I1,I2] = hmxSubdivide(Y);
+    Mh.col  = {I1 , I2 , I1 , I2};
     
     % Single class
     if isa(X,'single')
@@ -84,71 +98,28 @@ if (Mh.typ == 0)
 
     % H-Matrix (recursion)
     for i = 1:4
+        % Coordinates
         Xi = X(Mh.row{i},:);
         Yi = Y(Mh.col{i},:);
+        
+        % Partial pivoting
         if isa(green,'function_handle')
             Mh.chd{i} = hmxBuilder(Xi,Yi,green,tol);
+            
+        % Total pivoting    
         elseif isnumeric(green)
             Mi = green(Mh.row{i},Mh.col{i});
             Mh.chd{i} = hmxBuilder(Xi,Yi,Mi,tol);
+            
         else
             error('hmxBuilder.m : unavailable case')
         end
     end
     
+    % Type
+    Mh.typ = 0; 
+    
     % Fusion
     Mh = hmxFusion(Mh);    
-
-% Compressed leaf
-elseif (Mh.typ == 1)
-    % ACA with partial pivoting
-    if isa(green,'function_handle')
-        [A,B,flag] = hmxACA(X,Y,green,tol);
-
-    % ACA with total pivoting
-    elseif isnumeric(green) && ~issparse(green)
-        [A,B,flag] = hmxACA(green,tol);
-        
-    % No compressor
-    else
-        flag = 0;
-    end
-    
-    % Update
-    if flag
-        Mh.dat{1} = A;
-        Mh.dat{2} = B;
-    else
-        Mh.typ = 2;
-    end
-end
-
-% Full or sparse leaf
-if (Mh.typ == 2)
-    % Matrix
-    if isa(green,'function_handle')
-        [I,J]  = ndgrid(1:size(X,1),1:size(Y,1));
-        Mh.dat = green(X(I,:),Y(J,:));
-        Mh.dat = reshape(Mh.dat,size(X,1),size(Y,1));
-    elseif isnumeric(green)
-        Mh.dat = green;
-    else
-        error('hmxBuilder.m : unavailable case')
-    end
-    
-    % Sparse matrix
-    if issparse(Mh.dat)
-        Mh.typ = 3;
-    end
-    
-    % Full matrix recompression
-    if (Mh.typ == 2)        
-        rk         = ceil(1/4*min(size(Mh.dat)));
-        [A,B,flag] = hmxRSVD(Mh.dat,tol,rk);
-        if flag
-            Mh.dat = {A,B};
-            Mh.typ = 1;
-        end
-    end
 end
 end
