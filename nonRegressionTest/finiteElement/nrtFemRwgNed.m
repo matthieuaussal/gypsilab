@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Francois Alouges (c) 2017-2018.                            |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -20,10 +20,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtFemRwgNed.m                                |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Francois Alouges                              |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Operators validation                          |
 %|  `---'  |                                                              |
 %+========================================================================+

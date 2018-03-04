@@ -4,7 +4,7 @@ function Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,tol)
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
 %|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -21,10 +21,10 @@ function Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxBuilderFem.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Particles builder with low-rank approximation |
 %|  `---'  |                and finite element integration                |
 %+========================================================================+
@@ -90,7 +90,7 @@ if flag
 
 
 %%%% Full or sparse for smallest box (stopping criterion)
-elseif sum(Mh.dim < 200)
+elseif sum(Mh.dim < 100)
     % Quadrature matrix
     Nx    = size(X,1);
     Ny    = size(Y,1);

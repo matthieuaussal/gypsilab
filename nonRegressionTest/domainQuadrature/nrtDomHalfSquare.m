@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -20,10 +20,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHalfSquare.m                               |
-%|    #    |   VERSION    : 0.32                                          |
-%|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
+%|    #    |   VERSION    : 0.40                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Surfacic integration                          |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -70,7 +70,7 @@ view(0,90)
 
 % Dof to quadrature matrix
 tic
-M = u.dqm(omega);
+M = u.uqm(omega);
 toc
 
 % /int_{[0,0.5],[-0.5,0.5]} 1 dx dy = 1 
@@ -84,7 +84,7 @@ toc
 
 % Gradient
 u  = grad(u);
-Mp = u.dqm(omega);
+Mp = u.uqm(omega);
 
 % /int_{[0,0.5],[-0.5,0.5]} gradx(1) dx dy = 0 
 (W' * Mp{1}) * ones(size(Xdof,1),1) - 0
@@ -98,27 +98,27 @@ Mp = u.dqm(omega);
 
 % grad[psi]3
 u   = grad(u,3);
-tmp = u.dqm(omega);
+tmp = u.uqm(omega);
 norm(Mp{3}-tmp,'inf')
 
 % N*[psi]
 u   = ntimes(u);
-tmp = u.dqm(omega);
+tmp = u.uqm(omega);
 norm(tmp{3}-M,'inf')
 
 % N*[psi]3
 u   = ntimes(u,3);
-tmp = u.dqm(omega);
+tmp = u.uqm(omega);
 norm(tmp-M,'inf')
 
 % Nxgrad[psi]
 u   = nxgrad(u);
-tmp = u.dqm(omega);
+tmp = u.uqm(omega);
 norm(tmp{2}-Mp{1},'inf')
 
 % Nxgrad[psi]2
 u   = nxgrad(u,2);
-tmp = u.dqm(omega);
+tmp = u.uqm(omega);
 norm(tmp-Mp{1},'inf')
 
 

@@ -4,7 +4,7 @@ function Ms = domRegularize(data)
 %|              OPENDOM - LIBRARY FOR NUMERICAL INTEGRATION               |
 %|           openDom is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,10 +22,10 @@ function Ms = domRegularize(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domRegularize.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Finite element regularization matrix for      |
 %|  `---'  |                singularities with Laplace kernel             |
 %+========================================================================+
@@ -51,6 +51,7 @@ vtx  = Ydom.msh.vtx;
 elt  = Ydom.msh.elt;
 ctr  = Ydom.msh.ctr;
 nrm  = Ydom.msh.nrm;
+stp  = Ydom.msh.stp;
 srf  = Ydom.msh.ndv;
 tau  = cell2mat(Ydom.msh.tgt);
 nu   = cell2mat(Ydom.msh.nrmEdg);
@@ -71,7 +72,7 @@ end
 Nx = size(X,1);
 
 % Rangesearch with max(|edge|)_Y
-[Ielt,Relt] = knnsearch(X,ctr,'K',50);                        %%% DEBUG %%%
+[Ielt,Relt] = rangesearch(X,ctr,1.1*stp(2));                  %%% DEBUG %%%
 Mx          = cell(Nelt,1);
 
 
@@ -87,27 +88,27 @@ parfor el = 1:Nelt
     edga = Sel(2,:) - Sel(1,:);
     edgb = Sel(3,:) - Sel(1,:);
     edgc = Sel(3,:) - Sel(2,:);
-    rMin = max([norm(edga),norm(edgb),norm(edgc)]);           %%% DEBUG %%%
+    rMin = 1.1*max([norm(edga),norm(edgb),norm(edgc)]);       %%% DEBUG %%%
     
     % Quadratures points in interaction
     Iy = elt2qud(el,:);
-    Ix = sort(Ielt(el,Relt(el,:)<rMin))';
+    Ix = sort(Ielt{el}(Relt{el}<rMin))';
     
-    %     % Graphical representation                          %%% DEBUG %%%
-    %     figure(10)
-    %     plot(Ydom.msh.sub(el))
-    %     hold on
-    %     plot3(X(Ix,1),X(Ix,2),X(Ix,3),'*')
-    %     axis equal
-    %     hold off
-    %     pause(1)
+%     % Graphical representation                              %%% DEBUG %%%
+%     figure(10)
+%     plot(Ydom.msh.sub(el))
+%     hold on
+%     plot3(X(Ix,1),X(Ix,2),X(Ix,3),'*')
+%     axis equal
+%     hold off
+%     pause(1)
     
     % If interactions
     if ~isempty(Ix)
         %%% CORRECTION WITH SEMI-ANALYTIC INTEGRATION
         % Analytical integration
         [Rm1,rRm1,gradRm1] = domSemiAnalyticInt(X(Ix,:),Sel,Nel,Tel,NUel,1e-8);
-        %         Rm1(:) = 0; rRm1(:) = 0; gradRm1(:) = 0;    %%% DEBUG %%%
+%                 Rm1(:) = 0; rRm1(:) = 0; gradRm1(:) = 0;    %%% DEBUG %%%
         
         % Vector yg-x
         Xun = ones(length(Ix),1);
@@ -272,9 +273,18 @@ if (length(data) == 4)
     Mw = speye(Nx,Nx);
     Ms = sparse(Nx,Ndof);
 else
-    Mu = u.dqm(Xdom);
+    Mu = u.uqm(Xdom);
     Mw = spdiags(Wx,0,length(Wx),length(Wx));
     Ms = sparse(size(Xunk,1),Ndof);
+end
+
+% For empty regularization
+if isempty(Mx)
+    if iscell(Mu)
+        Mx = [1 1 zeros(1,length(Mu))];
+    else
+        Mx = [1 1 0];
+    end
 end
 
 % Integration

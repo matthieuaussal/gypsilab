@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -19,12 +19,12 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtFemJunction.m                              |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   FILE       : nrtFemDirichletSquare.m                       |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
-%| ( === ) |   SYNOPSIS   : Junction beetween domains (linear relation)   |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%| ( === ) |   SYNOPSIS   : Dirichlet condition with a square             |
 %|  `---'  |                                                              |
 %+========================================================================+
 
@@ -41,58 +41,130 @@ addpath('../../openMsh')
 % Parameters
 Nvtx = 1e3;
 Neig = 10;
+L    = [1 0.5];
+dl   = 1e-6;
 
-% Horizontal mesh
-mesh1                 = mshSquare(Nvtx,[1,1]);
-ctr                   = mesh1.ctr;
-mesh1.col(ctr(:,1)<0) = 1;
-mesh1.col(ctr(:,1)>0) = 2;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREPARE MESH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% mesh1          = mshSquare(ceil(Nvtx/2),[L(1)/2 L(2)]);
+% mesh1.vtx(:,1) = mesh1.vtx(:,1) - L(1)/4;
+% mesh1.col(:)    = 1;
+% 
+% mesh2          = mesh1;
+% mesh2.vtx(:,1) = mesh2.vtx(:,1) + L(1)/2;
+% mesh2.col(:)   = 2;
+% 
+% mesh3          = mesh2;
+% mesh3.vtx(:,3) = mesh3.vtx(:,1);
+% mesh3.vtx(:,1) = 0;
+% ctr            = mesh3.ctr;
+% mesh3          = mesh3.sub(ctr(:,2) <= 0.13);
+% ctr            = mesh3.ctr;
+% mesh3          = mesh3.sub(ctr(:,2) >= -0.13);
+% ctr            = mesh3.ctr;
+% mesh3          = mesh3.sub(ctr(:,3) <= 0.07);
+% mesh3.col(:)   = 3;
+% 
+% mesh  = union(union(mesh1,mesh2),mesh3);
+% mshWriteVtk('Tjunction.vtk',mesh,mesh.col)
+% pouet
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Vertical mesh
-mesh2          = mshSquare(Nvtx/2,[0.5 1]);
-mesh2.col(:)   = 3;
-mesh2.vtx(:,3) = 0.25+mesh2.vtx(:,1);
-mesh2.vtx(:,1) = 0;
-
-% Final mesh
-mesh = union(mesh1,mesh2);
-
-% Boundary
+% Read mesh and boundary
+mesh  = msh('junction.vtk');
 bound = mesh.bnd;
 
-% Domain
-omega = dom(mesh,3);
-sigma = dom(bound,2);
+% Extract Tjunction
+ctr       = mesh.ctr;
+Tjunction = mesh.sub(ctr(:,3)>0);
 
-% Finites elements space
-u = fem(mesh,'P1');
-v = fem(mesh,'P1');
+% Extract interface
+int = setdiff(Tjunction.bnd,bound);
 
-% Dirichlet
-u = dirichlet(u,bound);
-v = dirichlet(v,bound);
+% Extract vextex cut
+cut = int.sub(2:length(int)-1);
 
-% Junctions
-u = junction(u,[1 2 3],[1 1 1]);
-v = junction(v,[1 2 3],[1 1 1]);
+% Extract plaque 
+plaque = setdiff(mesh,Tjunction);
+
+% Subdivide plaque
+ctr     = plaque.ctr;
+plaque1 = plaque.sub(ctr(:,1)<=0);
+plaque2 = plaque.sub(ctr(:,1)>=0);
+
+% Cut and translate plaque 1
+I = ismember(plaque1.vtx,cut.vtx,'rows');
+plaque1.vtx(I,1) = plaque1.vtx(I,1) - dl;
+
+% Cut and translate plaque 2
+I = ismember(plaque2.vtx,cut.vtx,'rows');
+plaque2.vtx(I,1) = plaque2.vtx(I,1) + dl;
+
+% Cut and translate Tjunction
+I = ismember(Tjunction.vtx,int.vtx,'rows');
+Tjunction.vtx(I,3) = Tjunction.vtx(I,3) + dl;
+
+% Interfaces
+I = ismember(int.vtx,cut.vtx,'rows');
+int1 = int;
+int1.vtx(I,1) = int1.vtx(I,1) - dl;
+int2 = int;
+int2.vtx(I,1) = int2.vtx(I,1) + dl;
+int3 = int;
+int3.vtx(:,3) = int3.vtx(:,3) + dl;
 
 % Graphical representation
-plot(mesh); 
+figure
+% plot(mesh,'w')
 hold on
-plot(bound,'r')
-hold off
-axis equal;
-title('Mesh representation')
-xlabel('X');   ylabel('Y');   zlabel('Z');
+% plot(bound,'r')
+plot(plaque1,'g')
+plot(plaque2,'r')
+plot(Tjunction,'b')
+plot(int1,'y')
+plot(int2,'y')
+plot(int3,'y')
+axis equal
+view(-50,20)
+
+% Plaque with a holl
+mesh = union(union(plaque1,plaque2),Tjunction);
+
+% Dirichet condition
+bound = mesh.bnd;
+int   = union(union(int1,int2),int3);
+dir   = setdiff(bound,int);
+
+% Graphical representation
+figure
+plot(mesh,'w')
+hold on
+plot(int1,'g')
+plot(int2,'r')
+plot(int3,'b')
+plot(dir,'y')
+axis equal
+view(-50,20)
+
+% Domain
+omega = dom(mesh,7);
+
+% Finites elements space
+u = fem(mesh,'P2');
+
+% Dirichlet condition
+u = dirichlet(u,dir);
+
+% Junction
+u = junction(u,int1,1,int2,-1,int3,1);
 
 % Mass matrix
 tic
-M = integral(omega,u,v);
+M = integral(omega,u,u);
 toc
 
 % Rigidity matrix
 tic
-K = integral(omega,grad(u),grad(v));
+K = integral(omega,grad(u),grad(u));
 toc
 
 % Find eigen values
@@ -107,33 +179,18 @@ V = V./(max(max(abs(V))));
 [EV,ind] = sort(sqrt(real(diag(EV))));
 V        = V(:,ind);
 
-% Separated meshes
-mesh1 = mesh.sub(mesh.col==1);
-mesh2 = mesh.sub(mesh.col==2);
-mesh3 = mesh.sub(mesh.col==3);
-
-% Final valueas
-[X,P] = u.unk;
-V     = P * V;
-V1    = V(1:size(mesh1.vtx,1),:);    
-V2    = V(size(V1,1)+(1:size(mesh2.vtx,1)),:);    
-V3    = V(size(V1,1)+size(V2,1)+1:end,:);
-
 % Graphical representation
 figure
 for n = 1:9
     subplot(3,3,n)
-    hold on
-    plot(mesh1,V1(:,n))
-    plot(mesh2,V2(:,n))
-    plot(mesh3,V3(:,n))
+    surf(u,V(:,n))
+    title(['k = ',num2str(EV(n))])
     axis equal off
     colorbar
 end
 
 % Analytical solutions of eigenvalues for an arbitrary cube
 ref = zeros(Neig^2,1);
-L   = [1 1];
 l = 1;
 for i = 1:Neig
     for j = 1:Neig
@@ -146,7 +203,7 @@ ref = ref(1:Neig);
 
 % Error
 sol = EV(1:Neig);
-[ref sol]
+[ref sol abs(sol-ref)./ref]
 
 
 disp('~~> Michto gypsilab !')

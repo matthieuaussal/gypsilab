@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxHelmholtzBWdir.m                        |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Solve dirichlet scatering problem with        |
 %|  `---'  |                Brackage-Werner formulation                   |
 %+========================================================================+

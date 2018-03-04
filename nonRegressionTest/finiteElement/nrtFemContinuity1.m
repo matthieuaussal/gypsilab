@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -19,12 +19,12 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtFemContinuity.m                            |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   FILE       : nrtFemDirichletSquare.m                       |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
-%| ( === ) |   SYNOPSIS   : Continuity beetween domain for a disk         |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%| ( === ) |   SYNOPSIS   : Dirichlet condition with a square             |
 %|  `---'  |                                                              |
 %+========================================================================+
 
@@ -41,65 +41,64 @@ addpath('../../openMsh')
 % Parameters
 Nvtx = 1e3;
 Neig = 10;
+L    = [1 0.5];
+dl   = 1e-1;
 
-% Meshes
-mesh = mshDisk(Nvtx,1);
+% Original mesh
+mesh  = mshSquare(Nvtx,L);
+bound = mesh.bnd;
+ctr   = mesh.ctr;
 
-% Colors
-ctr = mesh.ctr;
-mesh.col(:) = 1;
-mesh.col(ctr(:,1)>0) = 2;
-mesh.col(ctr(:,1)>0 & ctr(:,2)>0) = 3;
+% Sub-mesh 1
+mesh1        = mesh.sub(ctr(:,1)<=0);
+mesh1.col(:) = 1;
+int1         = setdiff(mesh1.bnd,bound);
 
-% Submeshing
-mesh1 = mesh.sub(mesh.col==1);
-mesh2 = mesh.sub(mesh.col==2);
-mesh3 = mesh.sub(mesh.col==3);
+% Sub mesh 2 with translation
+mesh2          = mesh.sub(ctr(:,1)>=0);
+mesh2.col(:)   = 2;
+mesh2.vtx(:,1) = mesh2.vtx(:,1) + dl;
+int2           = int1;
+int2.vtx(:,1)  = int2.vtx(:,1) + dl;
 
-% Boundary
+% Final mesh
+mesh  = union(mesh1,mesh2);
 bound = mesh.bnd;
 
-% Interfaces
-inter1 = setdiff(mesh1.bnd,bound);
-inter2 = setdiff(mesh2.bnd,bound);
-
-% Domain
-omega = dom(mesh,3);
-sigma = dom(bound,2);
-
-% Finites elements space
-u = fem(mesh,'P1');
-v = fem(mesh,'P1');
-
 % Dirichlet
-u = dirichlet(u,bound);
-v = dirichlet(v,bound);
-
-% Continuity
-c = [1 2 ; 1 3 ; 2 3 ];
-u = continuity(u,c);
-v = continuity(v,c);
+int = union(int1,int2);
+dir = setdiff(bound,int);
 
 % Graphical representation
-plot(mesh); 
+figure
+plot(mesh)
 hold on
-plot(bound,'r')
-plot(inter1,'y')
-plot(inter2,'y')
-hold off
-axis equal;
-title('Mesh representation')
-xlabel('X');   ylabel('Y');   zlabel('Z');
-alpha(0.99)
+% plot(bound,'y')
+plot(int1,'c')
+plot(int2,'m')
+plot(dir,'y')
+axis equal
+
+% Domain
+omega = dom(mesh,7);
+
+% Finites elements space
+u = fem(mesh,'P2');
+
+% Dirichlet condition
+u = dirichlet(u,dir);
+
+% Continuity
+u = junction(u,int1,1,int2,-1);
 
 % Mass matrix
 tic
-M = integral(omega,u,v);
+M = integral(omega,u,u);
 toc
 
 % Rigidity matrix
 tic
-K = integral(omega,grad(u),grad(v));
+K = integral(omega,grad(u),grad(u));
 toc
 
 % Find eigen values
@@ -107,43 +106,38 @@ tic
 [V,EV] = eigs(K,M,2*Neig,'SM');
 toc
 
-% Evaluate eigen values at vertices
-V = feval(u,V,mesh);
-
 % Normalization
 V = V./(max(max(abs(V))));
 
 % Sort by ascending order
 [EV,ind] = sort(sqrt(real(diag(EV))));
-[~,uni]  = unique(floor(1e2*EV));
 V        = V(:,ind);
 
 % Graphical representation
 figure
 for n = 1:9
     subplot(3,3,n)
-    plot(mesh,V(:,n))
-        title(['k = ',num2str(EV(n))])
+    surf(u,V(:,n))
+    title(['k = ',num2str(EV(n))])
     axis equal off
+    colorbar
 end
 
-% Analytical solutions of eigenvalues for an unitary disk
+% Analytical solutions of eigenvalues for an arbitrary cube
 ref = zeros(Neig^2,1);
-k= 1;
-for i = 0:Neig
-    for j = 0:Neig
-        ref(k) = fzero(@(X) besselj(i,X),j);
-        k = k+1;
+l = 1;
+for i = 1:Neig
+    for j = 1:Neig
+        ref(l) = pi*sqrt( (i/L(1))^2 + (j/L(2))^2 );
+        l = l+1;
     end
 end
-ref = ref(ref>1e-6);
-ref = 1e-6*unique(ceil(ref*1e6));
+ref = sort(ref);
 ref = ref(1:Neig);
 
 % Error
-sol = EV(uni(1:length(ref)));
-[ref sol abs(sol(1:length(ref))-ref)./ref]
-
+sol = EV(1:Neig);
+[ref sol abs(sol-ref)./ref]
 
 
 disp('~~> Michto gypsilab !')

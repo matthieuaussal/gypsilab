@@ -4,7 +4,7 @@ function M = femLagrangePn(fe,domain)
 %|              OPENFEM - LIBRARY FOR FINITE ELEMENT METHOD               |
 %|           openFem is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,10 +22,10 @@ function M = femLagrangePn(fe,domain)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femLagrangePn.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Lagrange finite element matrix (P0,P1,P2)     |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -350,16 +350,16 @@ elseif strcmp(fe.opr,'n*[psi]')
     % Finite element
     tmp     = fem(fe.msh,fe.typ);
     tmp.opr = '[psi]';
-    dqm     = tmp.dqm(domain);
+    uqm     = tmp.uqm(domain);
     
     % Normals
     nrm = domain.qudNrm;
     
     % Dot product
     m    = size(nrm,1);
-    M{1} = spdiags(nrm(:,1),0,m,m) * dqm;
-    M{2} = spdiags(nrm(:,2),0,m,m) * dqm;
-    M{3} = spdiags(nrm(:,3),0,m,m) * dqm;
+    M{1} = spdiags(nrm(:,1),0,m,m) * uqm;
+    M{2} = spdiags(nrm(:,2),0,m,m) * uqm;
+    M{3} = spdiags(nrm(:,3),0,m,m) * uqm;
 
     
 %%%% NORMAL x DQM
@@ -367,7 +367,7 @@ elseif strcmp(fe.opr,'nxgrad[psi]')
     % Finite elements
     tmp     = fem(fe.msh,fe.typ);
     tmp.opr = 'grad[psi]';
-    dqm     = tmp.dqm(domain);
+    uqm     = tmp.uqm(domain);
     
     % Normals
     nrm  = domain.qudNrm;
@@ -381,7 +381,7 @@ elseif strcmp(fe.opr,'nxgrad[psi]')
     for i = 1:3
         ip1  = mod(i,3) + 1;
         ip2  = mod(ip1,3) + 1;
-        M{i} = N{ip1} * dqm{ip2} - N{ip2} * dqm{ip1};
+        M{i} = N{ip1} * uqm{ip2} - N{ip2} * uqm{ip1};
     end
     
     
@@ -393,10 +393,10 @@ elseif strcmp(fe.opr(1:end-1),'grad[psi]')
     % Finite elements
     tmp     = fem(fe.msh,fe.typ);
     tmp.opr = 'grad[psi]';
-    dqm     = tmp.dqm(domain);
+    uqm     = tmp.uqm(domain);
     
     % Gradient (j)
-    M  = dqm{j};
+    M  = uqm{j};
 
         
 %%% NORMALS * DQM (j)
@@ -407,14 +407,14 @@ elseif strcmp(fe.opr(1:end-1),'n*[psi]')
     % Finite element
     tmp     = fem(fe.msh,fe.typ);
     tmp.opr = '[psi]';
-    dqm     = tmp.dqm(domain);
+    uqm     = tmp.uqm(domain);
     
     % Normal (component j)
     N = domain.qudNrm;
     
     % Dot product (j)
     m = size(N,1);
-    M = spdiags(N(:,j),0,m,m) * dqm;
+    M = spdiags(N(:,j),0,m,m) * uqm;
     
     
 %%%% NORMAL x DQM (j)
@@ -425,7 +425,7 @@ elseif strcmp(fe.opr(1:end-1),'nxgrad[psi]')
     % Finite element
     tmp     = fem(fe.msh,fe.typ);
     tmp.opr = 'grad[psi]';
-    dqm     = tmp.dqm(domain);
+    uqm     = tmp.uqm(domain);
     
     % Normals
     N = domain.qudNrm;
@@ -436,8 +436,8 @@ elseif strcmp(fe.opr(1:end-1),'nxgrad[psi]')
     jp2 = mod(jp1,3) + 1;
 
     % Cross product
-    M = spdiags(N(:,jp1),0,m,m) * dqm{jp2} - ...
-        spdiags(N(:,jp2),0,m,m) * dqm{jp1};
+    M = spdiags(N(:,jp1),0,m,m) * uqm{jp2} - ...
+        spdiags(N(:,jp2),0,m,m) * uqm{jp1};
     
 else
     error('femLagrangePn.m : unavailable case')

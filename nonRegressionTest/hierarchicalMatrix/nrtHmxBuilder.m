@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxBuilder.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Build H-Matrix and compare to full product    |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -48,7 +48,7 @@ type = 'double'
 tol = 1e-3
 
 % Nombre d'onde et frequence (Hz)
-k = 0
+k = 10
 f = (k*340)/(2*pi);
 
 % Nuage de point recepteurs X
@@ -57,9 +57,9 @@ X  = -1 + 2*rand(Nx,3,type);
 X  = unit(X);
 
 % Nuage de point emmeteurs Y
-% Ny = 2e3 
+% Ny = 1e5 
 % Y  = -1 + 2*rand(Ny,3);
-% Y  = -5 + Y;
+% Y  = -1 + Y;
 Ny = Nx
 Y  = X;
 
@@ -68,11 +68,18 @@ V = -(1+1i) + 2*(rand(Ny,1,type) + 1i*rand(Ny,1,type));
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Gxy = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
+% rxy = @(X,Y) sqrt( (X(:,1)-Y(:,1)).^2 + (X(:,2)-Y(:,2)).^2 + (X(:,3)-Y(:,3)).^2 );
+% Gxy = @(X,Y) rxy(X,Y).^2;
+% Gxy = @(X,Y) exp(- rxy(X,Y).^2 / 0.2)
+% xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3)
+% Gxy = @(X,Y) exp(1i*k * xdoty(X,Y));
 
 % Representation graphique
 figure
 plot3(X(:,1),X(:,2),X(:,3),'*b',Y(:,1),Y(:,2),Y(:,3),'*r')
-axis equal 
+axis equal % size(I)
+% size(X)
+% size(Y)
 
 
 
@@ -128,6 +135,10 @@ tic
 [L,U] = lu(Mh);
 toc
 
+% Graphical representation
+figure
+spy(L)
+
 % Matrix vector product
 sol = L * (U * V);
 norm(ref-sol(ind))/norm(ref)
@@ -135,4 +146,3 @@ disp(' ')
 
 
 disp('~~> Michto gypsilab !')
-

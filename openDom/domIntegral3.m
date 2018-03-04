@@ -4,7 +4,7 @@ function I = domIntegral3(data)
 %|              OPENDOM - LIBRARY FOR NUMERICAL INTEGRATION               |
 %|           openDom is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,10 +22,10 @@ function I = domIntegral3(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domIntegral3.m                                |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Numerical integation with 3 input arguments   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -124,7 +124,7 @@ elseif isa(data{1},'dom') && (isa(data{2},'function_handle') || iscell(data{2}))
     
     % Integrated finite element matrix
     v  = data{3};
-    Mv = v.dqm(Xdom);
+    Mv = v.uqm(Xdom);
     if iscell(Mv)
         Mv{1} = Wx * Mv{1};
         Mv{2} = Wx * Mv{2};
@@ -147,7 +147,7 @@ elseif isa(data{1},'dom') && isa(data{2},'fem') && (isa(data{3},'function_handle
     
     % Integrated finite element matrix
     u  = data{2};
-    Mu = u.dqm(Xdom);
+    Mu = u.uqm(Xdom);
     if iscell(Mu)
         Mu{1} = Mu{1}' * Wx;
         Mu{2} = Mu{2}' * Wx;
@@ -180,7 +180,7 @@ elseif isa(data{1},'dom') && isa(data{2},'fem') && isa(data{3},'fem')
     
     % Integrated finite element matrix
     u  = data{2};
-    Mu = u.dqm(Xdom);
+    Mu = u.uqm(Xdom);
     if iscell(Mu)
         Mu{1} = Mu{1}' * Wx;
         Mu{2} = Mu{2}' * Wx;
@@ -191,7 +191,7 @@ elseif isa(data{1},'dom') && isa(data{2},'fem') && isa(data{3},'fem')
     
     % Finite element matrix
     v  = data{3};
-    Mv = v.dqm(Xdom);
+    Mv = v.uqm(Xdom);
     
     % Integration
     I = femMultiplyCell(Mu,Mv);

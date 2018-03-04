@@ -4,7 +4,7 @@ classdef msh
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
 %|           openMsh is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -21,10 +21,10 @@ classdef msh
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : msh.m                                         |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Mesh class definition                         |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -82,7 +82,7 @@ methods
     function mesh = clean(mesh)
         % Unify duplicate vertex
         [mesh.vtx,~,I] = unique(mesh.vtx,'rows','stable');
-        if size(mesh.elt,1) == 1
+        if (size(mesh.elt,1) == 1)
             I = I';
         end
         mesh.elt = I(mesh.elt);
@@ -99,16 +99,6 @@ methods
         else
             mesh.elt = Ivtx(mesh.elt);
         end
-        
-        % Sort vertices in ascending order
-        [mesh.vtx,tmp] = sortrows(mesh.vtx);
-        I              = zeros(size(mesh.vtx,1),1);
-        I(tmp)         = 1:size(mesh.vtx,1);
-        if (size(mesh.elt,1) == 1)
-            mesh.elt = I(mesh.elt)';
-        else
-            mesh.elt = I(mesh.elt);
-        end
     end
     
     
@@ -119,7 +109,7 @@ methods
             mshPlot(mesh,[])
         else
             V = varargin{2};
-            if numel(V) == size(mesh.elt,1)
+            if (numel(V) == size(mesh.elt,1)) && (~ischar(V))
                 mesh.col = V;
                 mshPlot(mesh,[])
             else
@@ -302,19 +292,9 @@ methods
         meshC     = msh(vtxC,eltC,colC);
     end    
     
-    % REORDER MESH WITH REVERSE CUTHILL MC-KEE
-    function mesh = symrcm(mesh)
-        omega = dom(mesh,1);
-        u     = fem(mesh,'P1');
-        M     = integral(omega,u,u);
-        I     = symrcm(M);
-        if norm((1:length(I))-sort(I)) > 1e-12
-            error('msh.m : unavailable case')
-        end
-        mesh.vtx = mesh.vtx(I,:);
-        tmp      = zeros(1,length(I));
-        tmp(I)   = (1:length(I));        
-        mesh.elt = tmp(mesh.elt);
+    % FUNCTION
+    function mesh = fct(mesh,fct)
+        mesh.vtx = fct(mesh.vtx);
     end
 end
 end

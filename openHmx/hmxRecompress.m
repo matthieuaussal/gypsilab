@@ -4,7 +4,7 @@ function Mh = hmxRecompress(Mh,tol)
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
 %|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -21,10 +21,10 @@ function Mh = hmxRecompress(Mh,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxRecompress.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Recompreesion of H-Matrix with new accuracy   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -33,7 +33,7 @@ function Mh = hmxRecompress(Mh,tol)
 if (Mh.typ == 0)
     for i = 1:4
         Mh.chd{i} = hmxRecompress(Mh.chd{i},tol);
-        Mh.tol    = max(tol,Mh.tol);
+        Mh.tol    = max(tol,Mh.tol);        
     end
     Mh = hmxFusion(Mh);
     
@@ -47,6 +47,13 @@ elseif (Mh.typ == 1)
     
 % Others leaves
 else
-    Mh.tol = max(tol,Mh.tol); 
+    if (Mh.tol < tol)
+        [A,B,flag] = hmxSVD(Mh.dat,tol);
+        if flag
+            Mh.dat = {A,B};
+            Mh.typ = 1;
+        end
+        Mh.tol = tol;
+    end
 end
 end

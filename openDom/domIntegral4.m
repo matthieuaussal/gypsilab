@@ -4,7 +4,7 @@ function I = domIntegral4(data)
 %|              OPENDOM - LIBRARY FOR NUMERICAL INTEGRATION               |
 %|           openDom is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,10 +22,10 @@ function I = domIntegral4(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domIntegral4.m                                |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Numerical integation with 4 input arguments   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -40,7 +40,7 @@ if isa(data{1},'dom') && isa(data{2},'fem')
     
     % Integrated finite element matrix
     u  = data{2};
-    Mu = u.dqm(Xdom);
+    Mu = u.uqm(Xdom);
     if iscell(Mu)
         Mu{1} = Mu{1}' * Wx;
         Mu{2} = Mu{2}' * Wx;
@@ -61,7 +61,7 @@ if isa(data{1},'dom') && isa(data{2},'fem')
     
     % Finite element matrix
     v  = data{4};
-    Mv = v.dqm(Xdom);
+    Mv = v.uqm(Xdom);
     
     % Integration
     I = femMultiplyCell(Mu,Fx,Mv);
@@ -97,7 +97,7 @@ elseif isnumeric(data{1}) && isa(data{2},'dom')
 
     % Integrated finite element matrix
     v  = data{4};
-    Mv = v.dqm(Ydom);
+    Mv = v.uqm(Ydom);
     if iscell(Mv)
         Mv{1} = Wy * Mv{1};
         Mv{2} = Wy * Mv{2};
@@ -124,7 +124,7 @@ elseif isa(data{1},'dom') && isnumeric(data{2})
     
     % Integrated finite element matrix
     u  = data{3};
-    Mu = u.dqm(Xdom);
+    Mu = u.uqm(Xdom);
     if iscell(Mu)
         Mu{1} = Mu{1}' * Wx;
         Mu{2} = Mu{2}' * Wx;

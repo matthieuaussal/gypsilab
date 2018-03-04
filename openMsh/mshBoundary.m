@@ -4,7 +4,7 @@ function mesh = mshBoundary(mesh)
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
 %|           openMsh is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -21,10 +21,10 @@ function mesh = mshBoundary(mesh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : mshBoundary.m                                 |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Submesh to free boundary mesh                 |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -35,28 +35,48 @@ if (size(mesh.elt,2) == 1)
     
 % Edge mesh
 elseif (size(mesh.elt,2) == 2)
-    part        = mesh.prt;
-    mlt         = accumarray(mesh.elt(:),1,[size(mesh.vtx,1),1]);
-    elt         = find(mlt==1);
+    % Particles
+    part = mesh.prt;
+    
+    % Element table
+    mlt = accumarray(mesh.elt(:),1,[size(mesh.vtx,1),1]);
+    elt = find(mlt==1);
+    
+    % Inherit colours 
     [mesh,~,IB] = intersect(msh(mesh.vtx,elt),part);
     mesh.col    = part.col(IB);
     
 % Triangular mesh
 elseif (size(mesh.elt,2) == 3)
-    dt          = triangulation(mesh.elt,mesh.vtx);
-    [elt,vtx]   = freeBoundary(dt);
+    % Edge boundary
+    dt        = triangulation(mesh.elt,mesh.vtx);
+    [elt,vtx] = freeBoundary(dt);
+    
+    % Inherit vertices order 
+    [vtx,~,I] = intersect(mesh.vtx,vtx,'rows','stable');
+    I(I)      = 1:length(I);
+    elt       = I(elt);
+    
+    % Inherit colours
     edges       = mesh.edg;   
     [mesh,~,IB] = intersect(msh(vtx,elt),edges);
     mesh.col    = edges.col(IB);
     
 % Tetrahedral mesh
 elseif (size(mesh.elt,2) == 4)
-    dt          = triangulation(mesh.elt,mesh.vtx);
-    [elt,vtx]   = freeBoundary(dt);
+    % Triangular boundary
+    dt        = triangulation(mesh.elt,mesh.vtx);
+    [elt,vtx] = freeBoundary(dt);
+    
+    % Inherit vertices order 
+    [vtx,~,I] = intersect(mesh.vtx,vtx,'rows','stable');
+    I(I)      = 1:length(I);
+    elt       = I(elt);
+    
+    % Inherit colours
     face        = mesh.fce;   
     [mesh,~,IB] = intersect(msh(vtx,elt),face);
     mesh.col    = face.col(IB);
-    
 else
     error('mshBoundary.m : unavailable case')
 end

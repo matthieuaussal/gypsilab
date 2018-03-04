@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxAlgebra.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Evaluate each hmx class function              |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -42,11 +42,11 @@ type = 'double';
 tol = 1e-3
 
 % Wave number or frequency (Hz)
-k = 1
+k = 5
 f = (k*340)/(2*pi);
 
 % Particles receptors X (sphere)
-Nx      = 2e3;
+Nx      = 1e3;
 [x,y,z] = sphere(ceil(sqrt(Nx)));
 X       = unique([x(:),y(:),z(:)],'rows');
 Nx      = size(X,1)
@@ -60,12 +60,12 @@ Y  = X;
 % Ny = 2e3
 % Y  = -1+2*rand(Ny,3);
 if strcmp(type,'single')
-    X = single(X);
+    Y = single(Y);
 end
 
 % Green kernel -> exp(1i*k*r)/r
 rxy   = @(X,Y) sqrt( (X(:,1)-Y(:,1)).^2 + (X(:,2)-Y(:,2)).^2 + (X(:,3)-Y(:,3)).^2 );
-green = @(X,Y) exp(1i*k*rxy(X,Y))./(rxy(X,Y) + 1/(1i*k));
+green = @(X,Y) exp(1i*k*rxy(X,Y))./(rxy(X,Y)+1e-8) .* (rxy(X,Y)>1e-8);
 
 % Particles charges (multiples)
 V = (-1+2*rand(Ny,2,type)) + (-1+2i*rand(Ny,2,type));
@@ -633,7 +633,8 @@ disp(' ')
 %%% ITERATIVE SOLVER WITH PRECONDITIONNER
 disp('~~~~~~~~~~~~~ ITERATIVE SOLVER WITH PRECONDITIONNER ~~~~~~~~~~~~~')
 tic
-[Lh,Uh] = lu(hmxRecompress(Mh,0.1));
+tmp     = hmxRecompress(Mh,0.1);
+[Lh,Uh] = lu(tmp);
 Mhm1V   = @(V) Uh\(Lh\V);
 toc
 tic

@@ -4,7 +4,7 @@ function Mh = hmxCat(dim,Ml,Mr)
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
 %|           openHmx is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal (c) 2015-2017.                             |
+%| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -21,10 +21,10 @@ function Mh = hmxCat(dim,Ml,Mr)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxCat.m                                      |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.12.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Concatenate H-Matrix along dimensions dim     |
 %|  `---'  |                with the rule                                 |
 %|         |                H-Matrix > Compr > Full                       |
@@ -68,7 +68,7 @@ if (Ml.typ == 0) && (Mr.typ == 0)
     
     % Split for too big full leaf 
     for i = 1:4
-        if (Mh.chd{i}.typ == 2) && ~sum(Mh.chd{i}.dim < 200)
+        if (Mh.chd{i}.typ == 2) && ~sum(Mh.chd{i}.dim < 100)
             Mh.chd{i} = hmxSplit(dim,Mh.chd{i});
             Mh.chd{i} = hmxFusion(Mh.chd{i});
         end
@@ -120,7 +120,7 @@ elseif (Ml.typ == 1) && (Mr.typ == 1)
     
 % [Compr & Full] -> H-matrix or Compr or Full
 elseif (Ml.typ == 1) && (Mr.typ == 2)
-    if sum(Ml.dim < 200)
+    if sum(Ml.dim < 100)
         Mh.dat = cat(dim,Ml.dat{1}*Ml.dat{2},Mr.dat);
         Mh.typ = 2;  
     else 
@@ -139,7 +139,7 @@ elseif (Ml.typ == 2) && (Mr.typ == 0)
         
 % [Full & Compr] -> Compr                            
 elseif (Ml.typ == 2) && (Mr.typ == 1)       
-    if sum(Mr.dim < 200)
+    if sum(Mr.dim < 100)
         Mh.dat = cat(dim,Ml.dat,Mr.dat{1}*Mr.dat{2});
         Mh.typ = 2;   
     else

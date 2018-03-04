@@ -4,7 +4,7 @@ function M = femMultiplyCell(varargin)
 %|              OPENFEM - LIBRARY FOR FINITE ELEMENT METHOD               |
 %|           openFem is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,10 +22,10 @@ function M = femMultiplyCell(varargin)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femMultiplyCell.m                             |
-%|    #    |   VERSION    : 0.32                                          |
-%|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
+%|    #    |   VERSION    : 0.40                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Multiply finite elements cells                |
 %|  `---'  |                                                              |
 %+========================================================================+

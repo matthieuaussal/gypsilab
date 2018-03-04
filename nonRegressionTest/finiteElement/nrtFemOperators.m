@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,8 +22,8 @@
 %|    #    |   FILE       : nrtFemOperators.m                             |
 %|    #    |   VERSION    : 0.32                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
-%|  ( # )  |   CREATION   : 15.11.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2017                                    |
+%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : Finites elements operators validation         |
 %|  `---'  |                                                              |
 %+========================================================================+

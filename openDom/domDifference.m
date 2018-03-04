@@ -4,7 +4,7 @@ function err = domDifference(domain,fe,Uh,Uex,type )
 %|              OPENDOM - LIBRARY FOR NUMERICAL INTEGRATION               |
 %|           openDom is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2015-2017.          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018.          |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -22,10 +22,10 @@ function err = domDifference(domain,fe,Uh,Uex,type )
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domDifference.m                               |
-%|    #    |   VERSION    : 0.32                                          |
+%|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : François Alouges                              |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 05.09.2017                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
 %| ( === ) |   SYNOPSIS   : L2 and H1 ERRORS                              |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -34,7 +34,7 @@ function err = domDifference(domain,fe,Uh,Uex,type )
 [X,Wx] = domain.qud;
 
 % Finite element matrix
-Mu = fe.dqm(domain);
+Mu = fe.uqm(domain);
 
 % Function to be applied
 Uexact = Uex(X);
@@ -49,7 +49,7 @@ switch type
     case 'H1'
         eps = 1e-6;
         gradef = grad(fe);
-        Gu = gradef.dqm(domain);
+        Gu = gradef.uqm(domain);
         DxUapp = Gu{1} * Uh;
         DyUapp = Gu{2} * Uh;
         DzUapp = Gu{3} * Uh;
