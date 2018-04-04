@@ -66,6 +66,16 @@ methods
         plot(fe.msh,V);
     end
     
+    function graph(fe,V)
+        V = feval(fe,V,fe.msh);
+        if iscell(V)
+            V = sqrt( V{1}.^2 + V{2}.^2 + V{3}.^2 );
+        end
+        nrm        = feval(fem(fe.msh,'P0'),fe.msh.nrm,fe.msh);
+        fe.msh.vtx = fe.msh.vtx + (V*ones(1,3)).*nrm;
+        plot(fe.msh,V)
+    end
+    
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% GLOBAL DATA  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % LENGTH

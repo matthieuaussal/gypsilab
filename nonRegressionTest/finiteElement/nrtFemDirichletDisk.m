@@ -101,7 +101,7 @@ V        = V(:,ind);
 figure
 for n = 1:9
     subplot(3,3,n)
-    surf(u,V(:,n))
+    graph(u,V(:,n))
     title(['k = ',num2str(EV(n))])
     axis equal off
 end
