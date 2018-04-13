@@ -64,7 +64,6 @@ run('nrtFemRwgNed.m');
 
 % Hierarchical matrices
 cd('../hierarchicalMatrix')
-run('nrtHelmholtzCalderon.m')
 run('nrtHmxAlgebra.m');
 run('nrtHmxBuilder.m');
 run('nrtHmxCompareLU.m');
@@ -74,6 +73,7 @@ run('nrtHmxCompressorTotal.m');
 
 % Scattering
 cd('../scattering')
+run('nrtHelmholtzCalderon.m')
 run('nrtHmxHelmholtzS.m');
 run('nrtHmxHelmholtzD.m');
 run('nrtHmxHelmholtzDt.m');
