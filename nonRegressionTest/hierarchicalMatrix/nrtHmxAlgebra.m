@@ -19,7 +19,7 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxAlgebra.m                               |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
@@ -643,6 +643,23 @@ for i = 1:size(V,2)
     sol(:,i) = gmres(@(V) Mh*V,V(:,i),[],tol,100,Mhm1V);
 end
 toc
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+disp(' ')
+
+
+%%% Diagonal
+disp('~~~~~~~~~~~~~ DIAGONAL ~~~~~~~~~~~~~')
+tic
+sol = diag(Mh);
+toc
+ref = diag(M);
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+sol = diag(Ih);
+toc
+ref = diag(I);
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')

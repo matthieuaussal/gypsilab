@@ -21,10 +21,10 @@ classdef hmx
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmx.m                                         |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
 %| ( === ) |   SYNOPSIS   : H-Matrix class definition and functions       |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -106,6 +106,12 @@ methods
     % SPARSE CONVERSION
     function M = sparse(Mh)
         M = hmxSparse(Mh);
+    end
+    
+    % DIAGONAL
+    function D = diag(Mh)
+        D = hmxDiag(Mh,(1:size(Mh,1))',(1:size(Mh,2))');
+        D = full(diag(D));
     end
 
     % SINGLE CONVERSION

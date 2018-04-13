@@ -36,6 +36,7 @@ cd('meshManagement/')
 run('nrtMshClean.m');
 run('nrtMshCube.m');
 run('nrtMshRead.m');
+run('nrtMshRefine.m');
 run('nrtMshSegment.m');
 run('nrtMshSquare.m');
 
@@ -63,6 +64,7 @@ run('nrtFemRwgNed.m');
 
 % Hierarchical matrices
 cd('../hierarchicalMatrix')
+run('nrtHelmholtzCalderon.m')
 run('nrtHmxAlgebra.m');
 run('nrtHmxBuilder.m');
 run('nrtHmxCompareLU.m');

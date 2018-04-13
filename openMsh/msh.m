@@ -81,11 +81,12 @@ methods
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CLEAN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function mesh = clean(mesh)
         % Unify duplicate vertex
-        [mesh.vtx,~,I] = unique(mesh.vtx,'rows','stable');
+        [~,I,J]  = unique(single(mesh.vtx),'rows','stable');
+        mesh.vtx = mesh.vtx(I,:);
         if (size(mesh.elt,1) == 1)
-            I = I';
+            J = J';
         end
-        mesh.elt = I(mesh.elt);
+        mesh.elt = J(mesh.elt);
         
         % Extract vertex table from element
         Ivtx              = zeros(size(mesh.vtx,1),1);
@@ -241,7 +242,28 @@ methods
     % BOUNDARY
     function mesh = bnd(mesh)
         mesh = mshBoundary(mesh);
-    end    
+    end
+        
+    % MIDPOINT
+    function [mesh,Ir] = midpoint(varargin)
+        mesh = varargin{1};
+        if (nargin == 1)
+            I = (1:length(mesh))';
+        else
+            I = varargin{2};
+        end
+        [mesh,Ir] = mshMidpoint(mesh,I);
+    end
+    
+    % REFINE
+    function mesh = refine(varargin)
+        mesh = varargin{1};
+        if (nargin == 1)
+            mesh = midpoint(mesh);
+        else
+            mesh = mshRefine(mesh,varargin{2});
+        end
+    end
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ALGEBRA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
