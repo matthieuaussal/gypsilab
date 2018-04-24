@@ -21,10 +21,10 @@ classdef msh
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : msh.m                                         |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
 %| ( === ) |   SYNOPSIS   : Mesh class definition                         |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -149,8 +149,8 @@ methods
         l    = sqrt(sum(l.^2,2));
         l    = [min(l) max(l)];
     end 
-    
-    
+
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% ELEMENT DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CENTER
     function X = ctr(mesh)
@@ -263,6 +263,22 @@ methods
         else
             mesh = mshRefine(mesh,varargin{2});
         end
+    end
+    
+    % HIERARCHICAL TREE
+    function tree = tree(varargin)
+        mesh = varargin{1};
+        if (nargin == 1)
+            typ = 'octree';
+            fig = 0;
+        elseif (nargin == 2)
+            typ = varargin{2};
+            fig = 0;
+        elseif (nargin == 3)
+            typ = varargin{2};
+            fig = varargin{3};
+        end
+        tree = mshTree(mesh,typ,fig);
     end
     
     

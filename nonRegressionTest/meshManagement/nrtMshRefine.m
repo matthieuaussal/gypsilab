@@ -108,7 +108,7 @@ plotNrm(meshr,'r')
 axis equal
 xlabel('X'); ylabel('Y'); zlabel('Z')
 
-% Refinement with recursive midpoint algorithm and function order
+% Refinement with recursive midpoint algorithm and fixed edge length
 stp    = meshr.stp;
 lambda = stp(2)/4;
 tic

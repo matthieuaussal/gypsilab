@@ -2,7 +2,7 @@
 |   '&`   |                                                              |
 |    #    |               THE GYPSILAB TOOLBOX FOR MATLAB                |
 |    #    |                                                              |
-|   _#_   |                         VERSION - 0.40                       |
+|   _#_   |                         VERSION - 0.41                       |
 |  ( # )  |                                                              |
 |  / 0 \  |               matthieu.aussal@polytechnique.edu              |
 | ( === ) |           www.cmap.polytechnique.fr/~aussal/gypsilab         |
@@ -27,6 +27,9 @@ Copyright Matthieu Aussal & Francois Alouges (c) 2018 - Ecole Polytechnique
 Copyright Matthieu Aussal & Francois Alouges (c) 2018 - Ecole Polytechnique
  
  - OpenHmX : Library for H-Matrix computation and algebra.
+Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
+
+ - OpenRay : Library for tri-dimensional ray-tracing.
 Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
  
 Scripts for non regression test are provided to evaluate performances 

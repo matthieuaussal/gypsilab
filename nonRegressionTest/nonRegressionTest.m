@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nonRegressionTest.m                           |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
 %| ( === ) |   SYNOPSIS   : run all non regression test                   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -33,8 +33,10 @@ clc
 
 % Mesh management
 cd('meshManagement/')
+run('nrtMshBitree.m')
 run('nrtMshClean.m');
 run('nrtMshCube.m');
+run('nrtMshOctree.m')
 run('nrtMshRead.m');
 run('nrtMshRefine.m');
 run('nrtMshSegment.m');
@@ -59,6 +61,7 @@ run('nrtFemDirichletDisk.m');
 run('nrtFemDirichletSquare.m');
 run('nrtFemElasticite2D')
 run('nrtFemJunction.m');
+run('nrtFemLaplace.m');
 run('nrtFemOperators.m');
 run('nrtFemRwgNed.m');
 
@@ -97,7 +100,16 @@ cd('../inverseProblem')
 run('nrtIpbHelmholtz.m');
 run('nrtIpbHelmholtz0.m');
 
+% Ray-tracing
+cd('../rayTracing');
+run('nrtRayCube.m');
+run('nrtRayFabryPerot.m');
+run('nrtRayLabyrinthe.m');
+run('nrtRaySource.m');
+run('nrtRaySphere.m');
+run('nrtRayTheatre');
+
 % End
-disp('==> DONE.');
+disp('~~> Non Regresion Test are done. Michto gypsilab !');
 
 
