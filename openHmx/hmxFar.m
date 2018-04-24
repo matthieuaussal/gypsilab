@@ -21,10 +21,10 @@ function bool = hmxFar(Mh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxFar.m                                      |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
 %| ( === ) |   SYNOPSIS   : H-Matrix far boolean                          |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -44,5 +44,5 @@ Yctr = 0.5*(Ymin+Ymax);
 Ydgl = Ymax-Ymin;
 
 % Separated particles set
-bool = sum( abs(Yctr-Xctr) >= 0.75*(Xdgl+Ydgl) );
+bool = sum( abs(Yctr-Xctr) >= 0.75*(Xdgl+Ydgl) & (Xdgl>0) & (Ydgl > 0));
 end
