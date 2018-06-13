@@ -64,7 +64,10 @@ k   = 1/stp(2)
 f   = (k*340)/(2*pi)
 
 % Incident wave
-PW = @(X) exp(1i*k*X*X0');
+PW         = @(X) exp(1i*k*X*X0');
+gradxPW{1} = @(X) 1i*k*X0(1) .* PW(X);
+gradxPW{2} = @(X) 1i*k*X0(2) .* PW(X);
+gradxPW{3} = @(X) 1i*k*X0(3) .* PW(X);
 
 % Incident wave representation
 plot(sphere,real(PW(sphere.vtx)))
@@ -78,8 +81,8 @@ view(0,10)
 % lighting phong
 
 
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Gxy = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
@@ -98,20 +101,21 @@ toc
 
 % Regularization
 tic
-LHS = LHS + 1/(4*pi) .* (k^2 * regularize(sigma,sigma,ntimes(u),'[1/r]',ntimes(v)) ...
+Hr  = 1/(4*pi) .* (k^2 * regularize(sigma,sigma,ntimes(u),'[1/r]',ntimes(v)) ...
     - regularize(sigma,sigma,nxgrad(u),'[1/r]',nxgrad(v)));
+LHS = LHS + Hr;
 toc
 
+% Finite element incident wave trace --> \int_Sx psi(x) dnx(pw(x)) dx
+RHS = - (- integral(sigma,ntimes(u),gradxPW));
+
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 % LU factorization
 tic
 [Lh,Uh] = lu(LHS);
 toc
-
-% Finite element incident wave trace --> \int_Sx psi(x) dnx(pw(x)) dx
-gradxPW{1} = @(X) 1i*k*X0(1) .* PW(X);
-gradxPW{2} = @(X) 1i*k*X0(2) .* PW(X);
-gradxPW{3} = @(X) 1i*k*X0(3) .* PW(X);
-RHS = - integral(sigma,ntimes(u),gradxPW);
 
 % Solve linear system  [H] mu = - dnP0
 tic
@@ -133,10 +137,10 @@ Ginf{2} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,2)) .* exp(-1i*k*xdoty(X,Y));
 Ginf{3} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,3)) .* exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy dny(exp(ik*nu.y)) * psi(y) dx
-Dinf = integral(nu,sigma,Ginf,ntimes(v),1e-6) ;
+Dinf = integral(nu,sigma,Ginf,ntimes(v)) ;
 
 % Finite element radiation  
-sol = Dinf * mu;
+sol = - Dinf * mu;
 
 % Analytical solution
 ref = sphereHelmholtz('inf','neu',1,k,nu); 
@@ -146,7 +150,6 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 % Graphical representation
 figure
 plot(theta,log(abs(sol)),'b',theta,log(abs(ref)),'--r')
-
 
 
 %%% DOMAIN SOLUTION
@@ -182,12 +185,12 @@ Ddom = Ddom + 1/(4*pi) .* regularize(square.vtx,sigma,'grady[1/r]',ntimes(v));
 toc
 
 % Boundary solution
-Psca = 0.5*mu + Id \ (Dbnd * mu) ;
+Psca = - Id \ (0.5*Id * mu + Dbnd * mu) ;
 Pinc = PW(u.dof);
 Pbnd = Pinc + Psca;
 
 % Domain solution
-Psca = Ddom * mu;
+Psca = - Ddom * mu;
 Pinc = PW(square.vtx);
 Pdom = Pinc + Psca;
 

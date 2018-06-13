@@ -79,8 +79,8 @@ hold off
 view(0,10)
 
 
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Gxy = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
@@ -91,13 +91,8 @@ v = fem(sphere,typ);
 
 % Finite element boundary operator --> \int_Sx \int_Sy psi(x)' G(x,y) psi(y) dx dy 
 tic
-LHS = 1/(4*pi) .* (integral(sigma,sigma,u,Gxy,v,tol));
+LHS = 1/(4*pi) .* integral(sigma,sigma,u,Gxy,v,tol);
 toc
-
-% Structure
-figure
-spy(LHS)
-% pouet
 
 % Regularization
 tic
@@ -105,48 +100,31 @@ Sr  = 1/(4*pi) .* regularize(sigma,sigma,u,'[1/r]',v);
 LHS = LHS + Sr;
 toc
 
-% % Convert to single
-% LHS = single(LHS);
+% Finite element incident wave trace --> \int_Sx psi(x)' pw(x) dx
+RHS = - integral(sigma,u,PW);
 
 % Structure
 figure
+subplot(2,2,1:2)
 spy(LHS)
 
-% Finite element incident wave trace --> \int_Sx psi(x)' pw(x) dx
-RHS = integral(sigma,u,PW);
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
 % LU factorization
 tic
 [Lh,Uh] = lu(LHS);
 toc
-figure
+subplot(2,2,3)
 spy(Lh)
-figure
+subplot(2,2,4)
 spy(Uh)
 
-% Solve linear system [-S] * lambda = - P0
+% Solve linear system [S] * lambda = P0
 tic
 lambda  = Uh \ (Lh \ RHS); % LHS \ RHS;
 toc
-
-% Solve with GMRES with ILU preconditionning
-tic
-[L,U] = ilu(Sr);
-toc
-tic
-lambda2 = gmres(@(V) LHS*V,RHS,[],tol,100,L,U);
-toc
-norm(lambda-lambda2)/norm(lambda)
-
-% Solve with GMRES with HLU preconditionning
-tic
-[Lh,Uh] = lu(hmxRecompress(LHS,0.1));
-Mhm1V   = @(V) Uh\(Lh\V);
-toc
-tic
-lambda2 = gmres(@(V) LHS*V,RHS,[],tol,100,Mhm1V);
-toc
-norm(lambda-lambda2)/norm(lambda)
 
 
 %%% INFINITE SOLUTION
@@ -161,12 +139,10 @@ xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3);
 Ginf  = @(X,Y) 1/(4*pi) .* exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Sinf = integral(nu,sigma,Ginf,v,1e-6);
-% figure
-% spy(Sinf)
+Sinf = integral(nu,sigma,Ginf,v);
 
 % Finite element radiation  
-sol = - Sinf * lambda;
+sol = Sinf * lambda;
 
 % Analytical solution
 ref = sphereHelmholtz('inf','dir',1,k,nu); 
@@ -192,18 +168,14 @@ Sreg = 1/(4*pi) .* regularize(square.vtx,sigma,'[1/r]',v);
 Sdom = Sdom + Sreg;
 toc
 
-% % Structure
-% figure
-% spy(Sdom)
-
 % Boundary solution
 Ibnd = integral(sigma,u,v);
-Psca = - Ibnd \ double(LHS * lambda) ;
+Psca = Ibnd \ (LHS * lambda) ;
 Pinc = PW(u.dof);
 Pbnd = Pinc + Psca;
 
 % Domain solution
-Psca = - Sdom * lambda;
+Psca = Sdom * lambda;
 Pinc = PW(square.vtx);
 Pdom = Pinc + Psca;
 

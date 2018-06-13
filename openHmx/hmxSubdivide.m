@@ -1,4 +1,4 @@
-function [I1,I2] = hmxSubdivide(X)
+function [I1,I2] = hmxSubdivide(X,dim)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -29,16 +29,10 @@ function [I1,I2] = hmxSubdivide(X)
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% Box definition for particles
-Xmin = min(X,[],1);   
-Xmax = max(X,[],1);
-Xdgl = Xmax-Xmin;
+% Sort data on largest dimension
+[~,I] = sort(X(:,dim));
 
-% Largest dimension
-[~,i] = max(Xdgl);
-
-% Median repartition on largest dimension
-[~,I] = sort(X(:,i));
-I1    = I(1:floor(end/2));
-I2    = I(floor(end/2)+1:end);
+% Equal repartition
+I1 = I(1:floor(end/2));
+I2 = I(floor(end/2)+1:end);
 end

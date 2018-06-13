@@ -64,7 +64,10 @@ k   = 1/stp(2)
 f   = (k*340)/(2*pi)
 
 % Incident wave
-PW = @(X) exp(1i*k*X*X0');
+PW         = @(X) exp(1i*k*X*X0');
+gradxPW{1} = @(X) 1i*k*X0(1) .* PW(X);
+gradxPW{2} = @(X) 1i*k*X0(2) .* PW(X);
+gradxPW{3} = @(X) 1i*k*X0(3) .* PW(X);
 
 % Incident wave representation
 plot(sphere,real(PW(sphere.vtx)))
@@ -75,8 +78,8 @@ hold off
 view(0,10)
 
 
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = grady[exp(ik|x-y|)/|x-y|]
 Gxy{1} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]1',k);
@@ -97,24 +100,26 @@ toc
 
 % Regularization
 tic
-Dbnd = Dbnd + 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(v));
+Dr   = 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(v));
+Dbnd = Dbnd + Dr;
 toc
 
-% Operator [Id/2-Dt]
-LHS = 0.5*Id - Dbnd.';
+% Operator [-Id/2 + Dt]
+LHS = - 0.5*Id + Dbnd.';
+
+% Finite element incident wave trace --> \int_Sx psi(x) dnx(pw(x)) dx
+RHS = - integral(sigma,ntimes(u),gradxPW);
+
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
 % LU factorization
 tic
 [Lh,Uh] = lu(LHS);
 toc
 
-% Finite element incident wave trace --> \int_Sx psi(x) dnx(pw(x)) dx
-gradxPW{1} = @(X) 1i*k*X0(1) .* PW(X);
-gradxPW{2} = @(X) 1i*k*X0(2) .* PW(X);
-gradxPW{3} = @(X) 1i*k*X0(3) .* PW(X);
-RHS = - integral(sigma,ntimes(u),gradxPW);
-
-% Solve linear system [Id/2-Dt] * lambda = - dnP0
+% Solve linear system [-Id/2 + Dt] * lambda = dnP0
 tic
 lambda = Uh \ (Lh \ RHS); % LHS \ RHS;
 toc
@@ -132,10 +137,10 @@ xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3);
 Ginf  = @(X,Y) 1/(4*pi) .* exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Sinf = integral(nu,sigma,Ginf,v,1e-6);
+Sinf = integral(nu,sigma,Ginf,v);
 
 % Finite element radiation  
-sol = - Sinf * lambda;
+sol = Sinf * lambda;
 
 % Analytical solution
 ref = sphereHelmholtz('inf','neu',1,k,nu); 
@@ -176,12 +181,12 @@ toc
 
 % Boundary solution
 Ibnd = integral(sigma,u,v);
-Psca = - Ibnd \ (Sbnd * lambda) ;
+Psca = Ibnd \ (Sbnd * lambda) ;
 Pinc = PW(u.dof);
 Pbnd = Pinc + Psca;
 
 % Domain solution
-Psca = - Sdom * lambda;
+Psca = Sdom * lambda;
 Pinc = PW(square.vtx);
 Pdom = Pinc + Psca;
 

@@ -36,7 +36,7 @@ if isempty(M)
 
 else
     % Singular value decomposition
-    [U,S,V] = svd(full(M),'econ');
+    [U,S,V] = svd(M,'econ');
     s       = diag(S);
 
     % Rank estimation at machine precision

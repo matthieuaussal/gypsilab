@@ -1,4 +1,4 @@
-function Mh = hmxTimes(Ml,Mr)
+function Ml = hmxTimes(Ml,Mr)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -31,36 +31,30 @@ function Mh = hmxTimes(Ml,Mr)
 
 %%% H-Matrix .* H-Matrix
 if isa(Ml,'hmx') && isa(Mr,'hmx')
-    Mh = [];
+    Ml = [];
     warning('hmxTimes.m : H-Matrix terms multiplication not yet implemented')
    
+
+%%% scal .* H-Matrix -> H-Matrix
+elseif isa(Mr,'hmx') 
+    Ml = hmxTimes(Mr,Ml);
+
     
-%%%  H-Matrix .* scal   ||   scal .* H-Matrix -> H-Matrix
-else
-    % Input analysis
-    if isa(Ml,'hmx')
-        Mh = Ml;
-        x  = Mr;
-    elseif isa(Mr,'hmx')
-        Mh = Mr;
-        x  = Ml;
-    else
-        error('hmxTimes.m : unavailable case')
-    end
-    
+%%% H-Matrix .* scal -> H-Matrix
+elseif isa(Ml,'hmx') 
     % H-Matrix (recursion)
-    if (Mh.typ == 0)
+    if (Ml.typ == 0)
         for i = 1:4
-            Mh.chd{i} = hmxTimes(x,Mh.chd{i});
+            Ml.chd{i} = hmxTimes(Ml.chd{i},Mr);
         end
         
     % Compressed leaf
-    elseif (Mh.typ == 1)
-        Mh.dat{1} = x .* Mh.dat{1};
+    elseif (Ml.typ == 1)
+        Ml.dat{1} = Ml.dat{1} .* Mr;
         
     % Full leaf
-    elseif (Mh.typ == 2)
-        Mh.dat = x .* Mh.dat;
+    elseif (Ml.typ == 2)
+        Ml.dat = Ml.dat .* Mr;
 
     % Unknown type
     else

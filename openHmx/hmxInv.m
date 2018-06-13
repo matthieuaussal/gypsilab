@@ -29,11 +29,12 @@ function Mh = hmxInv(Mh)
 %|  `---'  |                complement                                    |
 %+========================================================================+
 
-% Dimensions
-Mh.dim = [Mh.dim(2) Mh.dim(1)];
-Mh.pos = {Mh.pos{2} Mh.pos{1}};
+% Check invertibility
+if (size(Mh,1) ~= size(Mh,2)) || ~isequal(Mh.pos{1},Mh.pos{2})
+    error('hmxInv.m : matrix must be invertible.')
+end
 
-% H-Matrix (bloc recursion)
+%%% H-Matrix (bloc recursion)
 if (Mh.typ == 0)
     % Am1 -> M11 
     Mh.chd{1} = hmxInv(Mh.chd{1});
@@ -62,15 +63,15 @@ if (Mh.typ == 0)
     % Fusion
     Mh = hmxFusion(Mh);
     
-% Compressed leaf    
+%%% Compressed leaf    
 elseif (Mh.typ == 1)
     error('hmxInv : unavailable case')
     
-% Full leaf    
+%%% Full leaf    
 elseif (Mh.typ == 2)
     Mh.dat = inv(Mh.dat);
 
-% Unknown type
+%%% Unknown type
 else
     error('hmxInv.m : unavailable case')
 end

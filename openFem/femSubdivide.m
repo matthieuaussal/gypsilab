@@ -1,4 +1,4 @@
-function [X,elt2dof] = femDof(fe)
+function [Isub,domSub,femSub] = femSubdivide(dom,fem,Nsub,fig)
 %+========================================================================+
 %|                                                                        |
 %|              OPENFEM - LIBRARY FOR FINITE ELEMENT METHOD               |
@@ -21,56 +21,70 @@ function [X,elt2dof] = femDof(fe)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : femDof.m                                      |
+%|    #    |   FILE       : femSubdivide.m                                |
 %|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Define degrees of freedom                     |
-%|  `---'  |                                                              |
+%| ( === ) |   SYNOPSIS   : Subdivide finite element space for domain     |
+%|  `---'  |                decomposition method                          |
+%|         |                ! ONLY WORKS FOR NON DIRICHLET FEM !          |
 %+========================================================================+
 
-% Lagrange order 0, constant by element
-if strcmp(fe.typ,'P0')
-    X       = fe.msh.ctr;
-    elt2dof = (1:size(fe.msh.elt,1))';
+% Number of subdomains is power of 2
+if (Nsub ~= 2^floor(log2(Nsub)))
+    error('femSubdivide.m : number of subdomain is not a power of 2.')
+end
+
+% Mesh and dof associated to finite element space
+mesh          = fem.msh;
+[dof,elt2dof] = fem.dof;                                   % to be improved
+
+% Dof subdivision with binary tree
+Nleaf  = ceil(length(fem)/Nsub);
+bitree = tree(msh(dof),'binary',Nleaf);
+Isub   = bitree{end}.ind;
+
+% Security
+if (length(Isub) ~= Nsub)
+    error('femSubdivide.m : unavailable case')
+end
+
+% Output initialization
+domSub = cell(Nsub,1);
+femSub = cell(Nsub,1);
+
+% For each subindices
+for i = 1:Nsub
+    % Indices of valid dof and extended mesh
+    I       = ismember(elt2dof,Isub{i});
+    meshSub = mesh.sub(sum(I,2)>0);
     
-% Lagrange order 1, piecewise linear by element
-elseif strcmp(fe.typ,'P1')
-    X       = fe.msh.vtx;
-    elt2dof = fe.msh.elt;
+    % Quadrature
+    domSub{i}     = dom;
+    domSub{i}.msh = meshSub;
     
-% Lagrange order 2, piecewise quadratic by element
-elseif strcmp(fe.typ,'P2')
-    [edge,elt2edg] = fe.msh.edg;
-    X              = [fe.msh.vtx ; edge.ctr];
-    elt2dof        = [fe.msh.elt , elt2edg + size(fe.msh.vtx,1)];
+    % Finite element
+    femSub{i}     = fem;
+    femSub{i}.msh = meshSub;
     
-% NED linear elements
-elseif strcmp(fe.typ,'NED')
-    [edge,elt2dof] = fe.msh.edg;
-    X              = edge.ctr;
+    % Dirichlet condition for non valid dof
+    dir       = setdiff( msh(femSub{i}.dof) , msh(dof(Isub{i},:)) );
+    femSub{i} = dirichlet(femSub{i},dir);
     
-% RWG linear elements for surfacic mesh
-elseif strcmp(fe.typ,'RWG')
-    % Particular mesh (dof are vertices)
-    if (size(fe.msh.elt,2) == 1)
-        X       = fe.msh.vtx;
-        elt2dof = fe.msh.elt;
-        
-    % Triangular mesh
-    elseif (size(fe.msh.elt,2) == 3)
-        [edge,elt2dof] = fe.msh.edg;
-        X              = edge.ctr;
-        
-    % Tetrahedral mesh
-    elseif size(fe.msh.elt,2)==4
-        [face,elt2dof] = fe.msh.fce;
-        X              = face.ctr;
+    % Security
+    if (length(femSub{i}) ~= length(Isub{i}))
+        error('domainDecomposition.m : unavailable case');
     end
-    
-% Others
-else
-    error('femDof.m : unavailable case')
+
+    % Graphical representation
+    if fig
+        figure(fig)
+        hold on
+        plot(meshSub,'w')
+        plot(mesh.sub(sum(I,2)==size(elt2dof,2)),'b')
+        axis equal
+        alpha(0.99)
+    end
 end
 end

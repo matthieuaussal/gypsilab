@@ -33,42 +33,39 @@ close all
 clc
 
 % Library path
+addpath('../../openMsh')
 addpath('../../openHmx')
 
-% Data type
-type = 'double';
+% Dimensions
+Nx = 1e3;
+Ny = 1e3;
 
 % Accuracy
-tol = 1e-3
+tol = 1e-3;
 
-% Wave number or frequency (Hz)
-k = 5
-f = (k*340)/(2*pi);
-
-% Particles receptors X (sphere)
-Nx      = 1e3;
-[x,y,z] = sphere(ceil(sqrt(Nx)));
-X       = unique([x(:),y(:),z(:)],'rows');
-Nx      = size(X,1)
-if strcmp(type,'single')
-    X = single(X);
-end
+% Particles receptors X
+mesh = mshSphere(Nx,1);
+X    = mesh.vtx;
 
 % Particles transmitters Y (=X or not)
-Ny = Nx;
-Y  = X;
-% Ny = 2e3
-% Y  = -1+2*rand(Ny,3);
-if strcmp(type,'single')
-    Y = single(Y);
-end
+mesh = mshCube(Ny,2*[1 1 1]);
+Y    = X;%mesh.vtx;
+Ny   = Nx;%size(Y,1);
+
+% Type
+type = 'double';
+
+% Wave number or frequency (Hz)
+k = 5;
+f = (k*340)/(2*pi);
 
 % Green kernel -> exp(1i*k*r)/r
 rxy   = @(X,Y) sqrt( (X(:,1)-Y(:,1)).^2 + (X(:,2)-Y(:,2)).^2 + (X(:,3)-Y(:,3)).^2 );
-green = @(X,Y) exp(1i*k*rxy(X,Y))./(rxy(X,Y)+1e-8) .* (rxy(X,Y)>1e-8);
+green = @(X,Y) exp(1i*k*rxy(X,Y))./(rxy(X,Y)+1e-8) .* (rxy(X,Y)>1e-8) + ...
+    (sqrt(Nx)+1i*k) .* (rxy(X,Y)<=1e-8);
 
 % Particles charges (multiples)
-V = (-1+2*rand(Ny,2,type)) + (-1+2i*rand(Ny,2,type));
+V    = (-1+2*rand(Ny,2)) + (-1+2i*rand(Ny,2));
 
 % Spatial representation of particles
 figure
@@ -158,7 +155,7 @@ disp(' ')
 %%% Recompression
 disp('~~~~~~~~~~~~~ RECOMPRESSION ~~~~~~~~~~~~~')
 tic
-tmp = hmxRecompress(Mh,10*tol);
+tmp = hmx(Mh,0.1);
 toc
 sol = full(tmp);
 ref = M;
@@ -187,37 +184,51 @@ disp(' ')
 %%% Low-rank conversion
 disp('~~~~~~~~~~~~~ LOW-RANK CONVERSION ~~~~~~~~~~~~~')
 tic
-[A,B] = hmxLowrank(double(Mh));
+[A,B] = lowrank(Mh);
 sol   = A*B;
 toc
-ref = double(M);
+ref = M;
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
 
 
-%%% Concatenation
-disp('~~~~~~~~~~~~~ CONCATENATION ~~~~~~~~~~~~~')
-AB = hmx(X,Y,A,B,tol);
+%%% Diagonal
+disp('~~~~~~~~~~~~~ DIAGONAL ~~~~~~~~~~~~~')
 tic
-tmp = [AB,Mh,Mh,AB];
+sol = diag(Mh);
 toc
-sol = full(tmp);
-ref = [M,M,M,M];
+ref = diag(M);
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 tic
-tmp = [AB;Mh;Mh;AB];
+sol = diag(Ih);
 toc
-sol = full(tmp);
-ref = [M;M;M;M];
+ref = diag(I);
 norm(ref-sol,'inf')/norm(ref,'inf')
 
+disp(' ')
+
+
+%%% Single
+disp('~~~~~~~~~~~~~ SINGLE ~~~~~~~~~~~~~')
 tic
-tmp = [Ih,Ih];
+tmp = single(Mh);
 toc
 sol = full(tmp);
-ref = [I,I];
+ref = single(M);
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+disp(' ')
+
+
+%%% Double
+disp('~~~~~~~~~~~~~ DOUBLE ~~~~~~~~~~~~~')
+tic
+tmp = double(Mh);
+toc
+sol = full(tmp);
+ref = double(M);
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
@@ -291,7 +302,7 @@ disp(' ')
 
 
 %%% Left product H-Matrix
-disp('~~~~~~~~~~~~~ FULL MATRIX * H-MATRIX ~~~~~~~~~~~~~')
+disp('~~~~~~~~~~~~~ MATRIX * H-MATRIX ~~~~~~~~~~~~~')
 tmp = Mh.';
 tic
 sol = V.' * tmp;
@@ -333,74 +344,34 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 disp(' ')
 
 
-%%% Full Addition
-disp('~~~~~~~~~~~~~ FULL ADDITION/SUBSTRACTION ~~~~~~~~~~~~~')
-tic
-tmp = 2*M + Mh - M;
-toc
-sol = tmp * V;
-ref = 2*MV;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-tic
-tmp = 2*M + Ih - M;
-toc
-sol = tmp * V;
-ref = MV + IV;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
-%%% Full Addition
-disp('~~~~~~~~~~~~~ SPARSE ADDITION/SUBSTRACTION ~~~~~~~~~~~~~')
-tic
-tmp = 2*I + Mh - I;
-toc
-sol = tmp * V;
-ref = MV+IV;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-tic
-tmp = 2*I + Ih - I;
-toc
-sol = tmp * double(V);
-ref = 2*IV;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
 %%% H-Matrix addition
 disp('~~~~~~~~~~~~~ H-MATRIX ADDITION/SUBSTRACTION ~~~~~~~~~~~~~')
 tic
-tmp = 2.*Mh + Mh - Mh;
+tmp = 2.*M + Mh - M;
 toc
 sol = tmp * V;
-ref = 2*MV;
-norm(ref-sol,'inf')/norm(ref,'inf')
-figure
-spy(tmp)
-
-tic
-tmp = 2.*Ih + Mh - Ih;
-toc
-sol = tmp * V;
-ref = MV + IV;
+ref = 2 * MV;
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 tic
-tmp = 2.*Mh + Ih - Mh;
+tmp = 2.*I + Mh - I;
 toc
 sol = tmp * V;
 ref = MV + IV;
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 tic
-tmp = 2.*Ih + Ih - Ih;
+tmp = 2.*M + Ih - M;
+toc
+sol = tmp * V;
+ref = MV + IV;
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+tmp = 2.*I + Ih - I;
 toc
 sol = tmp * double(V);
-ref = 2*IV;
+ref = 2 * IV;
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
@@ -437,24 +408,29 @@ toc
 sol = sparse(tmp);
 ref = I * I.';
 norm(ref-sol,'inf')/norm(ref,'inf')
-figure
-spy(tmp)
+
+disp(' ')
+
+
+%%% H-Matrix plus product
+disp('~~~~~~~~~~~~~ H-MATRIX PLUS PRODUCT ~~~~~~~~~~~~~')
+tic
+tmp = plusmtimes(Ih,-pi,Mh,Mh.');
+toc
+sol = full(tmp);
+ref = I - pi*(M * M.');
+norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
 
 
 %%% H-Matrix inversion
 disp('~~~~~~~~~~~~~ INVERSION ~~~~~~~~~~~~~')
-Mh = Mh + sqrt(Nx).*speye(Nx);
-M  = M  + sqrt(Nx).*eye(Nx,type); 
-
 tic
 tmp = inv(Mh);
 toc
-tic
-ref = inv(M);
-toc
-sol = full(tmp);
+sol = tmp * V;
+ref = M \ V;
 norm(ref-sol,'inf')/norm(ref,'inf')
 figure
 spy(tmp)
@@ -462,10 +438,8 @@ spy(tmp)
 tic
 tmp = inv(Ih);
 toc
-tic
-ref = inv(I);
-toc
-sol = full(tmp);
+sol = tmp * V;
+ref = I \ V;
 norm(ref-sol,'inf')/norm(ref,'inf')
 figure
 spy(tmp)
@@ -479,35 +453,8 @@ tic
 Uh = chol(Ih);
 toc
 sol = sparse(Uh'*Uh);
-tic
-U = chol(I);
-toc
-sol2 = U'*U;
-ref  = I;
+ref = I;
 norm(ref-sol,'inf')/norm(ref,'inf')
-norm(ref-sol2,'inf')/norm(ref,'inf')
-figure
-spy(Uh)
-
-disp(' ')
-
-
-%%% H-Matrix LDLt
-disp('~~~~~~~~~~~~~ LDLt FACTORISATION ~~~~~~~~~~~~~')
-tic
-[Lh,Dh] = ldl(Ih);
-toc
-sol = sparse(Lh*Dh*Lh');
-tic
-[L,D,P] = ldl(I);
-L       = P*L;
-toc
-sol2 = L*D*L';
-ref  = I;
-norm(ref-sol,'inf')/norm(ref,'inf')
-norm(ref-sol2,'inf')/norm(ref,'inf')
-figure
-spy(Lh)
 
 disp(' ')
 
@@ -517,53 +464,32 @@ disp('~~~~~~~~~~~~~ LU FACTORISATION ~~~~~~~~~~~~~')
 tic
 [Lh,Uh] = lu(Mh);
 toc
-tmp = full(Mh);
-tic
-[L,U] = lu(tmp);
-toc
-sol  = full(Lh*Uh);
-sol2 = L*U;
-ref  = M;
+sol = full(Lh*Uh);
+ref = M;
 norm(ref-sol,'inf')/norm(ref,'inf')
-norm(ref-sol2,'inf')/norm(ref,'inf')
 figure
+subplot(1,2,1)
 spy(Lh)
-figure
+subplot(1,2,2)
 spy(Uh)
 
 tic
 [Lh,Uh] = lu(Ih);
 toc
-sol = full(Lh*Uh);
-tic
-[L,U] = lu(I);
-toc
-sol2 = L*U;
-ref  = I;
+sol = sparse(Lh*Uh);
+ref = I;
 norm(ref-sol,'inf')/norm(ref,'inf')
-norm(ref-sol2,'inf')/norm(ref,'inf')
 figure
+subplot(1,2,1)
 spy(Lh)
-figure
+subplot(1,2,2)
 spy(Uh)
 
 disp(' ')
 
 
-%%% Shermann-morrisonn conversion
-disp('~~~~~~~~~~~~~ SHERMANN MORRISON CONVERSION ~~~~~~~~~~~~~')
-tic
-[Sh,A,B] = hmxSherMorr(Mh);
-toc
-sol = full(Sh) + A*B;
-ref = M;
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
 %%% H-Matrix \
-disp('~~~~~~~~~~~~~ LU SOLVER ~~~~~~~~~~~~~')
+disp('~~~~~~~~~~~~~ EXACT SOLVER ~~~~~~~~~~~~~')
 tic
 sol =  Mh \ V;
 toc
@@ -583,119 +509,32 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 disp(' ')
 
 
-%%% Shermann-morrisonn solver
-disp('~~~~~~~~~~~~~ SHERMANN MORRISON SOLVER ~~~~~~~~~~~~~')
-
-tic
-[Lh,Uh] = lu(Sh);
-toc
-
-tic
-rk   = size(A,2);
-Sm1  = Uh \ (Lh \ [A,V]);
-Sm1A = Sm1(:,1:rk);
-Sm1V = Sm1(:,rk+1:end);
-toc
-
-tic
-Mk    = eye(rk) + B*(Sm1A);
-Mkm1V = Mk \ (B * Sm1V);
-toc
-
-tic
-sol = Sm1V - Uh \ (Lh \ ( A * Mkm1V));
-toc
-ref = M \ V;
-
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
-%%% ITERATIVE SOLVER
-disp('~~~~~~~~~~~~~ ITERATIVE SOLVER ~~~~~~~~~~~~~')
-tic
-sol = zeros(Nx,size(V,2),type);
-for i = 1:size(V,2)
-    sol(:,i) = gmres(@(V) Mh*V,V(:,i),[],tol,100);
-end
-toc
-ref = zeros(Nx,size(V,2),type);
-for i = 1:size(V,2)
-    ref(:,i) = gmres(M,V(:,i),[],tol,100);
-end
-toc
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
-%%% ITERATIVE SOLVER WITH PRECONDITIONNER
-disp('~~~~~~~~~~~~~ ITERATIVE SOLVER WITH PRECONDITIONNER ~~~~~~~~~~~~~')
-tic
-tmp     = hmxRecompress(Mh,0.1);
-[Lh,Uh] = lu(tmp);
-Mhm1V   = @(V) Uh\(Lh\V);
-toc
-tic
-sol = zeros(Nx,size(V,2),type);
-for i = 1:size(V,2)
-    sol(:,i) = gmres(@(V) Mh*V,V(:,i),[],tol,100,Mhm1V);
-end
-toc
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
-%%% Diagonal
-disp('~~~~~~~~~~~~~ DIAGONAL ~~~~~~~~~~~~~')
-tic
-sol = diag(Mh);
-toc
-ref = diag(M);
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-tic
-sol = diag(Ih);
-toc
-ref = diag(I);
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
-
-
 disp('~~> Michto gypsilab !')
 
 
-
-
-
-
-
-% % Preconditionner
-% S  = sparse(Sh);
-% Ap = A(:,1:1);
-% Bp = B(1:1,:);
-% D  = eye(1) + Bp*(S\Ap);
-% 
-% P = @(X) S\X - S\(Ap*(D\(Bp*(S\X))));
-% 
-% norm(S*V + Ap*(Bp*V) - MV,'inf')/norm(MV,'inf')
-% norm(P(V) - ref,'inf')/norm(ref,'inf')
+% %%% Concatenation
+% disp('~~~~~~~~~~~~~ CONCATENATION ~~~~~~~~~~~~~')
+% AB = hmx(X,Y,A,B,tol);
+% tic
+% tmp = [AB,Mh,Mh,AB];
+% toc
+% sol = full(tmp);
+% ref = [M,M,M,M];
+% norm(ref-sol,'inf')/norm(ref,'inf')
 % 
 % tic
-% sol = zeros(Nx,size(V,2),type);
-% for i = 1:size(V,2)
-%     sol(:,i) = gmres(@(V) Mh*V,V(:,i),[],1e-3,100,@(X));
-% end
+% tmp = [AB;Mh;Mh;AB];
 % toc
-% ref = zeros(Nx,size(V,2),type);
-% for i = 1:size(V,2)
-%     ref(:,i) = gmres(M,V(:,i),[],tol,100);
-% end
-% toc
+% sol = full(tmp);
+% ref = [M;M;M;M];
 % norm(ref-sol,'inf')/norm(ref,'inf')
+% 
+% tic
+% tmp = [Ih,Ih];
+% toc
+% sol = full(tmp);
+% ref = [I,I];
+% norm(ref-sol,'inf')/norm(ref,'inf')
+% 
+% disp(' ')
 

@@ -30,10 +30,9 @@ function Mh = hmxCtranspose(Mh)
 %+========================================================================+
 
 % Dimensions
-Mh.dim = [Mh.dim(2) Mh.dim(1)];
 Mh.pos = {Mh.pos{2} Mh.pos{1}};
 
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
     % Data
     tmp       = Mh.chd{2};
@@ -48,15 +47,15 @@ if (Mh.typ == 0)
     Mh.row = Mh.col(I);
     Mh.col = tmp(I);
     
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     Mh.dat = {Mh.dat{2}' , Mh.dat{1}'};
     
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     Mh.dat = Mh.dat';
 
-% Unknown type
+%%% Unknown type
 else
     error('hmxCtranspose.m : unavailable case')
 end

@@ -1,4 +1,4 @@
-function Mh = hmxRecompress(Mh,tol)
+function Mh = hmxCopy(Mh,tol)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -20,40 +20,36 @@ function Mh = hmxRecompress(Mh,tol)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxRecompress.m                               |
+%|    #    |   FILE       : hmxCopy.m                                     |
 %|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Recompreesion of H-Matrix with new accuracy   |
-%|  `---'  |                                                              |
+%| ( === ) |   SYNOPSIS   : Copy and recompreesion of H-Matrix with new   |
+%|  `---'  |                accuracy                                      |
 %+========================================================================+
 
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
     for i = 1:4
-        Mh.chd{i} = hmxRecompress(Mh.chd{i},tol);
+        Mh.chd{i} = hmxCopy(Mh.chd{i},tol);
         Mh.tol    = max(tol,Mh.tol);        
     end
     Mh = hmxFusion(Mh);
     
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
-    if (Mh.tol < tol)
+    if (tol > Mh.tol)
         [A,B]  = hmxQRSVD(Mh.dat{1},Mh.dat{2},tol);
         Mh.dat = {A,B};
         Mh.tol = tol;
     end
     
-% Others leaves
+%%% Full leaf
+elseif (Mh.typ == 2) 
+    
+%%% Unknown type
 else
-    if (Mh.tol < tol)
-        [A,B,flag] = hmxSVD(Mh.dat,tol);
-        if flag
-            Mh.dat = {A,B};
-            Mh.typ = 1;
-        end
-        Mh.tol = tol;
-    end
+    error('hmxCopy.m : unavailable case')
 end
 end

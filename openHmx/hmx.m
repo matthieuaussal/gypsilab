@@ -30,82 +30,133 @@ classdef hmx
 %+========================================================================+
 
 properties
-    dim = [];         % H-MATRIX DIMENSIONS 
-    pos = [];         % COORDINATES POSITIONS (X,Y)
-    chd = [];         % CHILDREN (M11 M12 M21 M22)
-    row = [];         % CHILDREN ROWS INDICES
-    col = [];         % CHILDREN COLUMNS INDICES
-    dat = [];         % LEAF DATA
-    typ = [];         % LEAF TYPE (0=H-MATRIX ; 1=COMPRESSED ; 2=FULL) 
-    tol = [];         % COMPRESSORS ACCURACY
+    typ = [];            % LEAF TYPE (0=H-MATRIX ; 1=COMPRESSED ; 2=FULL/SPARSE) 
+    pos = [];            % COORDINATES POSITIONS (X,Y)
+    row = cell(1,4);     % CHILDREN ROWS INDICES (M11,M12,M21,M22)
+    col = cell(1,4);     % CHILDREN COLUMNS INDICES
+    chd = cell(1,4);     % CHILDREN 
+    dat = [];            % LEAF DATA
+    tol = [];            % COMPRESSORS ACCURACY
 end
 
 methods
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRUCTOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CONSTRUCTOR
     function Mh = hmx(varargin)
+        % Empty object
+        if (nargin == 0)
+            
+        % Initialization other H-matrix
+        elseif (nargin == 2)
+            Mh = hmxCopy(varargin{1},varargin{2});
+            
         % Initialization with dimension and accuracy    
-        if (length(varargin) == 3)
-            Mh.dim = [length(varargin{1}),length(varargin{2})];
+        elseif (nargin == 3)
+            Mh     = hmx();
             Mh.pos = {varargin{1},varargin{2}};
-            Mh.chd = cell(1,4);
-            Mh.row = cell(1,4);
-            Mh.col = cell(1,4);
-            Mh.dat = [];
-            Mh.typ = [];
             Mh.tol = varargin{3};
        
         % Particles builder with partial and total pivoting   
-        elseif (length(varargin) == 4)
+        elseif (nargin == 4)
             X     = varargin{1};
             Y     = varargin{2};
             green = varargin{3};
             acc   = varargin{4};
-            if exist('parpool','file')
-                Mh = hmxBuilderParallel(X,Y,green,acc);
-            else
-                Mh = hmxBuilder(X,Y,green,acc);
-            end
+            Mh    = hmxBuilder(X,Y,green,acc);
             
         % Compressed builder    
-        elseif (length(varargin) == 5)
+        elseif (nargin == 5)
             X      = varargin{1};
             Y      = varargin{2};
             A      = varargin{3};
             B      = varargin{4};
             acc    = varargin{5};
             Mh     = hmx(X,Y,acc);
-            Mh.dat = {A,B};
             Mh.typ = 1;
+            Mh.dat = {A,B};            
             
        % Finite element builder    
-        elseif (length(varargin) == 8)
-            Xdof  = varargin{1};
-            Ydof  = varargin{2};
+        elseif (nargin == 8)
+            Xunk  = varargin{1};
+            Yunk  = varargin{2};
             Mx    = varargin{3};
             X     = varargin{4};
             green = varargin{5};
             Y     = varargin{6};
             My    = varargin{7};
             acc   = varargin{8};
-            if exist('parpool','file')
-                Mh = hmxBuilderFemParallel(Xdof,Ydof,Mx,X,green,Y,My,acc);
-            else
-                Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,acc);
-            end
+            Mh    = hmxBuilderFem(Xunk,Yunk,Mx,X,green,Y,My,acc);
             
         else
             error('hmx.m : undefined constructor case')
         end
+    end
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% GLOBAL DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % SIZE
+    function s = size(varargin)
+        Mh = varargin{1};
+        s  = [size(Mh.pos{1},1),size(Mh.pos{2},1)];
+        if (nargin == 2)
+            s = s(varargin{2});
+        end
+    end
+    
+    % LENGTH
+    function l = length(Mh)
+        l = max(size(Mh));
+    end
+
+    % ISLOWER
+    function b = islower(Mh)
+        if (Mh.typ == 0)
+            b = (Mh.chd{2}.typ == 1) && isempty(Mh.chd{2}.dat{1});
+        elseif (Mh.typ == 2)
+            b = 1;
+        else
+            error('hmx.m : unavailable case.')
+        end
+    end
+        
+    % ISUPPER
+    function b = isupper(Mh)
+        if (Mh.typ == 0)
+            b = (Mh.chd{3}.typ == 1) && isempty(Mh.chd{3}.dat{1});
+        elseif (Mh.typ == 2)
+            b = 1;
+        else
+            error('hmx.m : unavailable case.')
+        end
     end    
     
-    % FULL CONVERSION
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%% VISUALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % STRUCTURE VISUALISATION
+    function spy(Mh)
+        hmxSpy(Mh);
+    end
+    
+    % PLOT POSITIONS
+    function plot3(Mh)
+        plot3(Mh.pos{1}(:,1),Mh.pos{1}(:,2),Mh.pos{1}(:,3),'bo',...
+            Mh.pos{2}(:,1),Mh.pos{2}(:,2),Mh.pos{2}(:,3),'*r');
+    end
+
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONVERSION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % FULL
     function M = full(Mh)
         M = hmxFull(Mh);
     end
     
-    % SPARSE CONVERSION
+    % SPARSE
     function M = sparse(Mh)
         M = hmxSparse(Mh);
+    end
+    
+    % LOW-RANK
+    function [A,B] = lowrank(Mh)
+        [A,B] = hmxLowrank(Mh);
     end
     
     % DIAGONAL
@@ -113,15 +164,24 @@ methods
         D = hmxDiag(Mh,(1:size(Mh,1))',(1:size(Mh,2))');
         D = full(diag(D));
     end
-
-    % SINGLE CONVERSION
-    function M = single(Mh)
-        M = hmxSingle(Mh);
+    
+    % ZEROS
+    function Mh = zeros(Mh)
+        Mh.typ = 1;
+        Mh.row = cell(1,4);
+        Mh.col = cell(1,4);
+        Mh.chd = cell(1,4);
+        Mh.dat = {zeros(size(Mh,1),0),zeros(0,size(Mh,2))};
     end
 
-    % DOUBLE CONVERSION
-    function M = double(Mh)
-        M = hmxDouble(Mh);
+    % SINGLE
+    function Mh = single(Mh)
+        Mh = hmxSingle(Mh);
+    end
+
+    % DOUBLE
+    function Mh = double(Mh)
+        Mh = hmxDouble(Mh);
     end
 
     % TRANSPOSITION
@@ -134,6 +194,8 @@ methods
         Mh = hmxCtranspose(Mh);
     end
     
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ALGEBRA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SCALAR PRODUCT
     function Mh = times(Ml,Mr)
         Mh = hmxTimes(Ml,Mr);
@@ -165,6 +227,11 @@ methods
         end
     end
     
+    % ADDITION WITH MATRIX PRODUCT
+    function Mh = plusmtimes(Mh,alpha,Ml,Mr)
+        Mh = hmxPlusMtimes(Mh,alpha,Ml,Mr);
+    end
+    
     % INVERSION
     function Mh = inv(Mh)
         Mh = hmxInv(Mh);
@@ -185,64 +252,14 @@ methods
         [Lh,Uh] = hmxLU(Mh);
     end
     
-    % EXACT SOLVER 
+    % MLDIVIDE
     function B = mldivide(Mh,B)
-        if (Mh.typ == 2)
-            B = Mh.dat \ B;
-        elseif (Mh.chd{2}.typ == 1) && isempty(Mh.chd{2}.dat{1})
-            B = hmxSolveLower(Mh,B);
-        elseif (Mh.chd{3}.typ == 1) && isempty(Mh.chd{3}.dat{1})
-            B = hmxSolveUpper(Mh,B);
-        else
-            [Lh,Uh] = lu(Mh);
-            B = hmxSolveLower(Lh,B);
-            B = hmxSolveUpper(Uh,B);
-        end
+       B = hmxMldivide(Mh,B); 
     end
-    
-    % STRUCTURE VISUALISATION
-    function spy(Mh)
-        hmxSpy(Mh);
-    end
-    
-    % PLOT POSITIONS
-    function plot3(Mh)
-        plot3(Mh.pos{1}(:,1),Mh.pos{1}(:,2),Mh.pos{1}(:,3),'bo',...
-            Mh.pos{2}(:,1),Mh.pos{2}(:,2),Mh.pos{2}(:,3),'*r');
-    end
-    
-    % DIMENSIONS
-    function dim = size(varargin)
-        if length(varargin) == 1
-            dim = varargin{1}.dim;
-        else
-            dim = varargin{1}.dim(varargin{2});
-        end
-    end
-    
-    % VERTICAL CONCATENATION
-    function Mh = vertcat(varargin)
-        Mh = varargin{1};
-        for i = 2:nargin
-            Mh = cat(1,Mh,varargin{i});
-        end
-    end
-
-    % HORIZONTAL CONCATENATION
-    function Mh = horzcat(varargin)
-        Mh = varargin{1};
-        for i = 2:nargin
-            Mh = cat(2,Mh,varargin{i});
-        end
-    end
-    
-    % CONCATENATION
-    function Mh = cat(dim,Ml,Mr)
-        Mh = hmxCat(dim,Ml,Mr);
-    end
-    
-    % NORM(S)
-    
-    % MPOWER
+        
+    % MRDIVIDE
+    function B = mrdivide(B,Mh)
+        B = (Mh.'\B.').';
+    end  
 end
 end

@@ -2,7 +2,7 @@
 %|                                                                        |
 %|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
-%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018          |
+%| COPYRIGHT : Matthieu Aussal & Francois Alouges (c) 2017-2018           |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
 %| route de Saclay, 91128 Palaiseau, France. All rights reserved.         |
 %| LICENCE   : This program is free software, distributed in the hope that|
@@ -170,56 +170,28 @@ size(D)
 Y   = - integral(gamma,Jh,PWE);
 RHS = [Y;zeros(size(D,1),1)];
 
-%%
 
 %%% SOLVE LINEAR PROBLEM
 disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
-% Final linear system
+% Factorization LU H-Matrix
 tic
-Ch  = hmx(Eh.unk,Jh.unk,C,tol);
-Dh  = hmx(Eh.unk,Eh.unk,D,tol);
-toc
-tic
-LHS = [A B ; Ch Dh];
-toc
-figure
-spy(LHS)
-
-% LU factorization
-tic
-[Lh,Uh] = lu(LHS);
+[La,Ua] = lu(A);
 toc
 
 figure
-spy(Lh)
+subplot(1,2,1)
+spy(La)
+subplot(1,2,2)
+spy(Ua)
 
-% Solve
+% Shurr complement resolution
 tic
-X = Uh \ (Lh \ RHS);
-J = X(1:size(A,1));
-E = X(size(A,1)+1:end);
+Sm1V = @(V) Ua\(La\V);
+SV   = @(V) A*V - B*(D\(C*V));
+J    = gmres(SV,Y,[],tol,100,Sm1V);
+E    = - D\(C*J);
 toc
-
-
-% % Factorization LU H-Matrix
-% tic
-% [La,Ua] = lu(A);
-% toc
-% 
-% figure
-% subplot(1,2,1)
-% spy(La)
-% subplot(1,2,2)
-% spy(Ua)
-% 
-% % Shurr complement resolution
-% tic
-% Sm1V = @(V) Ua\(La\V);
-% SV   = @(V) A*V - B*(D\(C*V));
-% J    = gmres(SV,Y,[],tol,100,Sm1V);
-% E    = - D\(C*J);
-% toc
 
 
 %%% INFINITE SOLUTION
@@ -281,3 +253,5 @@ drawnow
 
 
 disp('~~> Michto gypsilab !')
+
+

@@ -29,18 +29,21 @@ function Mh = hmxMtimes(Ml,Mr)
 %|  `---'  |                Compr > Full > H-Matrix                       |
 %+========================================================================+
 
+% Check dimensions
+if (size(Ml,2) ~= size(Mr,1))
+    error('hmxMtimes.m : matrix dimensions must agree.')
+end
+
 %%% H-Matrix * H-Matrix --> H-Matrix
 if isa(Ml,'hmx') && isa(Mr,'hmx')
-    % Check dimensions
-    if (Ml.dim(2) ~= Mr.dim(1))
-        error('hmxMtimes.m : matrix dimensions must agree.')
-    end
-    
     % Initialisation
     Mh = hmx(Ml.pos{1},Mr.pos{2},Ml.tol);
     
     % H-Matrix * H-Matrix --> H-Matrix   (recursion)
     if (Ml.typ==0) && (Mr.typ==0)
+        % Type
+        Mh.typ = 0;
+        
         % Bloc product indices
         I = [1 2; 1 2; 3 4; 3 4];
         J = [1 3; 2 4; 1 3; 2 4];
@@ -52,53 +55,51 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
             Mh.row{i} = Ml.row{I(i,1)};
             Mh.col{i} = Mr.col{J(i,2)};
         end
-        Mh.typ = 0;
         
         % Fusion
         Mh = hmxFusion(Mh);
         
     % H-Matrix * Compr --> Compr
     elseif (Ml.typ==0) && (Mr.typ==1)
-        Mh.dat = {hmxMtimes(Ml,Mr.dat{1}) , Mr.dat{2}};
         Mh.typ = 1;
+        Mh.dat = {hmxMtimes(Ml,Mr.dat{1}) , Mr.dat{2}};
         
-    % H-Matrix * Full --> Full
+    % H-Matrix * Full --> Unavailable
     elseif (Ml.typ==0) && (Mr.typ==2)
-        Mh.dat = full(Ml) * Mr.dat;
-        Mh.typ = 2;
+        error('hmxMtimes : unvailable case')
         
         
     % Compr * H-Matrix --> Compr
     elseif (Ml.typ==1) && (Mr.typ==0)
-        Mh.dat = {Ml.dat{1} , hmxMtimes(Ml.dat{2},Mr)};
         Mh.typ = 1;
+        Mh.dat = {Ml.dat{1} , hmxMtimes(Ml.dat{2},Mr)};
             
     % Compr * Compr --> Compr
     elseif (Ml.typ==1) && (Mr.typ==1) 
-        Mh.dat = {Ml.dat{1} , (Ml.dat{2} * Mr.dat{1}) * Mr.dat{2}};
         Mh.typ = 1;
+        Mh.dat = {Ml.dat{1} , (Ml.dat{2} * Mr.dat{1}) * Mr.dat{2}};
         
     % Compr * Full --> Compr
     elseif (Ml.typ==1) && (Mr.typ==2)
-        Mh.dat = {Ml.dat{1} , Ml.dat{2} * Mr.dat};
         Mh.typ = 1;        
+        Mh.dat = {Ml.dat{1} , Ml.dat{2} * Mr.dat};
         
         
-    % Full * H-Matrix --> Full
+    % Full * H-Matrix --> Unavailable
     elseif (Ml.typ==2) && (Mr.typ==0)
-        Mh.dat = Ml.dat * full(Mr);
-        Mh.typ = 2;  
+        error('hmxMtimes : unvailable case')
         
     % Full * Compr --> Compr
     elseif (Ml.typ==2) && (Mr.typ==1)
-        Mh.dat = {Ml.dat*Mr.dat{1} , Mr.dat{2}};
         Mh.typ = 1;
+        Mh.dat = {Ml.dat*Mr.dat{1} , Mr.dat{2}};
         
     % Full * Full --> Full
     elseif (Ml.typ==2)
-        Mh.dat = Ml.dat * Mr.dat;
         Mh.typ = 2;
+        Mh.dat = Ml.dat * Mr.dat;
   
+        
     % Unknown type    
     else
         error('hmxMtimes : unvailable case')
@@ -107,15 +108,10 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     
 %%% H-Matrix * Matrix --> Full
 elseif isa(Ml,'hmx')
-    % Check dimensions
-    if (Ml.dim(2) ~= size(Mr,1))
-        error('hmxMtimes.m : matrix dimensions must agree.')
-    end
-    
     % H-Matrix (recursion)
     if (Ml.typ == 0)
         % Initializaton
-        Mh = zeros(Ml.dim(1),size(Mr,2));
+        Mh = zeros(size(Ml,1),size(Mr,2),class(Ml.row{1}));
 
         % Recursion
         for i = 1:4
@@ -138,15 +134,10 @@ elseif isa(Ml,'hmx')
     
 %%% Matrix * H-Matrix --> Full
 elseif isa(Mr,'hmx')
-    % Check dimensions
-    if (size(Ml,2) ~=  size(Mr,1))
-        error('hmxMtimes.m : matrix dimensions must agree.')
-    end
-
     % H-Matrix (recursion)
     if (Mr.typ == 0)
         % Initializaton
-        Mh = zeros(size(Ml,1),size(Mr,2));
+        Mh = zeros(size(Ml,1),size(Mr,2),class(Mr.row{1}));
 
         % Recursion
         for i = 1:4
@@ -165,10 +156,5 @@ elseif isa(Mr,'hmx')
     else
         error('hmxMtimes.m : unavailable case')
     end    
-    
-    
-%%% Unavailable    
-else
-    error('hmxMtimes.m : unavailable case')
 end
 end

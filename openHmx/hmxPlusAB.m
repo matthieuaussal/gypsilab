@@ -1,4 +1,4 @@
-function [Mh,A,B] = hmxSherMorr(Mh)
+function Mh = hmxPlusAB(Mh,A,B)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -20,53 +20,38 @@ function [Mh,A,B] = hmxSherMorr(Mh)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxSherMorr.m                                 |
+%|    #    |   FILE       : hmxPlusAB.m                                   |
 %|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Convert H-Matrix to Shermann Morrison form    |
-%|  `---'  |                Sh + A*B                                      |
+%| ( === ) |   SYNOPSIS   : Sum H-matriw with low-rank product            |
+%|  `---'  |                                                              |
 %+========================================================================+
-    
-% H-Matrix (recursion)
-if (Mh.typ == 0)
-    % Initialization
-    A = zeros(Mh.dim(1),0,class(Mh.row{1}));
-    B = zeros(0,Mh.dim(2),class(Mh.row{1}));
-    l = 0;
-    
-    % Recursion
-    for i = 1:4
-        % Children computation
-        [Mh.chd{i},Ai,Bi] = hmxSherMorr(Mh.chd{i});
-        ri = size(Ai,2);
-        
-        % Parent incrementation
-        A(Mh.row{i},l+1:l+ri) = Ai;
-        B(l+1:l+ri,Mh.col{i}) = Bi;
-        
-        % Rank incrementation
-        l = l+ri;
-    end
-    
-    % Recompression
-    [A,B] = hmxQRSVD(A,B,Mh.tol);
-    
-% Compressed leaf
-elseif (Mh.typ == 1)
-    A = Mh.dat{1}; 
-    B = Mh.dat{2};
-    Mh.dat{1} = zeros(Mh.dim(1),1,class(A)); 
-    Mh.dat{2} = zeros(1,Mh.dim(2),class(A));
-    
-% Full leaf
-elseif (Mh.typ == 2)
-    A = zeros(Mh.dim(1),0,class(Mh.dat)); 
-    B = zeros(0,Mh.dim(2),class(Mh.dat));
 
-% Unknown type
-else
-    error('hmxSherMorr.m : unavailable case')
+% Rank is > 0
+if (size(A,2) > 0)
+    %%% H-Matrix (recursion)
+    if (Mh.typ == 0)
+        for i = 1:4
+            Mh.chd{i} = hmxPlusAB(Mh.chd{i},A(Mh.row{i},:),B(:,Mh.col{i}));
+        end
+        Mh = hmxFusion(Mh);
+        
+    %%% Compressed leaf
+    elseif (Mh.typ == 1)
+        A      = [Mh.dat{1},A];
+        B      = [Mh.dat{2};B];
+        [A,B]  = hmxQRSVD(A,B,Mh.tol);
+        Mh.dat = {A,B};
+        
+    %%% Full leaf
+    elseif (Mh.typ == 2)
+        Mh.dat = Mh.dat + A*B;
+        
+    %%%% Unknown type
+    else
+        error('hmxPlus.m : unavailable case')
+    end
 end
 end

@@ -29,11 +29,11 @@ function [A,B] = hmxLowrank(Mh)
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
     % Initialisation
-    A = zeros(Mh.dim(1),0);
-    B = zeros(0,Mh.dim(2));
+    A = zeros(size(Mh,1),0,class(Mh.row{1}));
+    B = zeros(0,size(Mh,2),class(Mh.row{1}));
 
     % Recursion
     for i = 1:4
@@ -41,12 +41,12 @@ if (Mh.typ == 0)
         [Ai,Bi] = hmxLowrank(Mh.chd{i});
 
         % Low-rank addition for A
-        tmp              = zeros(Mh.dim(1),size(Ai,2));
+        tmp              = zeros(size(Mh,1),size(Ai,2),class(Mh.row{1}));
         tmp(Mh.row{i},:) = Ai;
         A                = [A , tmp];
 
         % Low-rank addition for B
-        tmp              = zeros(size(Bi,1),Mh.dim(2));
+        tmp              = zeros(size(Bi,1),size(Mh,2),class(Mh.row{1}));
         tmp(:,Mh.col{i}) = Bi;
         B                = [B ; tmp];
     end
@@ -54,21 +54,21 @@ if (Mh.typ == 0)
     % Recompression
     [A,B] = hmxQRSVD(A,B,Mh.tol);
 
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     A = Mh.dat{1};
     B = Mh.dat{2};
 
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     % Low-Rank conversion
     A = full(Mh.dat);
-    B = eye(Mh.dim(2));
+    B = eye(size(Mh,2));
     
     % Recompression
     [A,B] = hmxQRSVD(A,B,Mh.tol);
 
-% Others    
+%%% Others    
 else
     error('hmxLowrank.m : unavailable case')
 end

@@ -1,4 +1,4 @@
-function Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,tol)
+function Mh = hmxBuilderFem(Xunk,Yunk,Mx,X,green,Y,My,tol)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -25,15 +25,18 @@ function Mh = hmxBuilderFem(Xdof,Ydof,Mx,X,green,Y,My,tol)
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Particles builder with low-rank approximation |
-%|  `---'  |                and finite element integration                |
+%| ( === ) |   SYNOPSIS   : Finite element builder with low-rank          |
+%|  `---'  |                approximation for handle function             |
 %+========================================================================+
 
 % Initialisation
-Mh = hmx(Xdof,Ydof,tol);
+Mh = hmx(Xunk,Yunk,tol);
+
+% Admissibility
+[isfar,Xdim,Ydim] = hmxFar(Mh);
 
 % Compression for far distances
-if hmxFar(Mh)
+if isfar
     % ACA compression
     if iscell(green)
         A = cell(1,3);
@@ -85,41 +88,47 @@ end
     
 %%% Compression
 if flag
-    Mh.dat = {A,B};
+    % Type
     Mh.typ = 1;
+    
+    % Low-rank
+    Mh.dat = {A,B};
 
 
 %%%% Full or sparse for smallest box (stopping criterion)
-elseif sum(Mh.dim < 100)
+elseif (max(size(Mh)) < 100)
+    % Type
+    Mh.typ = 2;
+
     % Quadrature matrix
     Nx    = size(X,1);
     Ny    = size(Y,1);
     [I,J] = ndgrid(1:Nx,1:Ny);
     if iscell(green)
-        Gxy{1} = reshape(green{1}(X(I(:),:),Y(J(:),:)),Nx,Ny);
-        Gxy{2} = reshape(green{2}(X(I(:),:),Y(J(:),:)),Nx,Ny);
-        Gxy{3} = reshape(green{3}(X(I(:),:),Y(J(:),:)),Nx,Ny);
+        Gxy{1} = reshape(green{1}(X(I,:),Y(J,:)),Nx,Ny);
+        Gxy{2} = reshape(green{2}(X(I,:),Y(J,:)),Nx,Ny);
+        Gxy{3} = reshape(green{3}(X(I,:),Y(J,:)),Nx,Ny);
     else
-        Gxy = reshape(green(X(I(:),:),Y(J(:),:)),Nx,Ny);
+        Gxy = reshape(green(X(I,:),Y(J,:)),Nx,Ny);
     end
     
     % Matrix integration
     Mh.dat = femMultiplyCell(Mx,Gxy,My);
     
-    % Type
-    Mh.typ = 2;
-   
 
 %%% H-Matrix (recursion)
 else
-    % Subdivision for Xdof
-    [I1,I2] = hmxSubdivide(Xdof);
-    Mh.row  = {I1 , I1 , I2 , I2 };
+    % Type
+    Mh.typ = 0;
     
-    % Subdivision for Ydof
-    [I1,I2] = hmxSubdivide(Ydof);
+    % Subdivision for X
+    [I1,I2] = hmxSubdivide(Xunk,Xdim);
+    Mh.row  = {I1 , I1 , I2 , I2};
+    
+    % Subdivision for Y
+    [I1,I2] = hmxSubdivide(Yunk,Ydim);
     Mh.col  = {I1 , I2 , I1 , I2};
-    
+
     % H-Matrix (recursion)
     for i = 1:4
         % Dof indices
@@ -131,12 +140,9 @@ else
         [Mychd,Iy] = femSubdivideCell(My,Ic,'right');
 
         % Recursion
-        Mh.chd{i} = hmxBuilderFem(Xdof(Ir,:),Ydof(Ic,:),...
+        Mh.chd{i} = hmxBuilderFem(Xunk(Ir,:),Yunk(Ic,:),...
             Mxchd,X(Ix,:),green,Y(Iy,:),Mychd,tol);
     end
-    
-    % Type
-    Mh.typ = 0;
     
     % Fusion
     Mh = hmxFusion(Mh);    

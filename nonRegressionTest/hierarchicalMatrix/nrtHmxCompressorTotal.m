@@ -104,14 +104,6 @@ colormap gray
 
 
 %%% SPARSE COMPRESSION
-% Compression SVD
-disp('------> SPARSE SVD')
-tic
-[A,B] = hmxSVD(Msp,tol);
-toc
-size(A)
-norm(M-A*B,'fro')/norm(M,'fro')
-
 % Compression RSVD
 disp('------> SPARSE RSVD')
 tic

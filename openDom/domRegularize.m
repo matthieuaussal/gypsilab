@@ -22,10 +22,10 @@ function Ms = domRegularize(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domRegularize.m                               |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
 %| ( === ) |   SYNOPSIS   : Finite element regularization matrix for      |
 %|  `---'  |                singularities with Laplace kernel             |
 %+========================================================================+
@@ -77,7 +77,7 @@ Mx          = cell(Nelt,1);
 
 
 %%% RIGHT INTEGRATION WITH REGULARIZATION
-parfor el = 1:Nelt
+for el = 1:Nelt
     % Triangular data for Y
     Sel  = vtx(elt(el,:),:);
     Nel  = nrm(el,:);
@@ -250,8 +250,8 @@ parfor el = 1:Nelt
         end
         
         % Matrix-Vector product
-        I = Ix * ones(1,Nbas);
-        J = ones(length(Ix),1) * elt2dof(el,:);
+        I = repmat(Ix,1,Nbas);
+        J = repmat(elt2dof(el,:),length(Ix),1);
         if iscell(V)
             Mx{el} = [I(:) J(:) V{1}(:) V{2}(:) V{3}(:)];
         else
@@ -261,13 +261,9 @@ parfor el = 1:Nelt
 end
 
 
-%%% LEFT INTEGRATION AND RIGHT CORRECTIONS
-% Right unknowns
-[Xunk,Punk] = v.unk;
-
-% Data preparation
+%%% LEFT INTEGRATION AND RIGHT REDUCTION
+% Left integration matrix
 Ndof = size(v.dof,1);
-Mx   = cell2mat(Mx);
 if (length(data) == 4)
     Mu = speye(Nx,Nx);
     Mw = speye(Nx,Nx);
@@ -275,10 +271,11 @@ if (length(data) == 4)
 else
     Mu = u.uqm(Xdom);
     Mw = spdiags(Wx,0,length(Wx),length(Wx));
-    Ms = sparse(size(Xunk,1),Ndof);
+    Ms = sparse(length(u),Ndof);
 end
 
-% For empty regularization
+% Regularization matrix
+Mx = double(cell2mat(Mx));
 if isempty(Mx)
     if iscell(Mu)
         Mx = [1 1 zeros(1,length(Mu))];
@@ -287,7 +284,7 @@ if isempty(Mx)
     end
 end
 
-% Integration
+% Left integration
 if iscell(Mu)
     for i = 1:length(Mu)
         Ms = Ms + Mu{i}' * Mw * sparse(Mx(:,1),Mx(:,2),Mx(:,2+i),Nx,Ndof);
@@ -297,5 +294,6 @@ else
 end
 
 % Right reduction
-Ms = Ms * Punk;
+[~,Mv] = v.unk;
+Ms     = Ms * Mv;
 end

@@ -164,114 +164,24 @@ RHS = [Y;zeros(size(D,1),1)];
 %%% SOLVE LINEAR PROBLEM
 disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
-% Final linear system
+% Factorization LU H-Matrix
 tic
-Ch  = hmx(Eh.unk,Jh.unk,C,tol);
-Dh  = hmx(Eh.unk,Eh.unk,D,tol);
-toc
-tic
-LHS = [A B ; Ch Dh];
-toc
-figure
-spy(LHS)
-
-% LU factorization
-tic
-[Lh,Uh] = lu(LHS);
+[La,Ua] = lu(A);
 toc
 
 figure
-spy(Lh)
+subplot(1,2,1)
+spy(La)
+subplot(1,2,2)
+spy(Ua)
 
-% Solve
+% Shurr complement resolution
 tic
-X = Uh \ (Lh \ RHS);
-J = X(1:size(A,1));
-E = X(size(A,1)+1:end);
+Sm1V = @(V) Ua\(La\V);
+SV   = @(V) A*V - B*(D\(C*V));
+J    = gmres(SV,Y,[],tol,100,Sm1V);
+E    = - D\(C*J);
 toc
-
-
-% % Factorization LU H-Matrix
-% tic
-% [La,Ua] = lu(A);
-% toc
-% 
-% figure
-% subplot(1,2,1)
-% spy(La)
-% subplot(1,2,2)
-% spy(Ua)
-% 
-% % Shurr complement resolution
-% tic
-% Sm1V = @(V) Ua\(La\V);
-% SV   = @(V) A*V - B*(D\(C*V));
-% J    = gmres(SV,Y,[],tol,100,Sm1V);
-% E    = - D\(C*J);
-% toc
-
-% tic
-% Ch = hmx(Eh.unk,Jh.unk,C,tol);
-% Dh = hmx(Eh.unk,Eh.unk,D,tol);
-% toc
-% 
-% tic
-% [Lh,Uh] = lu(Dh);
-% toc
-% 
-% tic
-% Sh = A - hmxSolveUpper(B,Uh) * (Lh\Ch);
-% toc
-% 
-% tic
-% [Lh,Uh] = lu(Sh);
-% toc
-% 
-% tic
-% J    = Uh\(Lh\Y);
-% E    = - D\(C*J);
-% toc
-
-% % Left hand side H-Matrix
-% LHS     = hmx(N1+N2,N1+N2,tol);
-% LHS.chd = {A,B,hmx(Eh.unk,Jh.unk,C,tol),hmx(Eh.unk,Eh.unk,D,tol)};
-% LHS.row = {(1:N1)',(1:N1)',N1+(1:N2)',N1+(1:N2)'} ;
-% LHS.col = {(1:N1)',N1+(1:N2)',(1:N1)',N1+(1:N2)'}; 
-% LHS.typ = 0;
-% 
-% % Graphical representation
-% figure
-% spy(LHS)
-% 
-% % LU factorization
-% tic
-% [Lh,Uh] = lu(LHS);
-% toc
-% 
-% % Graphical representation
-% figure
-% subplot(1,2,1)
-% spy(Lh)
-% subplot(1,2,2)
-% spy(Uh)
-% 
-% % Solve linear system
-% tic
-% X = Uh\(Lh\RHS);
-% toc
-% J = X(1:N1);
-% E = X(N1+1:end);
-
-% Validation
-% ref = [full(A) , full(B)  
-%         C      ,    D    ];
-% % norm(full(LHS)-ref,'fro')/norm(ref,'fro')
-% tic
-% X = ref\RHS;
-% toc
-% J = X(1:N1);
-% E = X(N1+1:end);
-% norm(X-ref,'fro')/norm(ref,'fro')
 
 
 %%% INFINITE SOLUTION
@@ -334,3 +244,30 @@ drawnow
 
 disp('~~> Michto gypsilab !')
 
+
+
+% % Final linear system
+% tic
+% Ch  = hmx(Eh.unk,Jh.unk,C,tol);
+% Dh  = hmx(Eh.unk,Eh.unk,D,tol);
+% toc
+% tic
+% LHS = [A B ; Ch Dh];
+% toc
+% figure
+% spy(LHS)
+% 
+% % LU factorization
+% tic
+% [Lh,Uh] = lu(LHS);
+% toc
+% 
+% figure
+% spy(Lh)
+% 
+% % Solve
+% tic
+% X = Uh \ (Lh \ RHS);
+% J = X(1:size(A,1));
+% E = X(size(A,1)+1:end);
+% toc

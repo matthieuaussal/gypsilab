@@ -29,22 +29,22 @@ function M = hmxSparse(Mh)
 %|  `---'  |                                                              |
 %+========================================================================+
     
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
-    M = sparse(Mh.dim(1),Mh.dim(2));
+    M = sparse(size(Mh,1),size(Mh,2));
     for i = 1:4
         M(Mh.row{i},Mh.col{i}) = hmxSparse(Mh.chd{i});
     end
     
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     M = sparse(Mh.dat{1} * Mh.dat{2});
     
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     M = sparse(Mh.dat);
 
-% Unknown type
+%%% Unknown type
 else
     error('hmxSparse.m : unavailable case')
 end

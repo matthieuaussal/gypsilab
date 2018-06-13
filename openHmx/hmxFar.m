@@ -1,4 +1,4 @@
-function bool = hmxFar(Mh)
+function [bool,Xdim,Ydim] = hmxFar(Mh)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -30,19 +30,21 @@ function bool = hmxFar(Mh)
 %+========================================================================+
 
 % Particles box X
-X    = Mh.pos{1};
-Xmin = min(X,[],1);
-Xmax = max(X,[],1);
-Xctr = 0.5*(Xmin+Xmax);
-Xdgl = Xmax-Xmin;
+X        = Mh.pos{1};
+Xmin     = min(X,[],1);
+Xmax     = max(X,[],1);
+Xctr     = 0.5*(Xmin+Xmax);
+Xdgl     = Xmax-Xmin;
+[~,Xdim] = max(Xdgl);
 
 % Particles box Y
-Y    = Mh.pos{2};
-Ymin = min(Y,[],1);
-Ymax = max(Y,[],1);
-Yctr = 0.5*(Ymin+Ymax);
-Ydgl = Ymax-Ymin;
+Y        = Mh.pos{2};
+Ymin     = min(Y,[],1);
+Ymax     = max(Y,[],1);
+Yctr     = 0.5*(Ymin+Ymax);
+Ydgl     = Ymax-Ymin;
+[~,Ydim] = max(Ydgl);
 
 % Separated particles set
-bool = sum( abs(Yctr-Xctr) >= 0.75*(Xdgl+Ydgl) & (Xdgl>0) & (Ydgl > 0));
+bool = sum( (abs(Yctr-Xctr)>=0.75*(Xdgl+Ydgl)) & (Xdgl>0) & (Ydgl > 0));
 end

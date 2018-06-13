@@ -77,9 +77,8 @@ hold off
 view(0,10)
 
 
-
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Hxy{1} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]1',k) ;
@@ -109,14 +108,19 @@ LHS = 0.5*Id - nxK;
 % Right hand side
 RHS = - integral(sigma,nx(v),PWH);
 
-% Solve linear system 
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+
+% LU factorization
 tic
 [Lh,Uh] = lu(LHS);
 toc
+
+% Resolution
 tic
 J = Uh \ (Lh \ RHS);
 toc
-
 
 
 %%% INFINITE SOLUTION
@@ -132,7 +136,7 @@ xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3);
 Ginf  = @(X,Y) exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Tinf = integral(nu,sigma,Ginf,v, tol);
+Tinf = integral(nu,sigma,Ginf,v);
 sol  = 1i*k/(4*pi)*cross(nu, cross([Tinf{1}*J, Tinf{2}*J, Tinf{3}*J], nu));
 
 % Radiation infinie de reference, convention e^(+ikr)/r

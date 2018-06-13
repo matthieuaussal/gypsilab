@@ -75,8 +75,8 @@ hold off
 view(0,10)
 
 
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATORS
+disp('~~~~~~~~~~~~~ PREPARE OPERATORS ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Gxy         = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
@@ -106,25 +106,24 @@ Dr = 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(v));
 D  = 1/(4*pi) .* integral(sigma,sigma,u,gradyGxy,ntimes(v),tol) + Dr;
 toc
 
-% Final operator : [-1i*k*beta*S + (Id/2 + D)]
+% Final operator : [1i*k*beta*S - (Id/2 + D)]
 tic
-LHS  = -beta.*S + 0.5*Id + D;
+LHS  = beta.*S - (0.5*Id + D);
 toc
 
 % Finite element incident wave trace --> \int_Sx psi(x)' pw(x) dx
 RHS = - integral(sigma,u,PW);
 
-% % Structure
-% figure
-% spy(LHS)
-% pouet
 
-% Preconditionneur LU
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+
+% Preconditionneur ILU
 tic
-[L,U] = ilu(-beta.*Sr + 0.5*Id + Dr);
+[L,U] = ilu(beta.*Sr - (0.5*Id + Dr));
 toc
 
-% Solve with SPMD product for GMRES
+% Solve linear system : [1i*k*beta*S - (Id/2 + D)] = P0
 tic
 mu = gmres(@(V) LHS*V,RHS,[],tol,100,L,U);
 toc
@@ -148,13 +147,13 @@ gradxGinf{2} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,2)) .* exp(-1i*k*xdoty(X,Y));
 gradxGinf{3} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,3)) .* exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operators
-Sinf = integral(nu,sigma,Ginf,v,1e-6);
-Dinf = integral(nu,sigma,gradxGinf,ntimes(v),1e-6);
+Sinf = integral(nu,sigma,Ginf,v);
+Dinf = integral(nu,sigma,gradxGinf,ntimes(v));
 % figure
 % spy(Sinf)
 
 % Finite element radiation  
-sol = Dinf*mu - Sinf*lambda;
+sol = Sinf*lambda - Dinf*mu;
 
 % Analytical solution
 ref = sphereHelmholtz('inf','dir',1,k,nu); 
@@ -192,7 +191,7 @@ Dbnd = 1/(4*pi) .* (integral(sigma,sigma,u,gradyGxy,ntimes(v),tol) + ...
 toc
 
 % Boundary solution
-Psca = 0.5*mu + Id\double(Dbnd*mu - Sbnd*lambda);
+Psca = Id\(Sbnd*lambda - (0.5*Id*mu + Dbnd*mu));
 Pinc = PW(u.dof);
 Pbnd = Pinc + Psca;
 
@@ -209,7 +208,7 @@ Ddom = 1/(4*pi) .* ( integral(square.vtx,sigma,gradyGxy,ntimes(v),tol) + ...
 toc
 
 % Domain solution
-Psca = Ddom*mu - Sdom*lambda;
+Psca = Sdom*lambda - Ddom*mu;
 Pinc = PW(square.vtx);
 Pdom = Pinc + Psca;
 
@@ -227,7 +226,6 @@ title('Total field solution')
 colorbar
 hold off
 view(0,10)
-
 
 
 %%% ANAYTICAL SOLUTIONS FOR COMPARISONS

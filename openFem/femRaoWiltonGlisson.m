@@ -41,11 +41,14 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'div[psi]')
     
     % Intersect domain and finite element meshes
     if isequal(fe.msh,domain.msh)
-        mesh = fe.msh;
-        Ife  = (1:size(fe.msh.elt,1))';
-        Idom = Ife;
+        mesh    = fe.msh;
+        Ife     = (1:size(fe.msh.elt,1))';
+        Idom    = Ife;
+        XintQud = Xqud;
     else
         [mesh,Ife,Idom] = intersect(fe.msh,domain.msh);
+        domainInt       = dom(mesh,domain.gss);
+        XintQud         = domainInt.qud;
     end
     
     % Dimensions
@@ -87,7 +90,7 @@ if size(fe.msh.elt,2)==3 % Triangular elements
                 
                 % For each integration point
                 for j = 1:Ngss
-                    val(:,i,j) = flux.*(Xqud(j:Ngss:Nqud,n) - mesh.vtx(mesh.elt(:,i),n));
+                    val(:,i,j) = flux.*(XintQud(j:Ngss:end,n) - mesh.vtx(mesh.elt(:,i),n));
                 end
             end
             
@@ -195,7 +198,7 @@ elseif size(fe.msh.elt,2)==4 % Tetrahedral elements
                 
                 % For each integration point
                 for j = 1:Ngss
-                    val(:,i,j) = flux.*(Xqud(j:Ngss:Nqud,n) - mesh.vtx(mesh.elt(:,i),n));
+                    val(:,i,j) = flux.*(XintQud(j:Ngss:end,n) - mesh.vtx(mesh.elt(:,i),n));
                 end
             end
             

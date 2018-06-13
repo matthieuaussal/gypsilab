@@ -30,26 +30,23 @@ function [A,B] = hmxQRSVD(A,B,tol)
 %+========================================================================+
 
 if ~isempty(A)
-    % Full conversion
-    A = full(A);
-    B = full(B);
-    
     % QR Factorisation A = QA * RA;
     [QA,RA] = qr(A,0);
     
     % QR Factorisation Bt = QB * RB
     [QB,RB] = qr(B.',0);
     
-    % SVD : U*S*V = RA * RB.'
+    % Singular value decomposition U*S*V = RA * RB.'
     [U,S,V] = svd(RA * RB.','econ');
-    
-    % Indices singular values > tol
-    ind = find(abs(diag(S)./S(1)) >= tol);
-    
+    s       = diag(S);
+
+    % Compression rank
+    n = sum( s./s(1) >= tol );
+
     % Recompression A = QA * U * S
-    A = QA * (U(:,ind) * S(ind,ind));
+    A = QA * (U(:,1:n) * S(1:n,1:n));
     
     % Recompression B = V' * QB^t
-    B = V(:,ind)' * QB.';
+    B = V(:,1:n)' * QB.';
 end
 end

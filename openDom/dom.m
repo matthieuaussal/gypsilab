@@ -22,10 +22,10 @@ classdef dom
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : dom.m                                         |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.41                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
 %| ( === ) |   SYNOPSIS   : Domain class definition                       |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -117,6 +117,10 @@ methods
                 I = domIntegral5(varargin);
             case 6
                 I = domIntegral6(varargin);
+            case 7
+                I = domIntegral7(varargin);
+            case 8
+                I = domIntegral8(varargin);
             otherwise
                 error('dom.m : unavailable case')
         end

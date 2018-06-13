@@ -1,4 +1,4 @@
-function tree = mshTree(mesh,typ,fig)
+function tree = mshTree(mesh,typ,Nlf,fig)
 %+========================================================================+
 %|                                                                        |
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
@@ -29,6 +29,11 @@ function tree = mshTree(mesh,typ,fig)
 %|  `---'  |                                                              |
 %+========================================================================+
 
+% Security
+if isempty(Nlf)
+    Nlf = 1;
+end
+
 % Particles are element centers
 X  = mesh.ctr;
 Nx = length(mesh);
@@ -39,7 +44,7 @@ Xmax = max(X,[],1);
 edg  = max(Xmax-Xmin);
 
 % Initialize octree
-tree           = cell(2,1);
+tree           = cell(1,1);
 tree{1}.chd    = [];
 tree{1}.ctr    = Xmin + 0.5*edg;
 tree{1}.edg    = edg;
@@ -49,12 +54,12 @@ tree{1}.prt    = 0;
 
 % Recursive hierarchical clustering
 n = 1;
-while (length(tree{n}.ind) < Nx)
+while (max(tree{n}.nbr) > Nlf)
     % Tree subdivision
     if strcmp(typ,'octree')
-        [tree{n+1},Ichd] = mshSubDivide8(X,tree{n});
+        [tree{n+1,1},Ichd] = mshSubDivide8(X,tree{n});
     elseif strcmp(typ,'binary')
-        [tree{n+1},Ichd] = mshSubDivide2(X,tree{n});
+        [tree{n+1,1},Ichd] = mshSubDivide2(X,tree{n});
     else
         error('mshTree.m : unavailable case')
     end
@@ -204,7 +209,7 @@ for i = 1:Nprt
     Ncut  = sum(cut,1);
     
     % Security for planar repartition
-    if (sum(Ncut>0) == 1) && (sum(Ncut) > 1)
+    if (abs(Ncut(1)-Ncut(2)) > 1)
         [~,I]   = sort(X(ind,d));
         cutd(:) = 0;
         cutd(I(1:floor(end/2))) = 1;

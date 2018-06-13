@@ -69,6 +69,7 @@ run('nrtFemRwgNed.m');
 cd('../hierarchicalMatrix')
 run('nrtHmxAlgebra.m');
 run('nrtHmxBuilder.m');
+run('nrtHmxBuilderFem.m');
 run('nrtHmxCompareLU.m');
 run('nrtHmxCompressorPartial.m');
 run('nrtHmxCompressorsBox.m');

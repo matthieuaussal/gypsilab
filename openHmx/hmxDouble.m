@@ -32,24 +32,25 @@ function Mh = hmxDouble(Mh)
 % Position
 Mh.pos = {double(Mh.pos{1}),double(Mh.pos{2})};
 
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
     for i = 1:4
         Mh.chd{i} = hmxDouble(Mh.chd{i});
         Mh.row{i} = double(Mh.row{i});
         Mh.col{i} = double(Mh.col{i});
     end
+    Mh = hmxFusion(Mh);
     
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     Mh.dat{1} = double(Mh.dat{1});
     Mh.dat{2} = double(Mh.dat{2});
     
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     Mh.dat = double(Mh.dat);
     
-% Unknown type
+%%% Unknown type
 else
     error('hmxDouble.m : unavailable case')
 end

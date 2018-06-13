@@ -29,14 +29,14 @@ function D = hmxDiag(Mh,I,J)
 %|  `---'  |                                                              |
 %+========================================================================+
     
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
-    D = sparse(Mh.dim(1),Mh.dim(2));
+    D = sparse(size(Mh,1),size(Mh,2));
     for i = 1:4
         D(Mh.row{i},Mh.col{i}) = hmxDiag(Mh.chd{i},I(Mh.row{i}),J(Mh.col{i}));
     end
     
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     % Diagonal indices
     [ia,ib] = ismember(I,J);
@@ -47,9 +47,9 @@ elseif (Mh.typ == 1)
     D = sum(Mh.dat{1}(idx,:) .* (Mh.dat{2}(:,jdx)).',2);
     
     % Diagonal sparse matrix
-    D = sparse(idx,jdx,D,Mh.dim(1),Mh.dim(2));
+    D = sparse(idx,jdx,D,size(Mh,1),size(Mh,2));
         
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     % Diagonal indices
     [ia,ib] = ismember(I,J);
@@ -60,9 +60,9 @@ elseif (Mh.typ == 2)
     D = Mh.dat(sub2ind(size(Mh.dat),idx,jdx));
     
     % Diagonal sparse matrix
-    D = sparse(idx,jdx,D,Mh.dim(1),Mh.dim(2));
+    D = sparse(idx,jdx,D,size(Mh,1),size(Mh,2));
     
-% Unknown type
+%%% Unknown type
 else
     error('hmxDiag.m : unavailable case')
 end

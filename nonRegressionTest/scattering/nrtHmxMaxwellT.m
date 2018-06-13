@@ -77,9 +77,8 @@ hold off
 view(0,10)
 
 
-
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Gxy = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
@@ -94,35 +93,28 @@ LHS = 1i*k/(4*pi)*integral(sigma, sigma, v, Gxy, u, tol) ...
     - 1i/(4*pi*k)*integral(sigma, sigma, div(v), Gxy, div(u), tol) ;
 toc
 
-figure
-spy(LHS)
-
 % Regularization
 tic
 LHS = LHS + 1i*k/(4*pi)*regularize(sigma, sigma, v, '[1/r]', u) ...
       - 1i/(4*pi*k)*regularize(sigma, sigma, div(v), '[1/r]', div(u));
 toc
 
-% % Convert to single
-% LHS = single(LHS);
-
-figure
-spy(LHS)
-
 % Right hand side
 RHS = - integral(sigma,v,PWE);
 
-% Solve linear system 
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+
+% LU factorization
 tic
 [Lh,Uh] = lu(LHS);
 toc
+
+% Resolution
 tic
 J = Uh \ (Lh \ RHS);
 toc
-
-figure
-spy(Lh)
-
 
 
 %%% INFINITE SOLUTION
@@ -138,7 +130,7 @@ xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3);
 Ginf  = @(X,Y) exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Tinf = integral(nu,sigma,Ginf,v, tol);
+Tinf = integral(nu,sigma,Ginf,v);
 sol  = 1i*k/(4*pi)*cross(nu, cross([Tinf{1}*J, Tinf{2}*J, Tinf{3}*J], nu));
 
 % Radiation infinie de reference, convention e^(+ikr)/r

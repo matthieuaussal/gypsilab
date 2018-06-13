@@ -29,20 +29,25 @@ function Mh = hmxChol(Mh)
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% H-Matrix (recursion)
+% Check invertibility
+if (size(Mh,1) ~= size(Mh,2)) || ~isequal(Mh.pos{1},Mh.pos{2})
+    error('hmxChol.m : matrix must be invertible.')
+end
+
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
     % U11 -> M11
     Mh.chd{1} = hmxChol(Mh.chd{1});
 
     % U12 -> U11' \ M12
-    Mh.chd{2} = hmxSolveLower(Mh.chd{1}',Mh.chd{2});
+    Mh.chd{2} = Mh.chd{1}'\Mh.chd{2};
     
     % U21 -> 0
-    Mh.chd{3}.dat = {zeros(Mh.chd{3}.dim(1),0),zeros(0,Mh.chd{3}.dim(2))};
-    Mh.chd{3}.typ = 1;
+    Mh.chd{3} = zeros(Mh.chd{3});
     
     % M22 -> M22 - U12'*U12
     Mh.chd{4} = Mh.chd{4} - Mh.chd{2}' * Mh.chd{2};
+%     Mh.chd{4} = plusmtimes(Mh.chd{4},-1,Mh.chd{2}',Mh.chd{2});
     
     % U22 -> M22
     Mh.chd{4} = hmxChol(Mh.chd{4});
@@ -50,15 +55,15 @@ if (Mh.typ == 0)
     % Fusion
     Mh = hmxFusion(Mh);
 
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     error('hmxChol : unavailable case')
     
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     Mh.dat = chol(Mh.dat);    
    
-% Unknown type
+%%% Unknown type
 else
     error('hmxChol.m : unavailable case')
 end

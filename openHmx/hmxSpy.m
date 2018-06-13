@@ -34,14 +34,14 @@ Mh = varargin{1};
 
 % Initialize visu block
 if (Mh.typ > 0)
-    M        = sparse(Mh.dim(1),Mh.dim(2));
+    M        = sparse(size(Mh,1),size(Mh,2));
     M(:,1)   = 1;
     M(:,end) = 1;
     M(1,:)   = 1;
     M(end,:) = 1;
 end
 
-% H-Matrix (recursion)
+%%%% H-Matrix (recursion)
 if (Mh.typ == 0)
     A = hmxSpy(Mh.chd{1},[]);
     B = hmxSpy(Mh.chd{2},[]);
@@ -49,7 +49,7 @@ if (Mh.typ == 0)
     D = hmxSpy(Mh.chd{4},[]);
     M = [A,B;C,D];
 
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)      
     rk = size(Mh.dat{1},2);
     if (rk > 0)
@@ -59,7 +59,7 @@ elseif (Mh.typ == 1)
         M = 3 .* M;
     end
        
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     if issparse(Mh.dat)
         M = 4 .* (M + (abs(Mh.dat)>0));
@@ -67,7 +67,7 @@ elseif (Mh.typ == 2)
         M = 2 .* M;
     end
     
-% Unknown type    
+%%% Unknown type    
 else
     error('hmxSpy.m : unavailable case')
 end

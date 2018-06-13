@@ -39,7 +39,7 @@ methods
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRUCTOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function mesh = msh(varargin)
         % Read file
-        if (length(varargin) == 1)
+        if (length(varargin) == 1) && ischar(varargin{1})
             mesh = msh;
             file = varargin{1}; 
             ext  = file(end-2:end);
@@ -59,6 +59,12 @@ methods
             if isempty(mesh.col)
                 mesh.col = zeros(size(mesh.elt,1),1);
             end
+            
+        % Inout only vertex
+        elseif (length(varargin) == 1) && isnumeric(varargin{1})
+            mesh.vtx = varargin{1};
+            mesh.elt = (1:size(mesh.vtx,1))';
+            mesh.col = zeros(size(mesh.elt,1),1);
         
         % Input vertex and elements   
         elseif (length(varargin) == 2)
@@ -270,15 +276,22 @@ methods
         mesh = varargin{1};
         if (nargin == 1)
             typ = 'octree';
+            Nlf = 1;
             fig = 0;
         elseif (nargin == 2)
             typ = varargin{2};
+            Nlf = 1;
             fig = 0;
         elseif (nargin == 3)
             typ = varargin{2};
-            fig = varargin{3};
+            Nlf = varargin{3};
+            fig = 0;
+        elseif (nargin == 4)
+            typ = varargin{2};
+            Nlf = varargin{3};
+            fig = varargin{4};
         end
-        tree = mshTree(mesh,typ,fig);
+        tree = mshTree(mesh,typ,Nlf,fig);
     end
     
     

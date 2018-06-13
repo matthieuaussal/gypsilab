@@ -36,33 +36,34 @@ clc
 addpath('../../openMsh')
 
 % Initialize 3D mesh with tetra
-Nvtx = 1e3;
-L    = [4 3 2];
-tet  = mshCube(Nvtx,L)
+Nvtx  = 1e3;
+L     = [4 3 2];
+tet   = mshCube(Nvtx,L)
+Nleaf = 1;
 
 % Tetra tree
-tree(tet,'binary',2);
+tree(tet,'binary',Nleaf,2);
 tic
 tree(tet,'binary');
 toc
 
 % Triangle tree
 tri = tet.bnd
-tree(tri,'binary',3);
+tree(tri,'binary',Nleaf,3);
 tic
 tree(tri,'binary');
 toc
 
 % Edge tree
 edg = tri.edg
-tree(edg,'binary',4);
+tree(edg,'binary',Nleaf,4);
 tic
 tree(edg,'binary');
 toc
 
 % Particles tree
 prt = tri.prt
-tmp = tree(prt,'binary',5);
+tmp = tree(prt,'binary',Nleaf,5);
 tic
 tree(prt,'binary');
 toc
@@ -76,10 +77,10 @@ norm(prt.vtx-X)
 % Non uniform mesh
 mesh = mshSphere(1e3,1);
 fct  = @(X) floor(3*(1+X(:,1))/2);
-ref = mesh.refine(fct)
-tree(ref,'binary',6);
+refi = mesh.refine(fct)
+tree(refi,'binary',Nleaf,6);
 tic
-tree(ref,'binary');
+tree(refi,'binary');
 toc
 
 

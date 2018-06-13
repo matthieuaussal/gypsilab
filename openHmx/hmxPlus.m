@@ -29,13 +29,13 @@ function Ml = hmxPlus(Ml,Mr)
 %|  `---'  |                Full > H-Matrix > Compr                       |
 %+========================================================================+
 
+% Check dimensions
+if sum(size(Ml) ~= size(Mr))
+    error('hmxPlus.m : matrix dimensions must agree.')
+end
+
 %%% H-Matrix + H-Matrix -> H-Matrix
 if isa(Ml,'hmx') && isa(Mr,'hmx')
-    % Check dimensions
-    if sum(Ml.dim ~= Mr.dim)
-        error('hmxPlus.m : matrix dimensions must agree.')
-    end
-
     % H-Matrix + H-Matrix --> H-Matrix (recursion)
     if (Ml.typ == 0) && (Mr.typ == 0)
         % Construction
@@ -50,10 +50,9 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     elseif (Ml.typ == 0) && (Mr.typ == 1)
         Ml = hmxPlusAB(Ml,Mr.dat{1},Mr.dat{2});
              
-    % H-Matrix + Full -> Full
+    % H-Matrix + Full -> Unavailable
     elseif (Ml.typ == 0) && (Mr.typ == 2)
-        Mr.dat = full(Ml) + Mr.dat;
-        Ml     = Mr;
+        error('hmxPlus : unvailable case')
 
         
     % Compr + --- -> ---
@@ -61,9 +60,9 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
         Ml = hmxPlusAB(Mr,Ml.dat{1},Ml.dat{2});
         
         
-    % Full + H-Matrix -> Full
+    % Full + H-Matrix -> Unavailable
     elseif (Ml.typ == 2) && (Mr.typ == 0)
-        Ml.dat = Ml.dat + full(Mr);
+        error('hmxPlus : unvailable case')
         
     % Full + Compr -> Full
     elseif (Ml.typ == 2) && (Mr.typ == 1)
@@ -73,6 +72,7 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     elseif (Ml.typ == 2) && (Mr.typ == 2)
         Ml.dat = Ml.dat + Mr.dat;
         
+        
     else
         error('hmxPlus : unvailable case')
     end
@@ -81,46 +81,15 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     
 %%% H-Matrix + Matrix -> H-Matrix
 elseif isa(Ml,'hmx') 
-    Ml = Ml + hmxBuilder(Ml.pos{1},Ml.pos{2},Mr,Ml.tol);
+    Ml = Ml + hmx(Ml.pos{1},Ml.pos{2},Mr,Ml.tol);
 
     
 %%% Matrix + H-Matrix -> Matrix
 elseif isa(Mr,'hmx')
-    Ml = hmxBuilder(Mr.pos{1},Mr.pos{2},Ml,Mr.tol) + Mr;
+    Ml = hmx(Mr.pos{1},Mr.pos{2},Ml,Mr.tol) + Mr;
 
     
 %%% Unavailable  
-else
-    error('hmxPlus.m : unavailable case')
-end
-end
-
-
-function Mh = hmxPlusAB(Mh,A,B)
-% H-Matrix (recursion)
-if (Mh.typ == 0)
-    % Construction
-    for i = 1:4
-        Mh.chd{i} = hmxPlusAB(Mh.chd{i},A(Mh.row{i},:),B(:,Mh.col{i}));
-    end
-    
-    % Fusion
-    Mh = hmxFusion(Mh);
-    
-% Compressed leaf      
-elseif (Mh.typ == 1)
-    A      = [Mh.dat{1},A];
-    B      = [Mh.dat{2};B];
-    [A,B]  = hmxQRSVD(A,B,Mh.tol);
-    Mh.dat = {A,B};    
-    
-% Full leaf   
-elseif (Mh.typ == 2)
-    if (size(A,2) > 0)
-        Mh.dat = Mh.dat + A*B;
-    end
-    
-% Unknown type
 else
     error('hmxPlus.m : unavailable case')
 end

@@ -82,9 +82,8 @@ hold off
 view(0,10)
 
 
-
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
 Gxy    = @(X,Y) femGreenKernel(X,Y,'[exp(ikr)/r]',k);
@@ -124,16 +123,22 @@ nxK  = nxK + nxKr;
 toc
 
 % Left hand side
-LHS  = beta * T  + (1-beta) * (0.5*Id - nxK);
-LHSr = beta * Tr + (1-beta) * (0.5*Id - nxKr);
+LHS  = - beta * T  + (1-beta) * (0.5*Id - nxK);
+LHSr = - beta * Tr + (1-beta) * (0.5*Id - nxKr);
 
 % Right hand side
-RHS = beta*(-integral(sigma,v,PWE)) + (1-beta)*(-integral(sigma,nx(v),PWH));
+RHS = beta*integral(sigma,v,PWE) - (1-beta)*integral(sigma,nx(v),PWH);
 
-% Solve linear system (iterative)
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+
+% ILU preconditionner
 tic
 [L,U] = ilu(LHSr);
 toc
+
+% Iterative solver
 tic
 J = gmres(@(V) LHS*V,RHS,[],tol,1000,L,U);
 toc
@@ -152,7 +157,7 @@ xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3);
 Ginf  = @(X,Y) exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Tinf = integral(nu,sigma,Ginf,v, tol);
+Tinf = integral(nu,sigma,Ginf,v);
 sol  = 1i*k/(4*pi)*cross(nu, cross([Tinf{1}*J, Tinf{2}*J, Tinf{3}*J], nu));
 
 % Radiation infinie de reference, convention e^(+ikr)/r
@@ -209,3 +214,5 @@ colorbar
 
 
 disp('~~> Michto gypsilab !')
+
+

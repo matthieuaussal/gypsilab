@@ -29,24 +29,23 @@ function M = hmxFull(Mh)
 %|  `---'  |                                                              |
 %+========================================================================+
     
-% H-Matrix (recursion)
+%%% H-Matrix (recursion)
 if (Mh.typ == 0)
-    M = zeros(Mh.dim(1),Mh.dim(2),class(Mh.row{1}));
+    M = zeros(size(Mh,1),size(Mh,2),class(Mh.row{1}));
     for i = 1:4
         M(Mh.row{i},Mh.col{i}) = hmxFull(Mh.chd{i});
     end
     
-% Compressed leaf
+%%% Compressed leaf
 elseif (Mh.typ == 1)
     M = Mh.dat{1} * Mh.dat{2};
     
-% Full leaf
+%%% Full leaf
 elseif (Mh.typ == 2)
     M = full(Mh.dat);
 
-% Unknown type
+%%% Unknown type
 else
     error('hmxFull.m : unavailable case')
 end
-
 end

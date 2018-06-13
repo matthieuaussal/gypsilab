@@ -75,8 +75,8 @@ hold off
 view(0,10)
 
 
-%%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+%%% PREPARE OPERATOR
+disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
 % Green kernel function --> G(x,y) = grady[exp(ik|x-y|)/|x-y|]
 Gxy{1} = @(X,Y) femGreenKernel(X,Y,'grady[exp(ikr)/r]1',k);
@@ -97,21 +97,26 @@ toc
 
 % Regularization
 tic
-Dbnd = Dbnd + 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(v));
+Dr   = 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(v));
+Dbnd = Dbnd + Dr;
 toc
 
-% Operator [Id/2 + D]
-LHS = 0.5*Id + Dbnd;
+% Operator [-Id/2 - D]
+LHS = - 0.5*Id - Dbnd;
+
+% Finite element incident wave trace --> \int_Sx psi(x) pw(x) dx
+RHS = - integral(sigma,u,PW);
+
+
+%%% SOLVE LINEAR PROBLEM
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
 % LU factorization
 tic
 [Lh,Uh] = lu(LHS);
 toc
 
-% Finite element incident wave trace --> \int_Sx psi(x) pw(x) dx
-RHS = - integral(sigma,u,PW);
-
-% Solve linear system [Id/2 + D] * mu = - P0
+% Solve linear system [-Id/2 - D] * mu = P0
 tic
 mu  = Uh \ (Lh \ RHS); % LHS \ RHS;
 toc
@@ -131,10 +136,10 @@ Ginf{2} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,2)) .* exp(-1i*k*xdoty(X,Y));
 Ginf{3} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,3)) .* exp(-1i*k*xdoty(X,Y));
 
 % Finite element infinite operator --> \int_Sy dny(exp(ik*nu.y)) * psi(y) dx
-Dinf = integral(nu,sigma,Ginf,ntimes(v),1e-6) ;
+Dinf = integral(nu,sigma,Ginf,ntimes(v)) ;
 
 % Finite element radiation  
-sol = Dinf * mu;
+sol = - Dinf * mu;
 
 % Analytical solution
 ref = sphereHelmholtz('inf','dir',1,k,nu); 
@@ -144,7 +149,6 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 % Graphical representation
 figure
 plot(theta,log(abs(sol)),'b',theta,log(abs(ref)),'--r')
-
 
 
 %%% DOMAIN SOLUTION
@@ -161,12 +165,12 @@ Ddom = Ddom + 1/(4*pi) .* regularize(square.vtx,sigma,'grady[1/r]',ntimes(v));
 toc
 
 % Boundary solution
-Psca = 0.5*mu + Id \ (Dbnd * mu) ;
+Psca = - Id \ (0.5* Id * mu + Dbnd * mu) ;
 Pinc = PW(u.dof);
 Pbnd = Pinc + Psca;
 
 % Domain solution
-Psca = Ddom * mu;
+Psca = - Ddom * mu;
 Pinc = PW(square.vtx);
 Pdom = Pinc + Psca;
 
