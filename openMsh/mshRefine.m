@@ -30,7 +30,7 @@ function mesh = mshRefine(mesh,ord)
 %+========================================================================+
 
 % Fixed order for all element
-if isnumeric(ord) && (length(ord)==length(mesh))
+if (isnumeric(ord) || islogical(ord)) && (length(ord)==length(mesh))
     % Recursive loop
     while (sum(ord) > 0)
         % Midpoint refinement

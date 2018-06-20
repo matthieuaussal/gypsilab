@@ -108,53 +108,61 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     
 %%% H-Matrix * Matrix --> Full
 elseif isa(Ml,'hmx')
-    % H-Matrix (recursion)
-    if (Ml.typ == 0)
-        % Initializaton
-        Mh = zeros(size(Ml,1),size(Mr,2),class(Ml.row{1}));
-
-        % Recursion
-        for i = 1:4
-            Mh(Ml.row{i},:) = Mh(Ml.row{i},:) + hmxMtimes(Ml.chd{i},Mr(Ml.col{i},:));
+    if (size(Mr,2) > 0)
+        % H-Matrix (recursion)
+        if (Ml.typ == 0)
+            % Initializaton
+            Mh = zeros(size(Ml,1),size(Mr,2),class(Ml.row{1}));
+            
+            % Recursion
+            for i = 1:4
+                Mh(Ml.row{i},:) = Mh(Ml.row{i},:) + hmxMtimes(Ml.chd{i},Mr(Ml.col{i},:));
+            end
+            
+        % Compressed leaf
+        elseif (Ml.typ == 1)
+            Mh = Ml.dat{1} * (Ml.dat{2} * Mr);
+            
+        % Full leaf
+        elseif (Ml.typ == 2)
+            Mh = Ml.dat * Mr;
+            
+        % Unknown type
+        else
+            error('hmxMtimes.m : unavailable case')
         end
-        
-   % Compressed leaf
-    elseif (Ml.typ == 1)
-        Mh = Ml.dat{1} * (Ml.dat{2} * Mr);
-        
-    % Full leaf
-    elseif (Ml.typ == 2)
-        Mh = Ml.dat * Mr;
-        
-    % Unknown type
     else
-        error('hmxMtimes.m : unavailable case')
+        Mh = zeros(size(Ml,1),0);
     end
     
     
 %%% Matrix * H-Matrix --> Full
 elseif isa(Mr,'hmx')
-    % H-Matrix (recursion)
-    if (Mr.typ == 0)
-        % Initializaton
-        Mh = zeros(size(Ml,1),size(Mr,2),class(Mr.row{1}));
-
-        % Recursion
-        for i = 1:4
-            Mh(:,Mr.col{i}) = Mh(:,Mr.col{i}) + hmxMtimes(Ml(:,Mr.row{i}),Mr.chd{i});
+    if (size(Ml,1) > 0)
+        % H-Matrix (recursion)
+        if (Mr.typ == 0)
+            % Initializaton
+            Mh = zeros(size(Ml,1),size(Mr,2),class(Mr.row{1}));
+            
+            % Recursion
+            for i = 1:4
+                Mh(:,Mr.col{i}) = Mh(:,Mr.col{i}) + hmxMtimes(Ml(:,Mr.row{i}),Mr.chd{i});
+            end
+            
+        % Compressed leaf
+        elseif (Mr.typ == 1)
+            Mh = (Ml * Mr.dat{1}) * Mr.dat{2};
+            
+        % Full leaf
+        elseif (Mr.typ == 2)
+            Mh = Ml * Mr.dat;
+            
+        % Unknown type
+        else
+            error('hmxMtimes.m : unavailable case')
         end
-        
-   % Compressed leaf
-    elseif (Mr.typ == 1)
-        Mh = (Ml * Mr.dat{1}) * Mr.dat{2};
-        
-    % Full leaf
-    elseif (Mr.typ == 2)
-        Mh = Ml * Mr.dat;
-        
-    % Unknown type
     else
-        error('hmxMtimes.m : unavailable case')
-    end    
+        Mh = zeros(0,size(Mr,2));
+    end
 end
 end

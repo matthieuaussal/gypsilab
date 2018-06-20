@@ -103,6 +103,10 @@ Mh2 = hmx(X,Y,M,tol);
 toc
 
 tic
+Mh3 = hmx(Mh,0.1);
+toc
+
+tic
 Ih = hmx(double(X),double(Y),I,tol);
 toc
 
@@ -119,6 +123,11 @@ toc
 tic
 figure
 spy(Mh2);
+toc
+
+tic
+figure
+spy(Mh3);
 toc
 
 tic
@@ -144,21 +153,15 @@ ref = M;
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 tic
+sol = full(Mh3);
+toc
+ref = M;
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
 sol = full(Ih);
 toc
 ref = full(I);
-norm(ref-sol,'inf')/norm(ref,'inf')
-
-disp(' ')
-
-
-%%% Recompression
-disp('~~~~~~~~~~~~~ RECOMPRESSION ~~~~~~~~~~~~~')
-tic
-tmp = hmx(Mh,0.1);
-toc
-sol = full(tmp);
-ref = M;
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
@@ -188,6 +191,40 @@ tic
 sol   = A*B;
 toc
 ref = M;
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+disp(' ')
+
+
+%%% Full conversion
+disp('~~~~~~~~~~~~~ SUB-MATRIX ~~~~~~~~~~~~~')
+idx = floor(Nx/4):floor(3*Nx/4);
+jdx = floor(Ny/3):floor(2*Ny/3);
+
+tic
+sol = full(Mh,idx,jdx);
+toc
+ref = M(idx,jdx);
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+[A,B] = lowrank(Mh,idx,jdx);
+sol   = A*B; 
+toc
+ref = M(idx,jdx);
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+sol = sparse(Ih,idx,jdx);
+toc
+ref = I(idx,jdx);
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+[A,B] = lowrank(Ih,idx,jdx);
+sol   = A*B; 
+toc
+ref = I(idx,jdx);
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 disp(' ')
@@ -503,6 +540,15 @@ sol =  Ih \ double(V);
 toc
 tic
 ref = I \ double(V);
+toc
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+[Lh,Uh] = lu(Mh);
+tic
+sol =  (Uh \ (Lh \ Mh)) * V;
+toc
+tic
+ref = (M \ M ) * V;
 toc
 norm(ref-sol,'inf')/norm(ref,'inf')
 

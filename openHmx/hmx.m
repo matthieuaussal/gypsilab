@@ -145,18 +145,30 @@ methods
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONVERSION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % FULL
-    function M = full(Mh)
-        M = hmxFull(Mh);
+    function M = full(varargin)
+        if (nargin == 1)
+            M = hmxFull(varargin{1});
+        else
+            M = hmxFullSub(varargin{1},varargin{2},varargin{3});
+        end
     end
     
     % SPARSE
-    function M = sparse(Mh)
-        M = hmxSparse(Mh);
+    function M = sparse(varargin)
+        if (nargin == 1)
+            M = hmxSparse(varargin{1});
+        else
+            M = hmxSparseSub(varargin{1},varargin{2},varargin{3});
+        end
     end
     
     % LOW-RANK
-    function [A,B] = lowrank(Mh)
-        [A,B] = hmxLowrank(Mh);
+    function [A,B] = lowrank(varargin)
+        if (nargin == 1)
+            [A,B] = hmxLowrank(varargin{1});
+        else
+            [A,B] = hmxLowrankSub(varargin{1},varargin{2},varargin{3});
+        end
     end
     
     % DIAGONAL

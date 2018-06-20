@@ -65,8 +65,14 @@ if (Mh.typ == 0)
                 
             % Full
             else
+                % Compress
+                if (n == 0)
+                    A    = zeros(dim(1),0);
+                    B    = zeros(0,dim(2));
+                    flag = 1;
+                    
                 % Sparse
-                if (n <= 1/4*prod(dim))
+                elseif (n <= 1/4*prod(dim))
                     dat  = sparse(double(dat));
                     flag = 2;
                  

@@ -94,85 +94,135 @@ if islower(Mh) && isa(Bh,'hmx')
 
 %%% Upper H-Matrix \ H-Matrix -> H-Matrix
 elseif isupper(Mh) && isa(Bh,'hmx')  
-    error('hmxMldivide.m : upper H-Matrix solver not yet implemented.')
+    % H-Matrix \ H-Matrix -> H-Matrix (recursion)
+    if (Mh.typ == 0) && (Bh.typ == 0) 
+        % X22 -> U22 \ B22
+        Bh.chd{4} = hmxMldivide(Mh.chd{4},Bh.chd{4});
+        
+        % X21 -> U22 \ B21
+        Bh.chd{3} = hmxMldivide(Mh.chd{4},Bh.chd{3});
+        
+        % X12 -> U11 \ (B12 - U12*X22)
+        Bh.chd{2} = Bh.chd{2} - Mh.chd{2} * Bh.chd{4};
+        Bh.chd{2} = hmxMldivide(Mh.chd{1},Bh.chd{2});
+        
+        % X11 -> U11 \ (B11 - U12 * X21)
+        Bh.chd{1} = Bh.chd{1} - Mh.chd{2} * Bh.chd{3};
+        Bh.chd{1} = hmxMldivide(Mh.chd{1},Bh.chd{1}); 
+        
+        % Fusion
+        Bh = hmxFusion(Bh);
+        
+    % H-Matrix \ Compr -> Compr  
+    elseif (Mh.typ == 0) && (Bh.typ == 1) 
+        Bh.dat = { hmxMldivide(Mh,Bh.dat{1}) , Bh.dat{2} };
+        
+    % H-Matrix \ Full -> Unavailable
+    elseif (Mh.typ == 0) && (Bh.typ == 2) 
+        error('hmxMldivide : unavailable case')
+        
+
+    % Compr \ --- -> ---
+    elseif (Mh.typ == 1) 
+        error('hmxMldivide : unavailable case')
+                
+        
+    % Full \ H-Matrix -> Unavailable
+    elseif (Mh.typ == 2) && (Bh.typ == 0)
+        error('hmxMldivide : unavailable case')
+        
+    % Full \ Compr -> Compr
+    elseif (Mh.typ == 2) && (Bh.typ == 1)
+        Bh.dat = { Mh.dat\Bh.dat{1} , Bh.dat{2} };
+        
+    % Full \ Full -> Full
+    elseif (Bh.typ == 2)
+        Bh.dat = Mh.dat \ Bh.dat;
+        
+        
+    else
+        error('hmxMldivide : unavailable case')
+    end
     
     
 %%% Lower H-Matrix \ Matrix -> Matrix   
 elseif islower(Mh)
-    % H-Matrix (recursion)
-    if (Mh.typ == 0)
-        % X1 -> L11 \ B1
-        X1 = hmxMldivide(Mh.chd{1},Bh(Mh.row{1},:));
-        
-        % X2 -> L22 \ (B2 - L21*X1)
-        X2 = Bh(Mh.row{3},:) - Mh.chd{3}*X1;
-        X2 = hmxMldivide(Mh.chd{4},X2);
-        
-        % Bh = [X1 X2]
-        if issparse(X1)
-            Bh = sparse(size(Mh,1),size(Bh,2));
+    if (size(Bh,2) > 0)
+        % H-Matrix (recursion)
+        if (Mh.typ == 0)
+            % X1 -> L11 \ B1
+            X1 = hmxMldivide(Mh.chd{1},Bh(Mh.row{1},:));
+            
+            % X2 -> L22 \ (B2 - L21*X1)
+            X2 = Bh(Mh.row{3},:) - Mh.chd{3}*X1;
+            X2 = hmxMldivide(Mh.chd{4},X2);
+            
+            % Bh = [X1 X2]
+            if issparse(X1)
+                Bh = sparse(size(Mh,1),size(Bh,2));
+            else
+                Bh = zeros(size(Mh,1),size(Bh,2),class(X1));
+            end
+            Bh(Mh.col{1},:) = X1;
+            Bh(Mh.col{2},:) = X2;
+            
+        % Compressed leaf
+        elseif (Mh.typ == 1)
+            error('hmxMldivide : unavailable case')
+            
+        % Full leaf
+        elseif (Mh.typ == 2)
+            Bh = Mh.dat \ Bh;
+            
+        % Unknown type
         else
-            Bh = zeros(size(Mh,1),size(Bh,2),class(X1));
+            error('hmxMldivide : unavailable case')
         end
-        Bh(Mh.col{1},:) = X1;
-        Bh(Mh.col{2},:) = X2;
-              
-    % Compressed leaf
-    elseif (Mh.typ == 1)
-        error('hmxMldivide : unavailable case')
-        
-    % Full leaf
-    elseif (Mh.typ == 2)
-        Bh = Mh.dat \ Bh;
-
-    % Unknown type    
     else
-        error('hmxMldivide : unavailable case')
+        Bh = zeros(size(Mh,1),0);
     end
     
     
 %%% Upper H-Matrix \ Matrix -> Matrix   
 elseif isupper(Mh)
-    % H-Matrix (recursion)
-    if (Mh.typ == 0)
-        % X2 -> U22 \ B2
-        X2 = hmxMldivide(Mh.chd{4},Bh(Mh.row{4},:));
-        
-        % X1 -> U11 \ (B1 - U12*X2)
-        X1 = Bh(Mh.row{1},:) - Mh.chd{2}*X2;
-        X1 = hmxMldivide(Mh.chd{1},X1);
-        
-        % Bh = [X1 ; X2]
-        if issparse(X1)
-            Bh = sparse(size(Mh,1),size(Bh,2));
+    if (size(Bh,2) > 0)
+        % H-Matrix (recursion)
+        if (Mh.typ == 0)
+            % X2 -> U22 \ B2
+            X2 = hmxMldivide(Mh.chd{4},Bh(Mh.row{4},:));
+            
+            % X1 -> U11 \ (B1 - U12*X2)
+            X1 = Bh(Mh.row{1},:) - Mh.chd{2}*X2;
+            X1 = hmxMldivide(Mh.chd{1},X1);
+            
+            % Bh = [X1 ; X2]
+            if issparse(X1)
+                Bh = sparse(size(Mh,1),size(Bh,2));
+            else
+                Bh = zeros(size(Mh,1),size(Bh,2),class(X1));
+            end
+            Bh(Mh.col{1},:) = X1;
+            Bh(Mh.col{2},:) = X2;
+            
+        % Compressed leaf
+        elseif (Mh.typ == 1)
+            error('hmxMldivide : unavailable case')
+            
+        % Full leaf
+        elseif (Mh.typ == 2)
+            Bh = Mh.dat \ Bh;
+            
+        % Unknown type
         else
-            Bh = zeros(size(Mh,1),size(Bh,2),class(X1));
+            error('hmxMldivide : unavailable case')
         end
-        Bh(Mh.col{1},:) = X1;
-        Bh(Mh.col{2},:) = X2;
-        
-    % Compressed leaf
-    elseif (Mh.typ == 1)
-        error('hmxMldivide : unavailable case')
-        
-    % Full leaf
-    elseif (Mh.typ == 2)
-        Bh = Mh.dat \ Bh;
-        
-    % Unknown type
     else
-        error('hmxMldivide : unavailable case')
+        Bh = zeros(size(Mh,1),0);
     end
     
     
-%%% H-Matrix \ Matrix -> Matrix
-elseif isnumeric(Bh)
+%%% H-Matrix \ (H-)Matrix -> (H-)Matrix
+else
     [Lh,Uh] = lu(Mh);
     Bh      = Uh\(Lh\Bh);
-  
-    
-%%% Unavailable     
-else
-    error('hmxMldivide.m : unavailable case')
-end
 end
