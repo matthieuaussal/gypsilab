@@ -30,45 +30,49 @@ function M = femNedelec(fe,domain)
 %|  `---'  |                                                              |
 %+========================================================================+
 
+% Gaussian quadrature
+Xgss             = domReference(domain);
+[Xqud,~,elt2qud] = domain.qud;
+
+% Edges
+[mshedg,elt2edg] = fe.msh.edg;
+
+% Intersect domain and finite element meshes
+if isequal(fe.msh,domain.msh)
+    mesh = fe.msh;
+    Ife  = (1:size(fe.msh.elt,1))';
+    Idom = Ife;
+    XintQud = Xqud;
+else
+    [mesh,Ife,Idom] = intersect(fe.msh,domain.msh);
+    domainInt       = dom(mesh,domain.gss);
+    XintQud         = domainInt.qud;
+    
+end
+
+% Dimensions
+Nelt = length(Ife);
+Nqud = size(Xqud,1);
+Ngss = size(Xgss,1);
+% Dof are the edges of the mesh
+Ndof = size(mshedg.elt,1);
+Nbas = size(elt2edg,2);
+% Volumes
+Ndv  = mesh.ndv;
+
+% Numbering dof to quadrature
+idx = zeros(Nelt,Nbas,Ngss);
+jdx = zeros(Nelt,Nbas,Ngss);
+for i = 1:Nbas
+    for j = 1:Ngss
+        idx(:,i,j) = elt2qud(Idom,j);
+        jdx(:,i,j) = elt2edg(Ife,i);
+    end
+end
+        
 %%% FINITE ELEMENT MATRIX AND GRADIENT
 if size(fe.msh.elt,2)==3 % Triangular elements
-    if strcmp(fe.opr,'nx[psi]') || strcmp(fe.opr,'curl[psi]')
-        % Gaussian quadrature
-        Xgss             = domReference(domain);
-        [Xqud,~,elt2qud] = domain.qud;
-        
-        % Edges
-        [mshedg,elt2edg] = fe.msh.edg;
-        
-        % Intersect domain and finite element meshes
-        if isequal(fe.msh,domain.msh)
-            mesh = fe.msh;
-            Ife  = (1:size(fe.msh.elt,1))';
-            Idom = Ife;
-        else
-            [mesh,Ife,Idom] = intersect(fe.msh,domain.msh);
-        end
-        
-        % Dimensions
-        Nelt = length(Ife);
-        Nqud = size(Xqud,1);
-        Ngss = size(Xgss,1);
-        % Dof are the edges of the mesh
-        Ndof = size(mshedg.elt,1);
-        Nbas = size(elt2edg,2);
-        % Volumes
-        Ndv  = mesh.ndv;
-        
-        % Numbering dof to quadrature
-        idx = zeros(Nelt,Nbas,Ngss);
-        jdx = zeros(Nelt,Nbas,Ngss);
-        for i = 1:Nbas
-            for j = 1:Ngss
-                idx(:,i,j) = elt2qud(Idom,j);
-                jdx(:,i,j) = elt2edg(Ife,i);
-            end
-        end
-    end
+    
     % Vectorial operator nx[PSI]
     if strcmp(fe.opr,'nx[psi]')
         M = cell(1,3);
@@ -87,7 +91,7 @@ if size(fe.msh.elt,2)==3 % Triangular elements
                 
                 % For each integration point
                 for j = 1:Ngss
-                    val(:,i,j) = flux.*(Xqud(j:Ngss:Nqud,n) - mesh.vtx(mesh.elt(:,i),n));
+                    val(:,i,j) = flux.*(XintQud(j:Ngss:Nqud,n) - mesh.vtx(mesh.elt(:,i),n));
                 end
             end
             
@@ -145,43 +149,6 @@ if size(fe.msh.elt,2)==3 % Triangular elements
         error('femNedelec.m : unavailable case')
     end
 elseif size(fe.msh.elt,2)==4 % Tetrahedral elements
-    % Gaussian quadrature
-    Xgss             = domReference(domain);
-    [Xqud,~,elt2qud] = domain.qud;
-    
-    % Degrees of freedom
-    %[Xdof,elt2dof] = fe.dof;
-    
-    % Edges
-    [mshedg,elt2edg] = fe.msh.edg;
-    
-    % Intersect domain and finite element meshes
-    if isequal(fe.msh,domain.msh)
-        mesh = fe.msh;
-        Ife  = (1:size(fe.msh.elt,1))';
-        Idom = Ife;
-    else
-        [mesh,Ife,Idom] = intersect(fe.msh,domain.msh);
-    end
-    
-    % Dimensions
-    Nelt = length(Ife);
-    Nqud = size(Xqud,1);
-    Ngss = size(Xgss,1);
-    
-    % Dof are the edges
-    Ndof = size(mshedg.elt,1);
-    Nbas = size(elt2edg,2);
-    
-    % Numbering dof to quadrature
-    idx = zeros(Nelt,Nbas,Ngss);
-    jdx = zeros(Nelt,Nbas,Ngss);
-    for i = 1:Nbas
-        for j = 1:Ngss
-            idx(:,i,j) = elt2qud(Idom,j);
-            jdx(:,i,j) = elt2edg(Ife,i);
-        end
-    end
     
     M = cell(1,3);
     for n = 1:3
@@ -212,7 +179,7 @@ elseif size(fe.msh.elt,2)==4 % Tetrahedral elements
             if strcmp(fe.opr,'[psi]')
                 % Loop over integration points
                 for j = 1:Ngss
-                    x = Xqud(j:Ngss:Nqud,:);
+                    x = XintQud(j:Ngss:Nqud,:);
                     val(:,i,j) = ...
                         alphai.*(aibar(:,np1).*(x(:,np2) - xibar(:,np2)) - aibar(:,np2).*(x(:,np1) - xibar(:,np1)));
                 end

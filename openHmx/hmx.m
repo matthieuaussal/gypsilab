@@ -185,6 +185,15 @@ methods
         Mh.chd = cell(1,4);
         Mh.dat = {zeros(size(Mh,1),0),zeros(0,size(Mh,2))};
     end
+    
+    % ONES
+    function Mh = ones(Mh)
+        Mh.typ = 1;
+        Mh.row = cell(1,4);
+        Mh.col = cell(1,4);
+        Mh.chd = cell(1,4);
+        Mh.dat = {ones(size(Mh,1),1),ones(1,size(Mh,2))};
+    end
 
     % SINGLE
     function Mh = single(Mh)
@@ -273,5 +282,22 @@ methods
     function B = mrdivide(B,Mh)
         B = (Mh.'\B.').';
     end  
+    
+    % VERTICAL CONCATENATION
+    function Mh = vertcat(varargin)
+        Mh = varargin{1}.'; 
+        for i = 2:nargin
+            Mh = hmxHorzcat(Mh,varargin{i}.');
+        end
+        Mh = Mh.';
+    end
+    
+    % HORIZONTAL CONCATENATION
+    function Mh = horzcat(varargin)
+        Mh = varargin{1}; 
+        for i = 2:nargin
+            Mh = hmxHorzcat(Mh,varargin{i});
+        end
+    end
 end
 end

@@ -1,4 +1,4 @@
-function Mh = hmxBuilder(X,Y,M,tol)
+function Mh = hmxHorzcat(varargin)
 %+========================================================================+
 %|                                                                        |
 %|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
@@ -20,39 +20,70 @@ function Mh = hmxBuilder(X,Y,M,tol)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxBuilder.m                                  |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : hmxHorzcat.m                                  |
+%|    #    |   VERSION    : 0.42                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Particles builder with low-rank approximation |
-%|  `---'  |                for full, sparse and handle function          |
+%|  / 0 \  |   LAST MODIF : 15.07.2018                                    |
+%| ( === ) |   SYNOPSIS   : H-Matrix horizontal concatenation             |
+%|  `---'  |                                                              |
 %+========================================================================+
 
-% Initialisation
+%%% Input analysis
+Ml = varargin{1};
+Mr = varargin{2};
+if (nargin == 2)
+    if isequal(Ml.pos{1},Mr.pos{1})
+        Ix = (1:size(Ml,1))';        
+        Iy = (1:size(Ml,2)+size(Mr,2))';
+    else
+        error('hmxHorzcat.m : unavailable case');
+    end
+else
+    Ml = varargin{1};
+    Mr = varargin{2};
+    Ix = varargin{3};
+    Iy = varargin{4};
+end
+
+%%% Preparation
+% Particles
+X = Ml.pos{1}(Ix,:);
+Y = [Ml.pos{2} ; Mr.pos{2}];
+Y = Y(Iy,:);
+
+% Accuracy
+tol = max(Ml.tol,Mr.tol);
+
+% Initialiation
 Mh = hmx(X,Y,tol);
 
 % Admissibility
 [isfar,Xdim,Ydim] = hmxFar(Mh);
 
+% Y Indices
+bool = (Iy<=size(Ml,2));
+Iyl  = Iy(bool);
+Iyr  = Iy(~bool)-size(Ml,2);
+
 % Compression for far distances
-if ~issparse(M) && isfar
-    % ACA with partial pivoting for handle function
-    if isa(M,'function_handle')
-        [A,B,flag] = hmxACA(X,Y,M,tol);
-        
-    % ACA with total pivoting for full matrix
-    else
-        [A,B,flag] = hmxACA(M,tol);
-    end
+if isfar
+    % Compression
+    [Al,Bl] = lowrank(Ml,Ix,Iyl);
+    [Ar,Br] = lowrank(Mr,Ix,Iyr);
     
-% Compression for empty matrix
-elseif issparse(M) && (nnz(M) == 0)
-    A    = zeros(size(M,1),0);
-    B    = zeros(0,size(M,2));
-    flag = 1;
+    % Concatenation
+    A = [Al,Ar];
+    B = zeros(size(A,2),length(Iy));
+    B(1:size(Al,2),bool)      = Bl;
+    B(size(Al,2)+1:end,~bool) = Br;
     
-% No compression    
+    % Recompression
+    [A,B] = hmxQRSVD(A,B,Mh.tol);
+    
+    % Validation
+    flag = (numel(A)+numel(B)) <= prod(size(Mh));
+    
 else
     flag = 0;
 end
@@ -65,29 +96,25 @@ if flag
     
     % Low-rank
     Mh.dat = {A,B};
-    
-    
+
+
 %%%% Full or sparse for smallest box (stopping criterion)
 elseif (min(size(Mh)) < 100)
     % Type
     Mh.typ = 2;
     
-    % Handle function
-    if isa(M,'function_handle')
-        [I,J]  = ndgrid(1:size(X,1),1:size(Y,1));
-        Mh.dat = M(X(I,:),Y(J,:));
-        Mh.dat = reshape(Mh.dat,size(X,1),size(Y,1));
+    % Full
+    Mh.dat = zeros(size(Mh));
     
-    % Full or sparse matrix
-    else
-        Mh.dat = M;
-    end
-    
-    
+    % Fill data
+    Mh.dat(:,bool)  = full(Ml,Ix,Iyl);
+    Mh.dat(:,~bool) = full(Mr,Ix,Iyr);
+
+
 %%% H-Matrix (recursion)
 else
     % Type
-    Mh.typ = 0; 
+    Mh.typ = 0;
     
     % Subdivision for X
     [I1,I2] = hmxSubdivide(X,Xdim);
@@ -97,32 +124,14 @@ else
     [I1,I2] = hmxSubdivide(Y,Ydim);
     Mh.col  = {I1 , I2 , I1 , I2};
     
-    % Single class
-    if isa(X,'single')
-        for i = 1:4
-            Mh.row{i} = single(Mh.row{i});
-            Mh.col{i} = single(Mh.col{i});
-        end
-    end
-
     % H-Matrix (recursion)
     for i = 1:4
         % Coordinates
-        Xi = X(Mh.row{i},:);
-        Yi = Y(Mh.col{i},:);
-        
-        % Partial pivoting
-        if isa(M,'function_handle')
-            Mh.chd{i} = hmxBuilder(Xi,Yi,M,tol);
-            
-        % Total pivoting    
-        elseif isnumeric(M)
-            Mi = M(Mh.row{i},Mh.col{i});
-            Mh.chd{i} = hmxBuilder(Xi,Yi,Mi,tol);
-            
-        else
-            error('hmxBuilder.m : unavailable case')
-        end
+        Ir = Mh.row{i};
+        Ic = Mh.col{i};
+
+        % Recursion
+        Mh.chd{i} = hmxHorzcat(Ml,Mr,Ix(Ir),Iy(Ic)); 
     end
     
     % Fusion

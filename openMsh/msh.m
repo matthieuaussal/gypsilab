@@ -85,26 +85,12 @@ methods
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CLEAN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function mesh = clean(mesh)
-        % Unify duplicate vertex
-        [~,I,J]  = unique(single(mesh.vtx),'rows','stable');
-        mesh.vtx = mesh.vtx(I,:);
-        if (size(mesh.elt,1) == 1)
-            J = J';
-        end
-        mesh.elt = J(mesh.elt);
-        
-        % Extract vertex table from element
-        Ivtx              = zeros(size(mesh.vtx,1),1);
-        Ivtx(mesh.elt(:)) = 1;
-        mesh.vtx          = mesh.vtx(logical(Ivtx),:);
-        
-        % Reorder elements
-        Ivtx(Ivtx==1) = 1:sum(Ivtx,1);
-        if size(mesh.elt,1) == 1
-            mesh.elt = Ivtx(mesh.elt)';
+    function mesh = clean(varargin)
+        mesh = varargin{1};
+        if (nargin==1)
+            mesh = mshClean(mesh,[]);
         else
-            mesh.elt = Ivtx(mesh.elt);
+            mesh = mshClean(mesh,varargin{2});            
         end
     end
     
@@ -261,13 +247,18 @@ methods
         [mesh,Ir] = mshMidpoint(mesh,I);
     end
     
-    % REFINE
+    % REFINE WITH MIDPOINT
     function mesh = refine(varargin)
         mesh = varargin{1};
+        ref  = sum(mesh.ndv);
         if (nargin == 1)
             mesh = midpoint(mesh);
         else
             mesh = mshRefine(mesh,varargin{2});
+        end
+        sol = sum(mesh.ndv);
+        if norm(ref-sol)/norm(ref) > 1e-12
+            error('msh.m : unavailable case')
         end
     end
     
@@ -346,6 +337,21 @@ methods
     % FUNCTION
     function mesh = fct(mesh,fct)
         mesh.vtx = fct(mesh.vtx);
+    end
+    
+    % SHUFFLE
+    function mesh = shuffle(mesh,varargin)
+        Nvtx = size(mesh.vtx,1);        
+        if (nargin == 2)
+            RPV = (1:Nvtx)';
+        else
+            RPV = randperm(Nvtx);
+        end
+        mesh.vtx(RPV,:) = mesh.vtx;
+        mesh.elt        = RPV(mesh.elt);         
+        RPE      = randperm(length(mesh));
+        mesh.elt = mesh.elt(RPE,:);
+        mesh.col = mesh.col(RPE,:);
     end
 end
 end

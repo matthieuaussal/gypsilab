@@ -99,6 +99,7 @@ toc
 
 % Graphical representation
 figure
+subplot(2,2,1:2)
 spy(Mh)
 
 % Matrix vector product
@@ -120,9 +121,8 @@ tic
 toc
 
 % Graphical representation
-figure
-subplot(1,2,1); spy(Lh)
-subplot(1,2,2); spy(Uh)
+subplot(2,2,3); spy(Lh)
+subplot(2,2,4); spy(Uh)
 
 % Matrix vector product
 sol = Lh * (Uh * V);
@@ -133,4 +133,3 @@ disp(' ')
 
 
 disp('~~> Michto gypsilab !')
-

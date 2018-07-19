@@ -96,7 +96,7 @@ if flag
 
 
 %%%% Full or sparse for smallest box (stopping criterion)
-elseif (max(size(Mh)) < 100)
+elseif (min(size(Mh)) < 100)
     % Type
     Mh.typ = 2;
 

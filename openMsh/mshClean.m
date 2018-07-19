@@ -1,4 +1,4 @@
-function [vtx,elt] = mshReadMsh(filename)
+function mesh = mshClean(mesh,dst)
 %+========================================================================+
 %|                                                                        |
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
@@ -20,76 +20,37 @@ function [vtx,elt] = mshReadMsh(filename)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : mshReadMsh.m                                  |
+%|    #    |   FILE       : mshClean.m                                    |
 %|    #    |   VERSION    : 0.42                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Read .msh files (triangular and tetrahedral)  |
+%|  / 0 \  |   LAST MODIF : 21.06.2018                                    |
+%| ( === ) |   SYNOPSIS   : Clean mesh                                    |
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% Ouverture
-fid = fopen(filename,'r');
-if( fid==-1 )
-    error('Can''t open the file.');
-    return;
-end
-
-% En-tete -> Table des noeuds
-str = fgets(fid);
-while isempty(strfind(str,'Nodes'))
-    str = fgets(fid);
-end
-
-% Tabe des noeuds
-Nvtx = str2double(fgets(fid));
-vtx  = zeros(Nvtx,3);
-for i = 1:Nvtx
-    tmp = str2num(fgets(fid));
-    vtx(i,:) = tmp(2:4);
-end
-
-% Fin table des noeuds
-str = fgets(fid);
-if isempty(strfind(str,'Nodes'))
-    error('error reading vertex');
-    return
-end
-
-% Table des noeuds -> Table des elements
-str = fgets(fid);
-while isempty(strfind(str,'Elements'))
-    str = fgets(fid);
-end
-
-% Tabe des elements (4 vertex max)
-Nelt = str2double(fgets(fid));
-elt  = zeros(Nelt,4);
-for i = 1:Nelt
-    tmp = str2num(fgets(fid));
-    if tmp(2) == 2 % triangles
-        elt(i,1:3) = tmp(6:8);
-    elseif tmp(2) == 4 % tetrahedra
-        elt(i,1:4) = tmp(6:9);
-    end
-end
-elt = elt(elt(:,1)>0,:);
-
-% Uniformisation
-if (sum(elt(:,4))==0)
-    elt = elt(:,1:3);
+% Unify duplicate vertex
+if isempty(dst)
+    [~,I,J] = unique(single(mesh.vtx),'rows','stable');
 else
-    elt = elt(elt(:,4)>0,:);
+    [~,I,J] = unique(round(mesh.vtx/dst),'rows','stable');
 end
-
-% Fin table des noeuds
-str = fgets(fid);
-if isempty(strfind(str,'Elements'))
-    error('error reading elements');
-    return
+mesh.vtx = mesh.vtx(I,:);
+if (size(mesh.elt,1) == 1)
+    J = J';
 end
+mesh.elt = J(mesh.elt);
 
-% Fermeture fichier
-fclose(fid);
-return
+% Extract vertex table from element
+Ivtx              = zeros(size(mesh.vtx,1),1);
+Ivtx(mesh.elt(:)) = 1;
+mesh.vtx          = mesh.vtx(logical(Ivtx),:);
+
+% Reorder elements
+Ivtx(Ivtx==1) = 1:sum(Ivtx,1);
+if size(mesh.elt,1) == 1
+    mesh.elt = Ivtx(mesh.elt)';
+else
+    mesh.elt = Ivtx(mesh.elt);
+end
+end

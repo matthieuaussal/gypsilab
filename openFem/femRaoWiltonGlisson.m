@@ -121,8 +121,6 @@ if size(fe.msh.elt,2)==3 % Triangular elements
         % Operator
         M = sparse(idx(:),jdx(:),val(:),Nqud,Ndof);
         
-        
-        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% NORMAL x DQM
     elseif strcmp(fe.opr,'nx[psi]')
@@ -206,8 +204,7 @@ elseif size(fe.msh.elt,2)==4 % Tetrahedral elements
             M{n} = sparse(idx(:),jdx(:),val(:),Nqud,Ndof);
         end
         
-        
-        % Scalar operator div[PSI]
+    % Scalar operator div[PSI]
     elseif strcmp(fe.opr,'div[psi]')
         % Initialization
         val = zeros(Nelt,Nbas,Ngss);

@@ -414,6 +414,20 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 disp(' ')
 
 
+%%% H-Matrix concatenation
+disp('~~~~~~~~~~~~~ H-MATRIX CONCATENATION ~~~~~~~~~~~~~')
+tic
+tmp = [Mh Ih ; Ih Mh];
+toc
+sol = full(tmp);
+tic
+ref = [M I ; I M];
+toc
+norm(ref-sol,'inf')/norm(ref,'inf')
+figure
+spy(tmp)
+
+
 %%% H-Matrix product
 disp('~~~~~~~~~~~~~ H-MATRIX PRODUCT ~~~~~~~~~~~~~')
 tic
@@ -555,32 +569,9 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 disp(' ')
 
 
+
+
 disp('~~> Michto gypsilab !')
 
 
-% %%% Concatenation
-% disp('~~~~~~~~~~~~~ CONCATENATION ~~~~~~~~~~~~~')
-% AB = hmx(X,Y,A,B,tol);
-% tic
-% tmp = [AB,Mh,Mh,AB];
-% toc
-% sol = full(tmp);
-% ref = [M,M,M,M];
-% norm(ref-sol,'inf')/norm(ref,'inf')
-% 
-% tic
-% tmp = [AB;Mh;Mh;AB];
-% toc
-% sol = full(tmp);
-% ref = [M;M;M;M];
-% norm(ref-sol,'inf')/norm(ref,'inf')
-% 
-% tic
-% tmp = [Ih,Ih];
-% toc
-% sol = full(tmp);
-% ref = [I,I];
-% norm(ref-sol,'inf')/norm(ref,'inf')
-% 
-% disp(' ')
 

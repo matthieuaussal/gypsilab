@@ -46,7 +46,7 @@ elseif (size(mesh.elt,2) == 3)
     % Basis vector
     E1 = mesh.vtx(mesh.elt(:,2),:) - mesh.vtx(mesh.elt(:,1),:);
     E2 = mesh.vtx(mesh.elt(:,3),:) - mesh.vtx(mesh.elt(:,1),:);
-    E3 = cross(E1,E2) ;
+    E3 = cross(E1,E2,2);
     
     % Volume
     V = 0.5*sqrt(sum(E3.^2,2));

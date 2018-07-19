@@ -49,6 +49,9 @@ Isub   = bitree{end}.ind;
 if (length(Isub) ~= Nsub)
     error('femSubdivide.m : unavailable case')
 end
+if norm(sort(cell2mat(Isub)) - (1:length(fem))','inf') > 1e-12
+    error('femSubdivide.m : unavailable case')    
+end
 
 % Output initialization
 domSub = cell(Nsub,1);
@@ -79,12 +82,13 @@ for i = 1:Nsub
 
     % Graphical representation
     if fig
+        tmp = mesh.sub(sum(I,2)==size(elt2dof,2));
         figure(fig)
         hold on
-        plot(meshSub,'w')
-        plot(mesh.sub(sum(I,2)==size(elt2dof,2)),'b')
+        plot(tmp,'b')
+%         plot(msh(femSub{i}.unk),'b')
+        plot(setdiff(meshSub,tmp),'w')        
         axis equal
-        alpha(0.99)
     end
 end
 end

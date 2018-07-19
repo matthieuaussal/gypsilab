@@ -53,6 +53,7 @@ run('nrtDomTriangle.m');
 
 % Finite element
 cd('../finiteElement/')
+run('nrtFemAllWithShuffle.m');
 run('nrtFemContinuity1.m');
 run('nrtFemContinuity2.m');
 run('nrtFemConvergence.m');

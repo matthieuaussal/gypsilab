@@ -20,7 +20,7 @@ function Bh = hmxMldivide(Mh,Bh)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxMldivide.m                               |
+%|    #    |   FILE       : hmxMldivide.m                                 |
 %|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
