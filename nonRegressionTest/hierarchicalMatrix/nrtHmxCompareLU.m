@@ -62,8 +62,8 @@ alpha(0.1)
 hold on
 
 % Finites elements space
-u = fem(mesh,'P1');
-v = fem(mesh,'P1');
+u = fem(mesh,'P1')
+v = fem(mesh,'P1')
 
 % Random vector at dof
 V = rand(size(v.dof,1),1);
@@ -84,6 +84,9 @@ toc
 norm(L*(U*V) - ref)/norm(ref)
 figure
 spy(L)
+
+
+pouet
 
 % % Cuthill mckee
 % I = symrcm(M);

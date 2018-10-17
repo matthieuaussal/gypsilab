@@ -254,7 +254,23 @@ if strcmp(fe.opr,'[psi]') || strcmp(fe.opr,'grad[psi]')
     elseif strcmp(fe.opr,'grad[psi]')
         % Edge mesh
         if (dim == 2)
-            notYet
+            % Vector basis
+            E1 = mesh.vtx(mesh.elt(:,2),:) - mesh.vtx(mesh.elt(:,1),:);
+            
+            % Inverse Gramm matrix
+            Dx1 = 1./(E1(:,1).^2 + E1(:,2).^2 + E1(:,3).^2);
+            
+            % Gradient projection to integration points
+            dbas = cell(1,3);
+            for n = 1:3
+                dbas{n} = zeros(Nelt,Nbas,Ngss);
+                DCVx    = Dx1.*E1(:,n);
+                for i = 1:Nbas
+                    for j = 1:Ngss
+                        dbas{n}(:,i,j) = DCVx(:)*dxF(i,j);
+                    end
+                end
+            end
             
         % Triangular mesh
         elseif (dim == 3)

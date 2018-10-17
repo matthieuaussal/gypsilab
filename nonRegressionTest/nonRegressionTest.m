@@ -46,6 +46,7 @@ run('nrtMshSquare.m');
 cd('../domainQuadrature/')
 run('nrtDom1D.m');
 run('nrtDomHalfSquare.m');
+run('nrtDomIntSing.m');
 run('nrtDomND.m');
 run('nrtDomTetra.m');
 run('nrtDomTrace.m');
@@ -60,11 +61,14 @@ run('nrtFemConvergence.m');
 run('nrtFemDirichletCube.m');
 run('nrtFemDirichletDisk.m');
 run('nrtFemDirichletSquare.m');
+run('nrtFemDirichletString.m');
 run('nrtFemElasticite2D')
 run('nrtFemJunction.m');
 run('nrtFemLaplace.m');
 run('nrtFemOperators.m');
 run('nrtFemRwgNed.m');
+run('nrtFemWave1D.m');
+run('nrtFemWave2D.m');
 
 % Hierarchical matrices
 cd('../hierarchicalMatrix')

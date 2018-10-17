@@ -33,7 +33,25 @@ function mesh = mshClean(mesh,dst)
 if isempty(dst)
     [~,I,J] = unique(single(mesh.vtx),'rows','stable');
 else
-    [~,I,J] = unique(round(mesh.vtx/dst),'rows','stable');
+    % Range search for specified close distance 
+    [J,D] = rangesearch(mesh.vtx,mesh.vtx,dst);
+    M     = rangeMatrix(J,D);
+    M     = (M>0);
+    if ~issymmetric(M)
+        error('mshClean.m : unavailable case');
+    end
+    
+    % Unify interactions
+    M = triu(M);
+    if (max(sum(M,2)) >= 2)
+        error('mshClean.m : unavailable case');
+    end
+    [idx,jdx] = find(M);    
+
+    % Unicity
+    ind       = (1:size(mesh.vtx,1))';
+    ind(jdx)  = idx ;
+    [~,I,J]   = unique(ind,'stable');
 end
 mesh.vtx = mesh.vtx(I,:);
 if (size(mesh.elt,1) == 1)
@@ -53,4 +71,23 @@ if size(mesh.elt,1) == 1
 else
     mesh.elt = Ivtx(mesh.elt);
 end
+end
+
+
+function M = rangeMatrix(J,D)
+% Row indices and distances
+idx = cell2mat(J')';
+val = cell2mat(D')';
+
+% Column indices
+jdx = zeros(length(idx)+1,1);
+n   = 1;
+for i = 1:length(J)
+    jdx(n) = jdx(n) + 1;
+    n      = n + length(J{i});
+end
+jdx = cumsum(jdx(1:end-1));
+
+% Sparse Matrix
+M = sparse(idx,jdx,val);
 end

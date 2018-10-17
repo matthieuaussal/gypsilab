@@ -12,18 +12,19 @@
 %| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
 %| is available, please contact us to activate a "pay for remove" option. |
 %| CONTACT   : matthieu.aussal@polytechnique.edu                          |
+%|             francois.alouges@polytechnique.edu                         |
 %| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
 %|                                                                        |
 %| Please acknowledge the gypsilab toolbox in programs or publications in |
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshClean.m                                 |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : nrtFemDirichletString.m                       |
+%|    #    |   VERSION    : 0.42                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Clean tetrahedral mesh                        |
+%|  / 0 \  |   LAST MODIF : 31.10.2018                                    |
+%| ( === ) |   SYNOPSIS   : Dirichlet condition with a guitar string      |
 %|  `---'  |                                                              |
 %+========================================================================+
 
@@ -33,68 +34,93 @@ close all
 clc
 
 % Library path
+addpath('../../openDom')
+addpath('../../openFem')
 addpath('../../openMsh')
 
-% Load mesh
-load tetmesh
+% Parameters
+Nvtx = 100;
+Neig = 10;
+L    = 2;
 
-% Build mesh
-mesh1 = msh(X,tet);
+% Meshes
+mesh = mshSegment(Nvtx,L);
 
-% Graphical representation
-figure
-plot(mesh1)
-axis equal
-view(45,45)
+% Boundary
+bound = mesh.bnd;
 
-% Add vertices to tetrahedral mesh
-tmp = [zeros(10,3) ; 10*rand(10,3)];
-tet = tet + size(tmp,1);
-X   = [tmp ; X ; 10*rand(20,3)];
+% Domain
+omega = dom(mesh,3);
+sigma = dom(bound,2);
 
-% Build and clean mesh
-mesh2 = msh(X,tet);
+% Finites elements space
+u = fem(mesh,'P1');
+v = fem(mesh,'P1');
 
-% Test mesh egality
-~isequal(mesh1,mesh2)
-
-% Graphical representation
-figure
-plot(mesh2)
-axis equal
-view(45,45)
-
-% Colours
-mesh = mshSquare(20,[1 1]);
-ctr  = mesh.ctr;
-mesh.col(ctr(:,1)<0)  = 1;    
-mesh.col(ctr(:,1)>=0) = 2;
+% Dirichlet
+u = dirichlet(u,bound);
+v = dirichlet(v,bound);
 
 % Graphical representation
-figure
-plot(mesh)
-axis equal
-view(45,45)
+plot(mesh,'w'); 
+hold on
+plot(bound,'r')
+plot(omega)
+plot(u,'go')
+hold off
+axis equal;
+title('Mesh representation')
+xlabel('X');   ylabel('Y');   zlabel('Z');
+alpha(0.99)
 
-% Sub-meshing with small translation 
-delta     = 1e-2;
-mesh1     = mesh.sub(mesh.col==1);
-mesh2     = mesh.sub(mesh.col==2);
-mesh2.vtx = mesh2.vtx + delta;
-meshT     = union(mesh1,mesh2);
+% Mass matrix
+tic
+M = integral(omega,u,v);
+toc
+abs(sum(sum(M)) - 1)/1
+
+% Rigidity matrix
+tic
+K = integral(omega,grad(u),grad(v));
+toc
+sum(sum(K))
+
+% Find eigen values
+tic
+[V,EV] = eigs(K,M,2*Neig,'SM');
+toc
+
+% Normalization
+V = V./(max(max(abs(V))));
+
+% Sort by ascending order
+[EV,ind] = sort(sqrt(real(diag(EV))));
+[~,uni]  = unique(floor(1e2*EV));
+V        = V(:,ind);
 
 % Graphical representation
+X = u.unk;
 figure
-plot(meshT)
-axis equal
-view(45,45)
+for n = 1:9
+    subplot(3,3,n)
+    plot(X(:,1),V(:,n))
+    title(['k = ',num2str(EV(n))])
+    axis equal off
+end
 
-% Clean with specified range
-stp   = mesh.stp;
-meshT = clean(meshT,0.5*stp(1));
+% Analytical solutions of eigenvalues for an arbitrary cube
+ref = zeros(Neig,1);
+for i = 1:Neig
+    ref(i) = pi*sqrt( (i/L(1))^2 ) ;
+end
+
+% Error
+sol = EV(1:Neig);
+[ref sol abs(sol-ref)./ref]
 
 
 
 disp('~~> Michto gypsilab !')
+
 
 

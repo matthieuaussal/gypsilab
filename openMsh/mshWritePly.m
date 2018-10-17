@@ -1,6 +1,8 @@
+function mshWritePly(filename,mesh)
 %+========================================================================+
 %|                                                                        |
-%|            This script uses the GYPSILAB toolbox for Matlab            |
+%|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
+%|           openMsh is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -18,83 +20,46 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshClean.m                                 |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : mshWritePly.m                                 |
+%|    #    |   VERSION    : 0.43                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Clean tetrahedral mesh                        |
-%|  `---'  |                                                              |
+%|  / 0 \  |   LAST MODIF : 05.09.2018                                    |
+%| ( === ) |   SYNOPSIS   : Write mesh and data to ply format             |
+%|  `---'  |                (only surfacic triangular mesh)               |
 %+========================================================================+
 
-% Cleaning
-clear all
-close all
-clc
+% Security
+if (size(mesh.vtx,2) ~= 3) || (size(mesh.elt,2) ~= 3)
+    error('mshWritePly.m : unavailable case')
+end
+   
+% Open file
+fid = fopen(filename,'w');
 
-% Library path
-addpath('../../openMsh')
+% Header
+fprintf(fid,'%s\n','ply');
+fprintf(fid,'%s\n','format ascii 1.0');
+fprintf(fid,'%s\n','comment Gypsilab generated PLY file');
+fprintf(fid,'%s %d\n','element vertex ',size(mesh.vtx,1));
+fprintf(fid,'%s\n','property float x');
+fprintf(fid,'%s\n','property float y');
+fprintf(fid,'%s\n','property float z');
+fprintf(fid,'%s %d\n','element face ',size(mesh.elt,1));
+fprintf(fid,'%s\n','property list uchar int vertex_indices');
+fprintf(fid,'%s\n','end_header');
 
-% Load mesh
-load tetmesh
+% Node list
+for i = 1:size(mesh.vtx,1)
+    fprintf(fid,'%f %f %f\n',mesh.vtx(i,:));
+end
 
-% Build mesh
-mesh1 = msh(X,tet);
+% Element list
+for i = 1:size(mesh.elt,1)
+    fprintf(fid,'%d  %d  %d  %d\n',3,mesh.elt(i,:)-1);
+end
 
-% Graphical representation
-figure
-plot(mesh1)
-axis equal
-view(45,45)
-
-% Add vertices to tetrahedral mesh
-tmp = [zeros(10,3) ; 10*rand(10,3)];
-tet = tet + size(tmp,1);
-X   = [tmp ; X ; 10*rand(20,3)];
-
-% Build and clean mesh
-mesh2 = msh(X,tet);
-
-% Test mesh egality
-~isequal(mesh1,mesh2)
-
-% Graphical representation
-figure
-plot(mesh2)
-axis equal
-view(45,45)
-
-% Colours
-mesh = mshSquare(20,[1 1]);
-ctr  = mesh.ctr;
-mesh.col(ctr(:,1)<0)  = 1;    
-mesh.col(ctr(:,1)>=0) = 2;
-
-% Graphical representation
-figure
-plot(mesh)
-axis equal
-view(45,45)
-
-% Sub-meshing with small translation 
-delta     = 1e-2;
-mesh1     = mesh.sub(mesh.col==1);
-mesh2     = mesh.sub(mesh.col==2);
-mesh2.vtx = mesh2.vtx + delta;
-meshT     = union(mesh1,mesh2);
-
-% Graphical representation
-figure
-plot(meshT)
-axis equal
-view(45,45)
-
-% Clean with specified range
-stp   = mesh.stp;
-meshT = clean(meshT,0.5*stp(1));
-
-
-
-disp('~~> Michto gypsilab !')
-
-
+% Close file
+fclose(fid);
+disp([filename,' created.']);
+end
