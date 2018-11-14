@@ -67,14 +67,15 @@ S   = mesh.vtx;
 n   = mesh.nrm;
 tau = cell2mat(mesh.tgt');
 nu  = cell2mat(mesh.nrmEdg');
-[Rm1a,rRm1a,gradRm1a] = domSemiAnalyticInt(X,S,n,tau,nu,1e-8);
+[Rm1a,rRm1a,gradRm1a,gradrRm1a] = domSemiAnalyticInt(X,S,n,tau,nu,1e-8);
 toc
    
 % 2D simpson integration ("exact")
 tic
-Rm1s     = zeros(size(Rm1a));
-rRm1s    = zeros(size(rRm1a));
-gradRm1s = zeros(size(gradRm1a));
+Rm1s      = zeros(size(Rm1a));
+rRm1s     = zeros(size(rRm1a));
+gradRm1s  = zeros(size(gradRm1a));
+gradrRm1s = zeros(size(gradrRm1a));
 for i = 1:size(X,1)
     % Function |r| in the 2D plane of the triangle
     fun = @(x1,x2) sqrt( (x1-X(i,1)).^2 + (x2-X(i,2)).^2 + X(i,3).^2 );
@@ -101,6 +102,30 @@ for i = 1:size(X,1)
         gradRm1s(i,3) = integral2(@(x1,x2) X(i,3)./fun(x1,x2).^3, ...
             0, 1 , 0, @(x1) 1-x1);
     end
+    
+    % Tensorial integration grad(r/|r|) = Id/r - rxr/|r|^3
+    if (X(i,3) == 0)
+        gradrRm1s(i,:) = 0;
+    else
+        gradrRm1s(i,1,1) = integral2(@(x1,x2) 1./fun(x1,x2) - (x1-X(i,1)).*(x1-X(i,1))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,2,1) = integral2(@(x1,x2) - (x2-X(i,2)).*(x1-X(i,1))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,3,1) = integral2(@(x1,x2) - (0-X(i,3)).*(x1-X(i,1))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,1,2) = integral2(@(x1,x2) - (x1-X(i,1)).*(x2-X(i,2))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,2,2) = integral2(@(x1,x2) 1./fun(x1,x2) - (x2-X(i,2)).*(x2-X(i,2))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,3,2) = integral2(@(x1,x2) - (0-X(i,3)).*(x2-X(i,2))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,1,3) = integral2(@(x1,x2) - (x1-X(i,1)).*(0-X(i,3))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,2,3) = integral2(@(x1,x2) - (x2-X(i,2)).*(0-X(i,3))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+        gradrRm1s(i,3,3) = integral2(@(x1,x2) 1./fun(x1,x2) - (0-X(i,3)).*(0-X(i,3))./fun(x1,x2).^3, ...
+            0, 1 , 0, @(x1) 1-x1);
+    end
 end
 toc
 
@@ -121,7 +146,6 @@ title('Relative error (log) : \int r/|r|')
 grid on
 disp('Relative error (Linf) : \int r/|r|')
 norm(rRm1a(I,:)-rRm1s(I,:),'inf')./norm(rRm1a(I,:),'inf')
-norm(rRm1a-rRm1s,'inf')./norm(rRm1a,'inf')
 
 % Relative errors grad(1/|r|)
 figure
@@ -130,7 +154,18 @@ title('Relative error (log) : \int grad(1/|r|)')
 grid on
 disp('Relative error (Linf) : \int grad(1/|r|)')
 norm(gradRm1a(I,:)-gradRm1s(I,:),'inf')./norm(gradRm1a(I,:),'inf')
-norm(gradRm1a-gradRm1s,'inf')./norm(gradRm1a,'inf')
+
+% Relative errors gradx(r/|r|)
+figure
+semilogy( abs(gradrRm1a(:,:,1)-gradrRm1s(:,:,1))./abs(gradrRm1a(:,:,1)) )
+title('Relative error (log) : \int grad(rx/|r|)')
+grid on
+disp('Relative error (Linf) : \int grad(rx/|r|)')
+norm(gradrRm1a(I,:,1)-gradrRm1s(I,:,1),'inf')./norm(gradrRm1a(I,:,1),'inf')
+disp('Relative error (Linf) : \int grad(ry/|r|)')
+norm(gradrRm1a(I,:,2)-gradrRm1s(I,:,2),'inf')./norm(gradrRm1a(I,:,2),'inf')
+disp('Relative error (Linf) : \int grad(rz/|r|)')
+norm(gradrRm1a(I,:,3)-gradrRm1s(I,:,3),'inf')./norm(gradrRm1a(I,:,3),'inf')
 
 
 

@@ -107,8 +107,8 @@ for el = 1:Nelt
     if ~isempty(Ix)
         %%% CORRECTION WITH SEMI-ANALYTIC INTEGRATION
         % Analytical integration
-        [Rm1,rRm1,gradRm1] = domSemiAnalyticInt(X(Ix,:),Sel,Nel,Tel,NUel,1e-8);
-%                 Rm1(:) = 0; rRm1(:) = 0; gradRm1(:) = 0;    %%% DEBUG %%%
+        [Rm1,rRm1,gradRm1,gradrRm1] = domSemiAnalyticInt(X(Ix,:),Sel,Nel,Tel,NUel,1e-8);
+%                 Rm1(:) = 0; rRm1(:) = 0; gradRm1(:) = 0; gradrRm1(:) = 0;    %%% DEBUG %%%
         
         % Vector yg-x
         Xun = ones(length(Ix),1);
@@ -123,19 +123,38 @@ for el = 1:Nelt
         
         % Int_el(1/|r|) - Sum_g 1/|yg-x|
         Rm1 = Rm1 - Rxym1 * Wy(Iy);
-        %         norm(Rm1)                                   %%% DEBUG %%%
+%                 norm(Rm1)                                   %%% DEBUG %%%
         
         % Int_el(r/|r|) - Sum_g (yg-x)/|yg-x|
         rRm1(:,1) = rRm1(:,1) - (XY1 .* Rxym1) * Wy(Iy);
         rRm1(:,2) = rRm1(:,2) - (XY2 .* Rxym1) * Wy(Iy);
         rRm1(:,3) = rRm1(:,3) - (XY3 .* Rxym1) * Wy(Iy);
-        %         norm(rRm1)                                  %%% DEBUG %%%
+%                 norm(rRm1)                                  %%% DEBUG %%%
         
         % Int_el(-r/|r|^3) - Sum_g -(yg-x)/|yg-x|^3
-        gradRm1(:,1) = gradRm1(:,1) + (XY1 .* Rxym1.^3) * Wy(Iy);
-        gradRm1(:,2) = gradRm1(:,2) + (XY2 .* Rxym1.^3) * Wy(Iy);
-        gradRm1(:,3) = gradRm1(:,3) + (XY3 .* Rxym1.^3) * Wy(Iy);
-        %         norm(gradRm1)                               %%% DEBUG %%%
+        Rxym13       = Rxym1.^3;
+        gradRm1(:,1) = gradRm1(:,1) + (XY1 .* Rxym13) * Wy(Iy);
+        gradRm1(:,2) = gradRm1(:,2) + (XY2 .* Rxym13) * Wy(Iy);
+        gradRm1(:,3) = gradRm1(:,3) + (XY3 .* Rxym13) * Wy(Iy);
+%                 norm(gradRm1)                               %%% DEBUG %%%
+                
+        % Int_el grad(r/|r|) = Int_el Id/|r|-riorj/|r|^3 
+        % Int_el(Id/|r|-riorj/|r|^3) - Sum_g Id/|(yg-x)|-(yg-x)io(yg-x)j/|yg-x|^3
+        gradrRm1(:,1,1) = gradrRm1(:,1,1) - Rxym1 * Wy(Iy);
+        gradrRm1(:,2,2) = gradrRm1(:,2,2) - Rxym1 * Wy(Iy);
+        gradrRm1(:,3,3) = gradrRm1(:,3,3) - Rxym1 * Wy(Iy);
+        gradrRm1(:,1,1) = gradrRm1(:,1,1) + (XY1 .* XY1 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,1,2) = gradrRm1(:,1,2) + (XY1 .* XY2 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,1,3) = gradrRm1(:,1,3) + (XY1 .* XY3 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,2,1) = gradrRm1(:,2,1) + (XY2 .* XY1 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,2,2) = gradrRm1(:,2,2) + (XY2 .* XY2 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,2,3) = gradrRm1(:,2,3) + (XY2 .* XY3 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,3,1) = gradrRm1(:,3,1) + (XY3 .* XY1 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,3,2) = gradrRm1(:,3,2) + (XY3 .* XY2 .* Rxym13) * Wy(Iy);
+        gradrRm1(:,3,3) = gradrRm1(:,3,3) + (XY3 .* XY3 .* Rxym13) * Wy(Iy);
+%         norm(gradrRm1(:,:,1))                               %%% DEBUG %%%
+%         norm(gradrRm1(:,:,2))                               %%% DEBUG %%%
+%         norm(gradrRm1(:,:,3))                               %%% DEBUG %%%
         
         % Nullify V
         V = [];
@@ -162,6 +181,11 @@ for el = 1:Nelt
             elseif strcmp(green(1:end-1),'grady[1/r]') && strcmp(v.opr,'[psi]')
                 ii = str2double(green(end));
                 V  = gradRm1(:,ii);
+                
+            elseif strcmp(green(1:end-2),'[ij/r+rirj/r^3]') && strcmp(v.opr,'[psi]')
+                ii = str2double(green(end-1));
+                jj = str2double(green(end));
+                V  = 2*(ii==jj).*Rm1 - gradrRm1(:,ii,jj);
                 
             else
                 error('domRegularize : unavailable case')
@@ -205,6 +229,11 @@ for el = 1:Nelt
                 elseif strcmp(green(1:end-1),'grady[1/r]') && strcmp(v.opr,'[psi]')
                     ii     = str2double(green(end));
                     V(:,j) = tmp .* gradRm1(:,ii);
+                    
+                elseif strcmp(green(1:end-2),'[ij/r+rirj/r^3]') && strcmp(v.opr,'[psi]')
+                    ii     = str2double(green(end-1));
+                    jj     = str2double(green(end));
+                    V(:,j) = (2*(ii==jj).*Rm1 - gradrRm1(:,ii,jj)).*tmp;
                     
                 else
                     error('domRegularize : unavailable case')

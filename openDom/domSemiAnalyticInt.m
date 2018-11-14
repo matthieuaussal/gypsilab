@@ -1,4 +1,4 @@
-function [Rm1,rRm1,gradRm1] = domSemiAnalyticInt(X0,S,n,tau,nu,tol) 
+function [Rm1,rRm1,gradRm1,gradrRm1] = domSemiAnalyticInt(X0,S,n,tau,nu,tol) 
 %+========================================================================+
 %|                                                                        |
 %|              OPENDOM - LIBRARY FOR NUMERICAL INTEGRATION               |
@@ -62,9 +62,10 @@ omega = omega.*sign(h);
 omega(abs(h)<=1e-8) = 0;
 
 % Output initialization
-Rm1     = -h.*omega;
-rRm1    = zeros(NX0,3);
-gradRm1 = -omega*n;
+Rm1      = -h.*omega;
+rRm1     = zeros(NX0,3);
+gradRm1  = -omega*n;
+gradrRm1 = zeros(NX0,3,3);
 
 % Edge integration
 for ia = 1:3
@@ -95,6 +96,12 @@ for ia = 1:3
     ir = logical((ps<-tol) .* (psp1<-tol) .* im);  % paticles of the right of the edge
     intaRm1(ir) = -log(nrmX0S(ir,iap2)./nrmX0S(ir,iap1)); 
     
+    % terme Cn (terme dependant de la position du point d'observation / arete)
+    inta = (sqrt(ah.^2 + psp1.^2)-sqrt(ah.^2 + ps.^2));
+    inta_rRm1(:,1) = xnu(:,1) .* intaRm1 + inta * tau(ia,1);
+    inta_rRm1(:,2) = xnu(:,2) .* intaRm1 + inta * tau(ia,2);
+    inta_rRm1(:,3) = xnu(:,3) .* intaRm1 + inta * tau(ia,3);
+
     % Integration r on the edge
     intaR = 0.5.*(ar.*nrmX0S(:,iap2) + intaRm1.*ah.^2 + ps2);
     
@@ -109,8 +116,18 @@ for ia = 1:3
     
     % Integration of grad(1/|r|)
     gradRm1 = gradRm1 + intaRm1*nu(ia,:);    
+    
+    % Integration of grad(r/|r|)
+    gradrRm1(:,:,1) = gradrRm1(:,:,1) + nu(ia,1) * inta_rRm1(:,:);
+    gradrRm1(:,:,2) = gradrRm1(:,:,2) + nu(ia,2) * inta_rRm1(:,:);
+    gradrRm1(:,:,3) = gradrRm1(:,:,3) + nu(ia,3) * inta_rRm1(:,:);
 end
 
-% Normal composant of grad(r)
+% Normal component of grad(r)
 rRm1 = rRm1 + (h.*Rm1)*n;
+for i = 1:3
+    for j = 1:3
+        gradrRm1(:,i,j) = gradrRm1(:,i,j) + n(j)*(Rm1(:)*n(i)) + n(j)*h.*gradRm1(:,i);
+    end
+end
 end

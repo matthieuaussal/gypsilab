@@ -115,6 +115,14 @@ run('nrtRaySource.m');
 run('nrtRaySphere.m');
 run('nrtRayTheatre');
 
+% Stokes
+cd('../stokes');
+run('nrtStkConv.m');
+run('nrtStkGTradCol.m');
+run('nrtStkGTradExt.m');
+run('nrtStkGTradGal.m');
+run('nrtStkHmx.m');
+
 % End
 disp('~~> Non Regresion Test are done. Michto gypsilab !');
 

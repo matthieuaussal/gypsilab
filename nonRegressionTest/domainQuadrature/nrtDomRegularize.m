@@ -110,7 +110,16 @@ M   = integral(sigma,sigma,u,dyGxy,u);
 Mr  = regularize(sigma,sigma,u,'grady[1/r]1',u);
 norm(M+Mr,'inf')
 
-
+% Stokeslet P0
+for i = 1:3
+    for j = 1:3
+        name  = ['[ij/r+rirj/r^3]',num2str(i),num2str(j)];
+        green = @(X,Y) femGreenKernel(X,Y,name,[]);
+        M     = integral(sigma,sigma,u,green,u);
+        Mr    = regularize(sigma,sigma,u,name,u);
+        norm(M+Mr,'inf')
+    end
+end
 
 disp('~~> Michto gypsilab !')
 

@@ -172,7 +172,7 @@ plot(rir)
 
 % Audio rendering (5 seconds)
 out = fftfilt(rir,audio(1:5*fs));
-sound(out,fs)
+% sound(out,fs)
 
 
 
