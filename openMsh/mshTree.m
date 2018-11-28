@@ -68,22 +68,22 @@ while (max(tree{n}.nbr) > Nlf)
     tree{n}.chd = Ichd; 
 
     % Verify children
-    if norm( cell2mat(tree{n}.chd) - (1:length(tree{n+1}.nbr))' , 'inf') > 1e-12
+    if (norm( cell2mat(tree{n}.chd) - (1:length(tree{n+1}.nbr))' , 'inf') > 1e-12)
         error('mshTree.m : unavailable case')
     end
     
     % Verify indices
-    if norm( sort(cell2mat(tree{n+1}.ind)) - sort(cell2mat(tree{n+1}.ind)) , 'inf') > 1e-12
+    if (norm( sort(cell2mat(tree{n+1}.ind)) - sort(cell2mat(tree{n+1}.ind)) , 'inf') > 1e-12)
         error('mshTree.m : unavailable case')
     end
     
     % Verify number
-    if abs( sum(tree{n+1}.nbr) - sum(tree{n}.nbr) ) > 1e-12
+    if (abs( sum(tree{n+1}.nbr) - sum(tree{n}.nbr) ) > 1e-12)
         error('mshTree.m : unavailable case')
     end
     
     % Verify parents
-    if norm( unique(tree{n+1}.prt) - (1:length(tree{n}.nbr))' , 'inf') > 1e-12
+    if (norm( unique(tree{n+1}.prt) - (1:length(tree{n}.nbr))' , 'inf') > 1e-12)
         error('mshTree.m - unavailable case')
     end
     

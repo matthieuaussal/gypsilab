@@ -21,13 +21,18 @@ function [meshr,Ir] = mshMidpoint(mesh,I)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : mshMidpoint.m                                 |
-%|    #    |   VERSION    : 0.41                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Refine triangular mesh with midpoint algorithm|
 %|  `---'  |                                                              |
 %+========================================================================+
+
+% Check dimenion
+if (size(mesh,2) ~= 3)
+    error('mshMidpoint : unavailable case 1')
+end
 
 % Save color and replace by hierarchy
 col      = mesh.col;
@@ -48,7 +53,7 @@ mlt        = sum(ind,2);
 % Security
 tmp = setdiff(int,edgs);
 if (size(tmp.elt,1) ~= 0)
-    error('mshMidpoint.m : unavailable case');
+    error('mshMidpoint.m : unavailable case 2');
 end
 
 % Initialize refined mesh for element without refinement
@@ -75,7 +80,7 @@ meshr.col = col(Ir);
 
 % Security
 if (sum(mesh.ndv)-sum(meshr.ndv))/sum(mesh.ndv) > 1e-15*length(meshr)
-    error('mshMidpoint.m : unavailable case 2');
+    error('mshMidpoint.m : unavailable case 3');
 end
 end
 
@@ -171,7 +176,7 @@ end
 
 % Security
 if size(mesh.elt,1) ~= 3*Nelt
-    error('mshMidpoint2.m : unavailable case')
+    error('mshMidpoint2.m : unavailable case 1')
 end
 if size(mesh.vtx,1) ~= Nvtx+2*Nelt
     error('mshMidpoint2.m : unavailable case 2')
@@ -206,7 +211,7 @@ end
 
 % Security
 if size(mesh.elt,1) ~= 4*Nelt
-    error('mshMidpoint3.m : unavailable case')
+    error('mshMidpoint3.m : unavailable case 1')
 end
 end
 

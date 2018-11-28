@@ -2,7 +2,7 @@
 |   '&`   |                                                              |
 |    #    |               THE GYPSILAB TOOLBOX FOR MATLAB                |
 |    #    |                                                              |
-|   _#_   |                         VERSION - 0.41                       |
+|   _#_   |                         VERSION - 0.50                       |
 |  ( # )  |                                                              |
 |  / 0 \  |               matthieu.aussal@polytechnique.edu              |
 | ( === ) |           www.cmap.polytechnique.fr/~aussal/gypsilab         |
@@ -31,6 +31,10 @@ Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
 
  - OpenRay : Library for tri-dimensional ray-tracing.
 Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
+
+ - OpenEbd : Library for bi-dimensional convolution with green kernel.
+Copyright Martin Averseng (c) 2018 - Ecole Polytechnique
+https://github.com/MartinAverseng/EBD
  
 Scripts for non regression test are provided to evaluate performances 
 and verify computation.

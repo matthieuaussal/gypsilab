@@ -22,10 +22,10 @@ classdef dom
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : dom.m                                         |
-%|    #    |   VERSION    : 0.41                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Domain class definition                       |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -76,13 +76,16 @@ methods
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% GLOBAL DATA  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % LENGTH
-    function s = length(domain)
-        s = size(domain.qud,1);
+    function l = length(domain)
+        l = size(domain.qud,1);
     end
     
     % SIZE
-    function s = size(domain)
-        s = size(domain.qud);
+    function s = size(varargin)
+        s = size(varargin{1}.qud);
+        if (nargin == 2)
+           s = s(varargin{2}); 
+        end
     end
     
     
@@ -128,7 +131,12 @@ methods
     
     % SINGULAR REGULARIZAION
     function S = regularize(varargin)
-        S = domRegularize(varargin);
+        mesh = varargin{end}.msh;
+        if (size(mesh,2) == 3)
+            S = domRegularize3D(varargin);
+        elseif (size(mesh,2) == 2) && is2d(mesh)
+            S = domRegularize2D(varargin);
+        end
     end
     
     % INTERPOLATION

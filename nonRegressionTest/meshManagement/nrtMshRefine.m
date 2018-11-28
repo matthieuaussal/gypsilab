@@ -38,7 +38,6 @@ addpath('../../openMsh')
 % Create mesh
 Nvtx = 1e3;
 mesh = mshSquare(Nvtx,[2 2]);
-% mesh = mshSphere(Nvtx,1);
 
 % Colours
 mesh.col(1:20)                 = -1;

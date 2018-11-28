@@ -21,10 +21,10 @@ function [A,B,flag] = hmxACA(varargin)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxACA.m                                      |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Adaptative Cross Approximation, partial       |
 %|  `---'  |                & total pivoting                              |
 %+========================================================================+
@@ -36,6 +36,7 @@ if (nargin == 2)
     rkMax = 1e6;
     row   = @(i) full(M(i,:));
     col   = @(i) full(M(:,i));
+    mat   = @(i,j) M(sub2ind(size(M),i,j));
     
 % Total pivoting with full matrix and maximum rank
 elseif (nargin == 3)
@@ -44,6 +45,7 @@ elseif (nargin == 3)
     rkMax = varargin{3};
     row   = @(i) full(M(i,:));
     col   = @(i) full(M(:,i));
+    mat   = @(i,j) M(sub2ind(size(M),i,j));
     
 % Partial pivoting with handle function    
 elseif (nargin == 4) 
@@ -54,6 +56,7 @@ elseif (nargin == 4)
     rkMax = 1e6;
     row = @(i) green(X(i,:),Y).';
     col = @(i) green(X,Y(i,:));
+    mat = @(i,j) green(X(i,:),Y(j,:));
     
 % Partial pivoting with handle function and maximum rank   
 elseif (nargin == 5) 
@@ -64,119 +67,120 @@ elseif (nargin == 5)
     rkMax = varargin{5};
     row = @(i) green(X(i,:),Y).';
     col = @(i) green(X,Y(i,:));
+    mat = @(i,j) green(X(i,:),Y(j,:));
+    
 else
     error('hmxACA : unavailable case')
 end
 
-% First row
-B = row(1).';
-    
-% Maximum for pivoting
-[~,j] = max(abs(B));
-delta = B(j);
-if (abs(delta) <= 1e-12)
-    delta = 1e12;
+% Dimensions
+if exist('M','var')
+    [Nx,Ny] = size(M);
+else
+    Nx = size(X,1);
+    Ny = size(Y,1);
 end
 
-% First column with pivot
-A = col(j) ./ delta;
+% Initialize indices for row and columns pivot (dicreasing)
+Ir = (1:Nx)';
+Ic = (1:Ny)';
+
+% Initialize reference indices and values (fixed)
+[Ix,Iy,ref,flag] = hmxReference(Nx,Ny,mat,rkMax);
+if flag
+    nrm = norm(ref,2);
+else
+    A    = [];
+    B    = [];
+    flag = 0;
+    return
+end
+
+% First row (row index of maximum reference value)
+[~,i]  = max(abs(ref));
+B      = row(i).';
+
+% First pivot (maximum of the first row) 
+[~,j] = max(abs(B));
+delta = B(j);
+if (abs(delta) < 1e-12)
+    delta = 1e-12;
+end
+
+% First column
+A = col(j)./delta;
+
+% Update row indices
+Ir = [Ir(1:i-1);Ir(i+1:end)];
+Ic = [Ic(1:j-1);Ic(j+1:end)];
 
 % Frobenius norm for the initial tensor product
-An2 = (A'*A);
-Bn2 = (B'*B);
-Rn2 = An2 * Bn2;
+An2   = (A'*A);
+Bn2   = (B'*B);
+Rn2   = An2 * Bn2;
 
-% Left indices for row and columns pivot
-Ir = (2:size(A,1))';
-Ic = [1:j-1,j+1:size(B,1)]';
+% Update references values
+ref = ref - A(Ix).*B(Iy);
 
-% Iterative construction
-errFr = 1;
-n     = 1;
-while (errFr > tol)
-    % Reinitialize pivot
-    delta = 0;
-
-    % Find non zeros pivot
-    while abs(delta) <= 1e-12
-        % No more pivots
-        if isempty(Ir)
-            A    = [];
-            B    = [];
-            flag = 0;
-%             warning('hmxACA.m : no more pivots')
-            return
-        end
-        
-        % Row index
-        [~,i] = max(abs(A(Ir,n)));
-        
-        % Compute new row
-        new = row(Ir(i)).' - B*A(Ir(i),1:n).';
-        
-        % Column index
-        [~,j] = max(abs(new(Ic)));
-        
-        % Pivot
-        delta = new(Ic(j));
-        
-        % Same with minimum
-        [~,iMin] = min(abs(A(Ir,n)));
-        rowMin   = row(Ir(iMin)).' - B*A(Ir(iMin),1:n).';
-        [~,jMin] = max(abs(rowMin(Ic)));
-        deltaMin = rowMin(Ic(jMin));
-
-        % Choose between min and max
-        if abs(deltaMin) > abs(delta)
-            i     = iMin;
-            j     = jMin;
-            new   = rowMin;
-            delta = deltaMin;
-        end
-
-        % Update row indices
-        Ir = [Ir(1:i-1);Ir(i+1:end)];
+% Iterative construction using frobenius and infinite error on reference
+n = 1;
+while (sqrt(An2)*sqrt(Bn2) > tol*sqrt(Rn2)) || (norm(ref,2) > tol*nrm)
+    % Row index (maximum of column or reference)
+    [a,i] = max(abs(A(Ir,n)));
+    [b,k] = max(abs(ref(Ir)));
+    if (b>a*delta)
+        i = k;
     end
-
+    
+    % New row
+    new = row(Ir(i)).' - B*A(Ir(i),1:n).';
+    
+    % New pivot
+    [~,j] = max(abs(new(Ic)));
+    delta = new(Ic(j));
+    if (abs(delta) < 1e-12)
+        delta = 1e-12;
+    end
+    
     % Update row
     B(:,n+1) = new;
     
-    % Update column
+    % New column
     A(:,n+1) = (col(Ic(j)) - A*B(Ic(j),1:n).') ./ delta;
     
-    % Update column indices
+    % Update row and column indices
+    Ir = [Ir(1:i-1);Ir(i+1:end)];
     Ic = [Ic(1:j-1);Ic(j+1:end)];
     
     % Incrementation
     n = n + 1;
 
-    % Recursive frobenius
+    % Relative Frobenius error by block
     An2 = A(:,n)'*A(:,n);
     Bn2 = B(:,n)'*B(:,n);
-
-    u  = B(:,n)'*B(:,1:n-1);
-    v  = A(:,n)'*A(:,1:n-1);
-    AB = v*u.';
-
-    u  = B(:,1:n-1)'*B(:,n);
-    v  = A(:,1:n-1)'*A(:,n);
-    BA = u.'*v;
-
+    u   = B(:,n)'*B(:,1:n-1);
+    v   = A(:,n)'*A(:,1:n-1);
+    AB  = v*u.';
+    u   = B(:,1:n-1)'*B(:,n);
+    v   = A(:,1:n-1)'*A(:,n);
+    BA  = u.'*v;
     Rn2 = Rn2 + AB + BA + An2*Bn2;
 
-    % Relative Frobenius error with the residue
-    errFr = sqrt(An2)*sqrt(Bn2)/sqrt(Rn2);
-%     norm(A*B.' - A(:,1:n-1)*B(:,1:n-1).','fro')/norm(A*B.','fro')
-%     norm(A(:,n)*B(:,n).','fro')/norm(A*B.','fro')
-      
+    % Update reference
+    ref = ref - A(Ix,n).*B(Iy,n);
+    
     % Compression failed
-    if ( n*(size(A,1)+size(B,1)) > size(A,1)*size(B,1) ) || (n>=rkMax) 
+    if (n*(Nx+Ny) > Nx*Ny) || (n>=rkMax) 
         A    = [];
         B    = [];
         flag = 0;
-%         warning('hmxACA.m : compression failed')
         return
     end    
+%     sqrt(An2)*sqrt(Bn2)/sqrt(Rn2)
+%     norm(A*B.' - A(:,1:n-1)*B(:,1:n-1).','fro')/norm(A*B.','fro')
+%     norm(A(:,n)*B(:,n).','fro')/norm(A*B.','fro')    
+%     norm(ref,'inf')/nrm
+%     '================================'
 end
 
 % B transposition lead to  A * B

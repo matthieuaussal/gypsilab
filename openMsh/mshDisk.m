@@ -21,10 +21,10 @@ function mesh = mshDisk(N,rad)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : mshDisk.m                                     |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Build uniform mesh for a disk                 |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -49,7 +49,7 @@ X     = [0 0 ; x y];
 
 % Unicity test
 tmp = unique(X,'rows','stable');
-if max(abs(X-tmp)) > 1e-12
+if (max(abs(X-tmp)) > 1e-12)
     error('mshDisk : non unicity of vertices')
 end
    

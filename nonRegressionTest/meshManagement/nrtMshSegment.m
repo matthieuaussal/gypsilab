@@ -18,11 +18,11 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshRead.m                                  |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : nrtMshSegment.m                               |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Edge mesh of a segment                        |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -73,7 +73,9 @@ colorbar
 Xctr = mesh.ctr;
 hold on
 plot3(Xctr(:,1),Xctr(:,2),Xctr(:,3),'*y')
-hold off
+
+% Normals
+plotNrm(mesh,'r')
 
 % Volume
 V = mesh.ndv;

@@ -59,5 +59,4 @@ if iscell(M)
 else
     M = M * P;
 end
-
 end

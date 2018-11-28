@@ -19,11 +19,11 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtDomRegularize.m                            |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : nrtDomRegularize2D.m                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  ( # )  |   CREATION   : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Singular kernel regularization (in debug mode)|
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -43,84 +43,75 @@ N   = 1e2;
 gss = 3;
 
 % Spherical mesh
-sphere = mshSphere(N,1);
+circle = mshCircle(N,1);
 
 % Square mesh
 square = mshSquare(2*N,[3 3]);
 
 % Graphical representation
 figure
-plot(sphere)
+plot(circle)
 hold on
-plot(square)
+plot(square,'w')
 axis equal
+alpha(0.5)
 
 % Domain
-sigma = dom(sphere,gss);    
+sigma = dom(circle,gss);    
 
 % Finite elements
-u = fem(sphere,'P0');
-v = fem(sphere,'P1');
-w = fem(sphere,'RWG');
+u = fem(circle,'P0');
+v = fem(circle,'P1');
 
 % Gren kernel
-Gxy   = @(X,Y) femGreenKernel(X,Y,'[1/r]',[]);
-dyGxy = @(X,Y) femGreenKernel(X,Y,'grady[1/r]1',[]);
-
+Gxy      = @(X,Y) femGreenKernel(X,Y,'[log(r)]',[]);
+dyGxy{1} = @(X,Y) femGreenKernel(X,Y,'grady[log(r)]1',[]);
+dyGxy{2} = @(X,Y) femGreenKernel(X,Y,'grady[log(r)]2',[]);
+dyGxy{3} = @(X,Y) femGreenKernel(X,Y,'grady[log(r)]3',[]);
 
 % Single radiation P0
 M  = integral(square.vtx,sigma,Gxy,u);
-Mr = regularize(square.vtx,sigma,'[1/r]',u);
+Mr = regularize(square.vtx,sigma,'[log(r)]',u);
+norm(M+Mr,'inf')
+
+% Double radiation P0
+M  = integral(square.vtx,sigma,dyGxy,ntimes(u));
+Mr = regularize(square.vtx,sigma,'grady[log(r)]',ntimes(u));
 norm(M+Mr,'inf')
 
 % Single radiation P1
 M  = integral(square.vtx,sigma,Gxy,v);
-Mr = regularize(square.vtx,sigma,'[1/r]',v);
+Mr = regularize(square.vtx,sigma,'[log(r)]',v);
 norm(M+Mr,'inf')
-
-% Single radiation RWG
-M  = integral(square.vtx,sigma,Gxy,div(w));
-Mr = regularize(square.vtx,sigma,'[1/r]',div(w));
-norm(M+Mr,'inf')
-
 
 % Single layer P0
 M  = integral(sigma,sigma,u,Gxy,u);
-Mr = regularize(sigma,sigma,u,'[1/r]',u);
-norm(M+Mr,'inf')
-
-% Single layer P1
-M  = integral(sigma,sigma,v,Gxy,v);
-Mr = regularize(sigma,sigma,v,'[1/r]',v);
-norm(M+Mr,'inf')
-
-% Single layer RWG
-M  = integral(sigma,sigma,div(w),Gxy,div(w));
-Mr = regularize(sigma,sigma,div(w),'[1/r]',div(w));
-norm(M+Mr,'inf')
-
-
-% Double radiation P0
-M  = integral(square.vtx,sigma,dyGxy,u);
-Mr = regularize(square.vtx,sigma,'grady[1/r]1',u);
+Mr = regularize(sigma,sigma,u,'[log(r)]',u);
 norm(M+Mr,'inf')
 
 % Double layer P0
-M   = integral(sigma,sigma,u,dyGxy,u);
-Mr  = regularize(sigma,sigma,u,'grady[1/r]1',u);
+M  = integral(sigma,sigma,u,dyGxy,ntimes(u));
+Mr = regularize(sigma,sigma,u,'grady[log(r)]',ntimes(u));
 norm(M+Mr,'inf')
 
-% Stokeslet P0
-for i = 1:3
-    for j = 1:3
-        name  = ['[ij/r+rirj/r^3]',num2str(i),num2str(j)];
-        green = @(X,Y) femGreenKernel(X,Y,name,[]);
-        M     = integral(sigma,sigma,u,green,u);
-        Mr    = regularize(sigma,sigma,u,name,u);
-        norm(M+Mr,'inf')
-    end
-end
+% Single layer P1
+M  = integral(sigma,sigma,u,Gxy,v);
+Mr = regularize(sigma,sigma,u,'[log(r)]',v);
+norm(M+Mr,'inf')
+
+% Hypersingular P1
+M  = integral(sigma,sigma,ntimes(u),Gxy,ntimes(v));
+Mr = regularize(sigma,sigma,ntimes(u),'[log(r)]',ntimes(v));
+norm(M+Mr,'inf')
+
+M  = integral(sigma,sigma,nxgrad(u),Gxy,nxgrad(v));
+Mr = regularize(sigma,sigma,nxgrad(u),'[log(r)]',nxgrad(v));
+norm(M+Mr,'inf')
+
+
 
 disp('~~> Michto gypsilab !')
+
+
 
 

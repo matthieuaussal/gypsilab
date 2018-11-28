@@ -18,7 +18,7 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtHmxHelmholtzSDrad.m                        |
+%|    #    |   FILE       : nrtHelmholtzSDrad.m                           |
 %|    #    |   VERSION    : 0.40                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
@@ -36,7 +36,6 @@ clc
 addpath('../../openDom')
 addpath('../../openFem')
 addpath('../../openMsh')
-addpath('../../openHmx')
 
 % Parameters
 N   = 1e3

@@ -22,10 +22,10 @@ function Gxy = femGreenKernel(X,Y,green,k)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femGreenKernel.m                              |
-%|    #    |   VERSION    : 0.40                                          |
-%|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
+%|    #    |   VERSION    : 0.50                                          |
+%|   _#_   |   AUTHOR(S)  : M. Aussal & F. Alouges & M. Averseng          |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Usefull green kernel functions                |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -74,6 +74,28 @@ elseif strcmp(green(1:end-1),'grady[exp(ikr)/r]')
     Gxy = - (1i*k - 1./Rxy) .* exp(1i*k.*Rxy) .* ...
         (X(:,j)-Y(:,j)) ./ (Rxy.^2);
     
+elseif strcmp(green,'[log(r)]')
+    Gxy = log(Rxy);
+    
+elseif strcmp(green,'[H0(kr)]')
+    Gxy = besselh(0,k*Rxy);
+    
+elseif strcmp(green(1:end-1),'gradx[log(r)]')
+    j = str2double(green(end));
+    Gxy = (X(:,j)-Y(:,j)) ./ (Rxy.^2);    
+    
+elseif strcmp(green(1:end-1),'grady[log(r)]')
+    j = str2double(green(end));
+    Gxy = - (X(:,j)-Y(:,j)) ./ (Rxy.^2);    
+    
+elseif strcmp(green(1:end-1),'gradx[H0(kr)]')
+    j   = str2double(green(end));
+    Gxy = - k * besselh(1,k*Rxy) .* (X(:,j)-Y(:,j)) ./ Rxy;
+    
+elseif strcmp(green(1:end-1),'grady[H0(kr)]')
+    j   = str2double(green(end));
+    Gxy = k * besselh(1,k*Rxy) .* (X(:,j)-Y(:,j)) ./ Rxy;
+    
 elseif strcmp(green(1:end-2),'[ij/r+rirj/r^3]')        
     i = str2double(green(end-1));
     j = str2double(green(end));
@@ -91,8 +113,11 @@ end
 
 % Singularity
 if strcmp(green,'[exp(ikr)/r]')
-    Gxy(Rxy<1e-6) = 0 + 1i*k;
+    Gxy(Rxy<1e-12) = 0 + 1i*k;
+elseif strcmp(green,'[H0(kr)]')
+    gamma         = 0.5772156649;
+    Gxy(Rxy<1e-12) = 1 + 1i*(2/pi*(gamma+log(k/2)));    
 else
-    Gxy(Rxy<1e-6) = 0;
+    Gxy(Rxy<1e-12) = 0;
 end
 end

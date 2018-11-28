@@ -19,11 +19,11 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtDomIntSing.m                               |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : nrtDomIntSing3D.m                             |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 05.09.2018                                    |
-%|  / 0 \  |   LAST MODIF :                                               |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Singular integration over a triangle          |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -36,8 +36,6 @@ clc
 % Library path
 addpath('../../openMsh')
 addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openHmx')
 
 % Reference mesh (triangle)
 vtx  = 1.0 * [0 0 0 ; 1 0 0 ; 0 1 0];
@@ -67,7 +65,7 @@ S   = mesh.vtx;
 n   = mesh.nrm;
 tau = cell2mat(mesh.tgt');
 nu  = cell2mat(mesh.nrmEdg');
-[Rm1a,rRm1a,gradRm1a,gradrRm1a] = domSemiAnalyticInt(X,S,n,tau,nu,1e-8);
+[Rm1a,rRm1a,gradRm1a,gradrRm1a] = domSemiAnalyticInt3D(X,S,n,tau,nu);
 toc
    
 % 2D simpson integration ("exact")

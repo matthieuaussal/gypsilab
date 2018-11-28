@@ -21,10 +21,10 @@ classdef msh
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : msh.m                                         |
-%|    #    |   VERSION    : 0.41                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Mesh class definition                         |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -125,13 +125,16 @@ methods
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% GLOBAL DATA  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % LENGTH
-    function s = length(mesh)
-        s = size(mesh.elt,1);
+    function l = length(mesh)
+        l = size(mesh.elt,1);
     end
     
     % SIZE
-    function s = size(mesh)
-        s = size(mesh.elt);
+    function s = size(varargin)
+        s = size(varargin{1}.elt);
+        if (nargin == 2)
+           s = s(varargin{2}); 
+        end
     end
     
     % STEP
@@ -139,9 +142,13 @@ methods
         mesh = mesh.edg;
         l    = mesh.vtx(mesh.elt(:,2),:) - mesh.vtx(mesh.elt(:,1),:);
         l    = sqrt(sum(l.^2,2));
-        l    = [min(l) max(l)];
+        l    = [min(l) max(l) mean(l) std(l)];
     end 
-
+    
+    % 2 DIMENSIONS
+    function b = is2d(mesh)
+        b = (max(abs(mesh.vtx(:,3))) < 1e-12);
+    end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% ELEMENT DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CENTER
@@ -160,21 +167,35 @@ methods
     % NORMALS
     function N = nrm(mesh)
         T = mesh.tgt;
-        N = cross(T{1},T{2},2);
-        N = N ./ (sqrt(sum(N.^2,2)) * [1 1 1]);
+        if (size(mesh,2) == 3)
+            N = cross(T{1},T{2},2);
+            N = N ./ (sqrt(sum(N.^2,2)) * [1 1 1]);
+        elseif (size(mesh,2) == 2) && is2d(mesh)
+            N = T * [0 -1 0 ; 1 0 0 ; 0 0 1]';
+        else
+            error('msh.m : unavailable case')
+        end
     end
     
     % EDGES NORMALS
     function Nu = nrmEdg(mesh)
-        Nu = cell(1,3);
-        for i = 1:3
-            Nu{i} = cross(mesh.tgt{i},mesh.nrm,2);
+        if (size(mesh,2) == 3)
+            Nu = cell(1,3);
+            for i = 1:3
+                Nu{i} = cross(mesh.tgt{i},mesh.nrm,2);
+            end
+        elseif (size(mesh,2) == 2)
+            T     = mesh.tgt; 
+            Nu{1} = T;
+            Nu{2} = -T;
+        else
+            error('msh.m : unavailable case')
         end
     end
     
     % TANGENTS
     function T = tgt(mesh)
-        if (size(mesh.elt,2) == 3)
+        if (size(mesh,2) == 3)
             T = cell(1,3);
             for i = 1:3
                 ip1  = mod(i,3)+1;
@@ -183,6 +204,10 @@ methods
                 B    = mesh.vtx(mesh.elt(:,ip2),:);
                 T{i} = (B-A)./(sqrt(sum((B-A).^2,2))*[1 1 1]);
             end
+        elseif (size(mesh,2) == 2)
+            A = mesh.vtx(mesh.elt(:,1),:);
+            B = mesh.vtx(mesh.elt(:,2),:);
+            T = (B-A)./(sqrt(sum((B-A).^2,2))*[1 1 1]);
         else
             error('msh.m : unavailable case')
         end
@@ -191,11 +216,13 @@ methods
     % SWAP
     function mesh = swap(varargin)
         mesh = varargin{1};
-        if (size(mesh.elt,2) == 3)
-            Ielt = 1:size(mesh.elt,1);
-            if (nargin == 2)
-                Ielt = varargin{2};
-            end
+        Ielt = 1:size(mesh.elt,1);
+        if (nargin == 2)
+            Ielt = varargin{2};
+        end
+        if (size(mesh,2) == 2)
+            mesh.elt(Ielt,:) = mesh.elt(Ielt,[2 1]);
+        elseif (size(mesh,2) == 3)
             mesh.elt(Ielt,:) = mesh.elt(Ielt,[2 1 3]);
         else
             error('msh.m : unavailable case')
@@ -257,7 +284,7 @@ methods
             mesh = mshRefine(mesh,varargin{2});
         end
         sol = sum(mesh.ndv);
-        if norm(ref-sol)/norm(ref) > 1e-12
+        if (norm(ref-sol)/norm(ref) > 1e-12)
             error('msh.m : unavailable case')
         end
     end

@@ -1,4 +1,4 @@
-function Ms = domRegularize(data)
+function Ms = domRegularize3D(data)
 %+========================================================================+
 %|                                                                        |
 %|              OPENDOM - LIBRARY FOR NUMERICAL INTEGRATION               |
@@ -21,11 +21,11 @@ function Ms = domRegularize(data)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : domRegularize.m                               |
-%|    #    |   VERSION    : 0.41                                          |
+%|    #    |   FILE       : domRegularize3D.m                             |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Finite element regularization matrix for      |
 %|  `---'  |                singularities with Laplace kernel             |
 %+========================================================================+
@@ -107,7 +107,7 @@ for el = 1:Nelt
     if ~isempty(Ix)
         %%% CORRECTION WITH SEMI-ANALYTIC INTEGRATION
         % Analytical integration
-        [Rm1,rRm1,gradRm1,gradrRm1] = domSemiAnalyticInt(X(Ix,:),Sel,Nel,Tel,NUel,1e-8);
+        [Rm1,rRm1,gradRm1,gradrRm1] = domSemiAnalyticInt3D(X(Ix,:),Sel,Nel,Tel,NUel);
 %                 Rm1(:) = 0; rRm1(:) = 0; gradRm1(:) = 0; gradrRm1(:) = 0;    %%% DEBUG %%%
         
         % Vector yg-x
@@ -117,9 +117,9 @@ for el = 1:Nelt
         XY3 = Xun * Y(Iy,3)' - X(Ix,3) * Yun;
         
         % Distance r = |yg-x|
-        Rxy             = sqrt(XY1.^2 + XY2.^2 + XY3.^2);
-        Rxym1           = 1./Rxy;
-        Rxym1(Rxy<1e-6) = 0;
+        Rxy              = sqrt(XY1.^2 + XY2.^2 + XY3.^2);
+        Rxym1            = 1./Rxy;
+        Rxym1(Rxy<1e-12) = 0;
         
         % Int_el(1/|r|) - Sum_g 1/|yg-x|
         Rm1 = Rm1 - Rxym1 * Wy(Iy);
@@ -188,7 +188,7 @@ for el = 1:Nelt
                 V  = 2*(ii==jj).*Rm1 - gradrRm1(:,ii,jj);
                 
             else
-                error('domRegularize : unavailable case')
+                error('domRegularize3D.m : unavailable case')
             end
             
             
@@ -236,7 +236,7 @@ for el = 1:Nelt
                     V(:,j) = (2*(ii==jj).*Rm1 - gradrRm1(:,ii,jj)).*tmp;
                     
                 else
-                    error('domRegularize : unavailable case')
+                    error('domRegularize3D.m : unavailable case')
                 end
             end
             
@@ -269,13 +269,13 @@ for el = 1:Nelt
                     V{3}(:,j)   = sgnS .* gradRm1xXmS(:,3);
                     
                 else
-                    error('domRegularize : unavailable case')
+                    error('domRegularize3D.m : unavailable case')
                 end
                 
             end
             
         else
-            error('domRegularize : unavailable case')
+            error('domRegularize3D.m : unavailable case')
         end
         
         % Matrix-Vector product

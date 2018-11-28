@@ -19,11 +19,11 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtFemConvergence.m                           |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   FILE       : nrtFemConvergence2D.m                         |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Francois Alouges                              |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Mesh convergence for lagrange approximation   |
 %|  `---'  |                                                              |
 %+========================================================================+

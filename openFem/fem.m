@@ -22,10 +22,10 @@ classdef fem
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : fem.m                                         |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : Finite element class definition               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -84,10 +84,13 @@ methods
     end
     
     % SIZE
-    function s = size(fe)
-        s = size(fe.unk);
+    function s = size(varargin)
+        s = size(varargin{1}.unk);
+        if (nargin == 2)
+            s = s(varargin{2});
+        end
     end
-    
+        
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% OPERATORS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % CURL OF THE BASIS FUNCTION

@@ -49,7 +49,7 @@ Isub   = bitree{end}.ind;
 if (length(Isub) ~= Nsub)
     error('femSubdivide.m : unavailable case')
 end
-if norm(sort(cell2mat(Isub)) - (1:length(fem))','inf') > 1e-12
+if (norm(sort(cell2mat(Isub)) - (1:length(fem))','inf') > 1e-12)
     error('femSubdivide.m : unavailable case')    
 end
 

@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nonRegressionTest.m                           |
-%|    #    |   VERSION    : 0.41                                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.04.2018                                    |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
 %| ( === ) |   SYNOPSIS   : run all non regression test                   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -45,8 +45,10 @@ run('nrtMshSquare.m');
 % Domain quadrature
 cd('../domainQuadrature/')
 run('nrtDom1D.m');
+run('nrtDomEdge.m');
 run('nrtDomHalfSquare.m');
-run('nrtDomIntSing.m');
+run('nrtDomIntSing2D.m');
+run('nrtDomIntSing3D.m');
 run('nrtDomND.m');
 run('nrtDomTetra.m');
 run('nrtDomTrace.m');
@@ -57,7 +59,7 @@ cd('../finiteElement/')
 run('nrtFemAllWithShuffle.m');
 run('nrtFemContinuity1.m');
 run('nrtFemContinuity2.m');
-run('nrtFemConvergence.m');
+run('nrtFemConvergence2D.m');
 run('nrtFemDirichletCube.m');
 run('nrtFemDirichletDisk.m');
 run('nrtFemDirichletSquare.m');
@@ -79,15 +81,25 @@ run('nrtHmxCompareLU.m');
 run('nrtHmxCompressorPartial.m');
 run('nrtHmxCompressorsBox.m');
 run('nrtHmxCompressorTotal.m');
+run('nrtHmxLowrank.m');
 
-% Scattering
-cd('../scattering')
+% Scattering 2D
+cd('../scattering2d')
+run('nrtLaplace2dSDrad.m')
+run('nrtHelmholtz2dSDrad.m')
+run('nrtHmxHelmholtz2dS.m');
+run('nrtHmxHelmholtz2dD.m');
+run('nrtHmxHelmholtz2dDt.m');
+run('nrtHmxHelmholtz2dH.m');
+
+% Scattering 3D
+cd('../scattering3d')
 run('nrtHelmholtzCalderon.m')
+run('nrtHelmholtzSDrad.m');
 run('nrtHmxHelmholtzS.m');
 run('nrtHmxHelmholtzD.m');
 run('nrtHmxHelmholtzDt.m');
 run('nrtHmxHelmholtzH.m');
-run('nrtHmxHelmholtzSDrad.m');
 run('nrtHmxHelmholtzBWdir.m');
 run('nrtHmxHelmholtzBWneu.m');
 run('nrtHmxMaxwellT.m');
