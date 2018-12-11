@@ -38,7 +38,7 @@ Ic = (1:Ny)';
 
 % Block search
 n = 1;
-while ~isempty(Ir) && (n<=log(min(Nx,Ny))) && (n<rkMax)   % (n*(Nx+Ny) > Nx*Ny)
+while ~isempty(Ir) && ~isempty(Ic) && (n<=log(min(Nx,Ny))) && (n<rkMax)   % (n*(Nx+Ny) > Nx*Ny)
     % New row and non empty columns indices
     i   = Ir(1);
     row = mat(i*ones(size(Ic)),Ic);
@@ -69,7 +69,7 @@ while ~isempty(Ir) && (n<=log(min(Nx,Ny))) && (n<rkMax)   % (n*(Nx+Ny) > Nx*Ny)
     n = n + 1;
 end
 
-% Non used indices
+% Remaining rows
 if ~isempty(Ir) 
     if isempty(Ic)
         Ic = (1:Ny)';

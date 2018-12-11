@@ -32,6 +32,9 @@ close all
 clc
 
 % Library path
+addpath('../../openMsh')
+addpath('../../openDom')
+addpath('../../openFem')
 addpath('../../openHmx')
 
 % Dimensions
@@ -72,6 +75,20 @@ norm(A*B-M,'inf')/norm(M,'inf')
 
 % Compress random complex
 M     = (-1+2*rand(Nx,rk)+1i*(-1+2*rand(Nx,rk))) * (rand(rk,Ny) + 1i*rand(rk,Ny));
+[A,B] = hmxACA(M,tol);
+norm(A*B-M,'inf')/norm(M,'inf')
+
+% Compress 1x2 block with zeros
+M     = rand(Nx,rk) * rand(rk,Ny);
+Z     = zeros(Nx,10);
+M     = [M Z];
+[A,B] = hmxACA(M,tol);
+norm(A*B-M,'inf')/norm(M,'inf')
+
+% Compress 2x1 block with zeros
+M     = rand(Nx,rk) * rand(rk,Ny);
+Z     = zeros(10,Ny);
+M     = [M ; Z];
 [A,B] = hmxACA(M,tol);
 norm(A*B-M,'inf')/norm(M,'inf')
 
