@@ -39,12 +39,12 @@ addpath('../../openMsh')
 addpath('../../openHmx')
 
 % Parameters
-N   = 2.^(6:12)
+N   = 2.^(6:9)
 x0  = [1 2 0.5];
 rad = [5 3 2];
 err = zeros(2,length(N));
 h   = zeros(size(N));
-tol = 1e-3;
+tol = 1e-6;
 
 % Loop over mesh
 for n = 1:length(N)

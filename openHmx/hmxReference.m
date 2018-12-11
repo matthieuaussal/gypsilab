@@ -38,7 +38,7 @@ Ic = (1:Ny)';
 
 % Block search
 n = 1;
-while ~isempty(Ir)
+while ~isempty(Ir) && (n<=log(min(Nx,Ny))) && (n<rkMax)   % (n*(Nx+Ny) > Nx*Ny)
     % New row and non empty columns indices
     i   = Ir(1);
     row = mat(i*ones(size(Ic)),Ic);
@@ -67,20 +67,15 @@ while ~isempty(Ir)
     
     % Incrementation
     n = n + 1;
-    
-    % Compression failed
-    if (n>log(min(Nx,Ny))) || (n>=rkMax)
-        ind       = ceil(length(Ic)*rand(length(Ir),1));
-        Mxy(Ir,:) = [Ir Ic(ind) mat(Ir,Ic(ind))];
-        break
+end
+
+% Non used indices
+if ~isempty(Ir) 
+    if isempty(Ic)
+        Ic = (1:Ny)';
     end
-%     if (n*(Nx+Ny) > Nx*Ny) || (n>=rkMax)
-%         Ix   = [];
-%         Iy   = [];
-%         V    = [];
-%         flag = 0;
-%         return
-%     end
+    ind       = ceil(length(Ic)*rand(length(Ir),1));
+    Mxy(Ir,:) = [Ir Ic(ind) mat(Ir,Ic(ind))];
 end
 
 % Output format
