@@ -18,13 +18,13 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshRead.m                                  |
+%|    #    |   FILE       : nrtMshMmg.m                                   |
 %|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
-%| ( === ) |   SYNOPSIS   : Mesh generation and readers                   |
-%|  `---'  |                                                              |
+%|  ( # )  |   CREATION   : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF :                                               |
+%| ( === ) |   SYNOPSIS   : Remeshing mesh using Mmg platform             |
+%|  `---'  |                https://www.mmgtools.org/                     |
 %+========================================================================+
 
 % Cleaning
@@ -34,105 +34,106 @@ clc
 
 % Library path
 addpath('../../openMsh')
+addpath('../../openMmg')
 
-% Segment
-Nvtx = 1e1;
-L    = 1;
-mesh = mshSegment(Nvtx,L);
+
+%%% 2D refinment
+N    = 100;
+hmin = 0.02;
+hmax = 0.05;
+
+% Mesh unit sphere
+mesh = mshSquare(N,[1 1]);
+mesh.stp
+
+% Mesh refinment
+meshMmg = mmg(mesh,hmin,hmax);
+meshMmg.stp
+    
+% Graphical representation
 figure
+
+subplot(1,2,1)
 plot(mesh)
 axis equal
-view(30,30)
+view(0,90)    
+grid on
+title('Original')
 
-% Square
-Nvtx = 1e2;
-L    = [1 1];
-mesh = mshSquare(Nvtx,L);
+subplot(1,2,2)
+plot(meshMmg)
+axis equal
+view(0,90)    
+grid on
+title('Mmg')
+
+
+%%% 3D surface refinment
+N    = 100;
+hmin = 0.1;
+hmax = 0.2;
+
+% Mesh unit sphere
+mesh = mshSphere(N,1);
+mesh.stp
+
+% Mesh refinment
+meshMmg = mmg(mesh,hmin,hmax);
+meshMmg.stp
+    
+% Graphical representation
 figure
+
+subplot(1,2,1)
 plot(mesh)
 axis equal
-view(30,30)
+view(0,90)    
+grid on
+title('Original')
 
-% Disk
-Nvtx = 1e2;
-rho  = 2;
-mesh = mshDisk(Nvtx,rho);
+subplot(1,2,2)
+plot(meshMmg)
+axis equal
+view(0,90)    
+grid on
+title('Mmg')
+
+
+%%% 2D volume rafinment
+N    = 100;
+hmin = 0.05;
+hmax = 0.1;
+
+% Mesh unit sphere
+mesh = mshCube(N,[1 1 1]);
+mesh.stp
+
+% Mesh refinment
+meshMmg = mmg(mesh,hmin,hmax);
+meshMmg.stp
+
+% Graphical representation
 figure
+
+subplot(1,2,1)
 plot(mesh)
 axis equal
-view(30,30)
-
-% Cube
-Nvtx = 1e3;
-L    = [1 1 1];
-mesh = mshCube(Nvtx,L);
-figure
-plot(mesh)
-axis equal
-view(30,30)
+view(20,20)    
+grid on
+title('Original')
 alpha(0.3)
 
-% Sphere
-Nvtx = 1e3;
-rho  = 2;
-mesh = mshSphere(Nvtx,rho);
-figure
-plot(mesh)
+subplot(1,2,2)
+plot(meshMmg)
 axis equal
-view(30,30)
+view(20,20)    
+grid on
+title('Mmg')
 alpha(0.3)
+    
 
-% .msh triangle
-mesh = msh('sphere.msh');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .msh tetra
-mesh = msh('sphereTet.msh');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .ply
-mesh = msh('cube.ply');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .stl
-mesh = msh('cube.stl');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .mesh
-mesh = msh('cube.mesh');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-colorbar
-alpha(0.3)
-
-% .vtk
-mesh = msh('plan.vtk');
-figure
-plot(mesh)
-view(90,0)
-
-
+    
 
 disp('~~> Michto gypsilab !')
-
-
 
 

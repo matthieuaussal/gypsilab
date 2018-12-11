@@ -18,12 +18,12 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtStkGTradCol.m                              |
-%|    #    |   VERSION    : 0.42                                          |
+%|    #    |   FILE       : nrtStkRadiation.m                             |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 31.10.2018                                    |
-%|  / 0 \  |   LAST MODIF : 31.10.2018                                    |
-%| ( === ) |   SYNOPSIS   : Stoke collocation of a unit sphere using BEM  |
+%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%| ( === ) |   SYNOPSIS   : Stoke radiation of a unit sphere using BEM    |
 %|  `---'  |                with stokeslet G and stresslet T              |
 %+========================================================================+
 
@@ -38,7 +38,8 @@ addpath('../../openFem')
 addpath('../../openMsh')
 
 % Parameters
-N  = 100;
+N  = 300;
+n  = 100;
 x0 = [0.1 0.2 0.3];
 
 % Mesh unit sphere
@@ -47,12 +48,13 @@ mesh = mshSphere(N,1);
 % Quadrature
 gamma = dom(mesh,3);
 
-% Finite element
+% Finite element and unknowns
 phi = fem(mesh,'P1');
 unk = phi.unk;
 
-% Radiation space
-X = mesh.vtx;
+% Radiation particles
+mesh2 = mshSphere(n,2);
+X     = mesh2.vtx;
 
 % Graphical rep
 figure
@@ -61,9 +63,11 @@ hold on
 plotNrm(mesh)
 plot(gamma)
 plot(phi,'*r')
+plot(msh(X))
+alpha(0.5)
 axis equal
 
-% Initalization
+% Initalization of block matrix for each coordinate (x,y,z)
 G      = cell(3,3);
 T      = cell(3,3);
 mu     = cell(3,1);
@@ -77,9 +81,6 @@ for i = 1:3
         name   = ['[ij/r+rirj/r^3]',num2str(i),num2str(j)];
         green  = @(X,Y) 1/(8*pi) .* femGreenKernel(X,Y,name,[]);
         G{i,j} = integral(X,gamma,green,phi);
-        
-        % Regularization
-        G{i,j} = G{i,j} + 1/(8*pi) .* regularize(X,gamma,name,phi);
         
         % Double layer : T = \int_gamma -6/(8pi) (r_i*r_j*(r.n)/|r|^5)
         T{i,j} = 0;
@@ -98,19 +99,19 @@ for i = 1:3
     lambda{i} = 0;
     for k = 1:3
         name      = ['[rirjrk/r^5]',num2str(i),num2str(1),num2str(k)];
-        lambda{i} = lambda{i}  - (-6/(8*pi)) * femGreenKernel(x0,phi.unk,name,[]) .* unk(:,k);
+        lambda{i} = lambda{i} - (-6/(8*pi)) * femGreenKernel(x0,phi.unk,name,[]) .* unk(:,k);
     end
 end
 
-% Convert cell to matrix
+% Convert cells to full matrix
 G      = cell2mat(G);
 T      = cell2mat(T);
 mu     = cell2mat(mu);
 lambda = cell2mat(lambda);
 
-% Stokes radiation in boundary : ui(x) = - sum_j \int_gamma Gij(x,y) lambda_j dy ...
+% Stokes radiation in domain : ui(x) = - sum_j \int_gamma Gij(x,y) lambda_j dy ...
 %              + sum_j \int_gamma Tij(x,y).n(y) mu_j dy 
-sol = - G*lambda + T*mu - 0.5*mu; 
+sol = -G*lambda + T*mu ; 
 
 % Analytic solution : Gi1
 ref = cell(3,1);
@@ -128,8 +129,8 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 figure(2)
 for i = 1:3
     subplot(1,3,i)
-    ind = (i-1)*N + (1:N);
-    plot(mesh,sol(ind))
+    ind = (i-1)*n + (1:n);
+    plot(mesh2,sol(ind))
     axis equal
     colorbar
     title(['Component ',num2str(i)])

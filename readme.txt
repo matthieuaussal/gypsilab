@@ -9,11 +9,11 @@
 |  `---'  |                                                              | 
 \========================================================================/
 
-   The gypsilab project is a young open-source MATLAB toolbox for fast 
-numerical computation with finite element and boundary element methods. 
-Accessible with a high-level programming language, it gives a useful 
-framework for fast prototyping. Initially designed for numerical acoustics, 
-multiphysics problems can now be addressed. 
+   The gypsilab project is an open-source MATLAB toolbox for fast numerical 
+computation with finite element and boundary element methods. Accessible 
+with a high-level programming language, it gives a useful framework for 
+fast prototyping. Initially designed for numerical acoustics, many physics 
+problems can also be addressed. 
 
    Gypsilab is divided in few libraries :
  
@@ -35,6 +35,10 @@ Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
  - OpenEbd : Library for bi-dimensional convolution with green kernel.
 Copyright Martin Averseng (c) 2018 - Ecole Polytechnique
 https://github.com/MartinAverseng/EBD
+
+ - OpenMmg : Library for simplicial remeshing using the level-set methods.
+Copyright Bx INP/Inria/UBordeaux/UPMC (c) 2004
+https://www.mmgtools.org/  -  https://github.com/MmgTools/Mmg/
  
 Scripts for non regression test are provided to evaluate performances 
 and verify computation.

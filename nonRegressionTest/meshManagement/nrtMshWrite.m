@@ -18,12 +18,12 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshRead.m                                  |
+%|    #    |   FILE       : nrtMshWrite.m                                 |
 %|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
-%| ( === ) |   SYNOPSIS   : Mesh generation and readers                   |
+%|  ( # )  |   CREATION   : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF :                                               |
+%| ( === ) |   SYNOPSIS   : Mesh readers and writer                       |
 %|  `---'  |                                                              |
 %+========================================================================+
 
@@ -35,104 +35,87 @@ clc
 % Library path
 addpath('../../openMsh')
 
-% Segment
-Nvtx = 1e1;
-L    = 1;
-mesh = mshSegment(Nvtx,L);
+
+%%% Particles mesh
+mesh = msh(rand(100,3));
+
+% Graphical representation
+figure
+plot(mesh)
+axis equal
+view(10,10)
+grid on
+
+% .msh format
+mshWriteMsh('testPoint.msh',mesh)
+meshMsh = msh('testPoint.msh');
+norm(meshMsh.vtx - mesh.vtx)
+norm(meshMsh.elt - mesh.elt)
+
+
+%%% Edge mesh
+mesh = mshSegment(100,1);
+
+% Graphical representation
+figure
+plot(mesh)
+axis equal
+view(10,10)
+grid on
+
+% .msh format
+mshWriteMsh('testEdge.msh',mesh)
+meshMsh = msh('testEdge.msh');
+norm(meshMsh.vtx - mesh.vtx)
+norm(meshMsh.elt - mesh.elt)
+
+
+%%% Surfacic mesh
+mesh = mshSphere(100,1);
+
+% Graphical representation
 figure
 plot(mesh)
 axis equal
 view(30,30)
 
-% Square
-Nvtx = 1e2;
-L    = [1 1];
-mesh = mshSquare(Nvtx,L);
-figure
-plot(mesh)
-axis equal
-view(30,30)
+% .ply format
+mshWritePly('testTriangle.ply',mesh)
+meshPly = msh('testTriangle.ply');
+norm(meshPly.vtx - mesh.vtx)
+norm(meshPly.elt - mesh.elt)
 
-% Disk
-Nvtx = 1e2;
-rho  = 2;
-mesh = mshDisk(Nvtx,rho);
-figure
-plot(mesh)
-axis equal
-view(30,30)
+% .vtk format
+mshWriteVtk('testTriangle.vtk',mesh)
+meshVtk = msh('testTriangle.vtk');
+norm(meshVtk.vtx - mesh.vtx)
+norm(meshVtk.elt - mesh.elt)
 
-% Cube
-Nvtx = 1e3;
-L    = [1 1 1];
-mesh = mshCube(Nvtx,L);
+% .msh format
+mshWriteMsh('testTriangle.msh',mesh)
+meshMsh = msh('testTriangle.msh');
+norm(meshMsh.vtx - mesh.vtx)
+norm(meshMsh.elt - mesh.elt)
+
+
+%%% Volumic mesh
+mesh = mshCube(100,[1 1 1]);
+
+% Graphical representation
 figure
 plot(mesh)
 axis equal
-view(30,30)
+view(10,10)
 alpha(0.3)
 
-% Sphere
-Nvtx = 1e3;
-rho  = 2;
-mesh = mshSphere(Nvtx,rho);
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .msh triangle
-mesh = msh('sphere.msh');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .msh tetra
-mesh = msh('sphereTet.msh');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .ply
-mesh = msh('cube.ply');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .stl
-mesh = msh('cube.stl');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-alpha(0.3)
-
-% .mesh
-mesh = msh('cube.mesh');
-figure
-plot(mesh)
-axis equal
-view(30,30)
-colorbar
-alpha(0.3)
-
-% .vtk
-mesh = msh('plan.vtk');
-figure
-plot(mesh)
-view(90,0)
-
+% .msh format
+mshWriteMsh('testTetra.msh',mesh)
+meshMsh = msh('testTetra.msh');
+norm(meshMsh.vtx - mesh.vtx)
+norm(meshMsh.elt - mesh.elt)
 
 
 disp('~~> Michto gypsilab !')
-
 
 
 

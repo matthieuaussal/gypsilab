@@ -41,6 +41,7 @@ run('nrtMshRead.m');
 run('nrtMshRefine.m');
 run('nrtMshSegment.m');
 run('nrtMshSquare.m');
+run('nrtMshWrite.m');
 
 % Domain quadrature
 cd('../domainQuadrature/')
@@ -129,11 +130,9 @@ run('nrtRayTheatre');
 
 % Stokes
 cd('../stokes');
-run('nrtStkConv.m');
-run('nrtStkGTradCol.m');
-run('nrtStkGTradExt.m');
-run('nrtStkGTradGal.m');
-run('nrtStkHmx.m');
+run('nrtHmxStkConvergence.m');
+run('nrtStkConvergence.m');
+run('nrtStkRadiation.m');
 
 % End
 disp('~~> Non Regresion Test are done. Michto gypsilab !');

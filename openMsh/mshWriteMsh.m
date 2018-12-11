@@ -1,4 +1,4 @@
-function [vtx,elt] = mshReadMsh(filename)
+function mshWriteMsh(filename,mesh)
 %+========================================================================+
 %|                                                                        |
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
@@ -20,74 +20,53 @@ function [vtx,elt] = mshReadMsh(filename)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : mshReadMsh.m                                  |
-%|    #    |   VERSION    : 0.42                                          |
+%|    #    |   FILE       : mshWriteMsh.m                                 |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Read .msh files (particle, edge, triangular   |
-%|  `---'  |                and tetrahedral                               |
+%|  ( # )  |   CREATION   : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF :                                               |
+%| ( === ) |   SYNOPSIS   : Write mesh and data to msh format             |
+%|  `---'  |                (particle, edge, triangular and tetrahedral)  |
 %+========================================================================+
 
-% Open
-fid = fopen(filename,'r');
-if( fid==-1 )
-    error('mshReadMsh.m : cant open the file');
+% Security
+if (size(mesh.vtx,2) ~= 3) || (size(mesh.elt,2) > 4)
+    error('mshWriteMsh.m : unavailable case')
 end
+   
+% Open file
+fid = fopen(filename,'w');
 
-% Read header -> nodes
-str = fgets(fid);
-while ~contains(str,'$Nodes')
-    str = fgets(fid);
-end
+% Header
+fprintf(fid,'%s\n','$MeshFormat');
+fprintf(fid,'%s\n','2.2 0 8');
+fprintf(fid,'%s\n','$EndMeshFormat');
 
 % Nodes
-Nvtx = str2double(fgets(fid));
-vtx  = zeros(Nvtx,3);
-for i = 1:Nvtx
-    tmp      = str2num(fgets(fid));
-    vtx(i,:) = tmp(2:4);
+fprintf(fid,'%s\n','$Nodes');
+fprintf(fid,'%d\n',size(mesh.vtx,1));
+for i = 1:size(mesh.vtx,1)
+    fprintf(fid,'%d %f %f %f\n',i,mesh.vtx(i,:));
 end
-
-% Verify nodes ending
-str = fgets(fid);
-if ~contains(str,'$EndNodes')
-    error('mshReadMsh.m : unavailable case');
-end
-
-% Nodes -> Elements
-str = fgets(fid);
-while ~contains(str,'$Elements')
-    str = fgets(fid);
-end
+fprintf(fid,'%s\n','$EndNodes');
 
 % Elements (up to tetra)
-Nelt = str2double(fgets(fid));
-elt  = zeros(Nelt,4);
-for i = 1:Nelt
-    tmp = str2num(fgets(fid));
-    if (tmp(2) == 15) % particles
-        elt(i,1) = tmp(6);
-    elseif (tmp(2) == 1) % segment
-        elt(i,1:2) = tmp(6:7);
-    elseif (tmp(2) == 2) % triangles
-        elt(i,1:3) = tmp(6:8);
-    elseif (tmp(2) == 4) % tetrahedra
-        elt(i,1:4) = tmp(6:9);
+fprintf(fid,'%s\n','$Elements');
+fprintf(fid,'%d\n',size(mesh.elt,1));
+for i = 1:size(mesh.elt,1)
+    if (size(mesh.elt,2) == 1)  % particle
+        fprintf(fid,'%d %d %d %d %d  %d\n',i,15,2,0,1,mesh.elt(i,:));
+    elseif (size(mesh.elt,2) == 2)  % segment
+        fprintf(fid,'%d %d %d %d %d  %d %d\n',i,1,2,0,1,mesh.elt(i,:));
+    elseif (size(mesh.elt,2) == 3)  % triangle
+        fprintf(fid,'%d %d %d %d %d  %d %d %d\n',i,2,2,0,1,mesh.elt(i,:));
+    elseif (size(mesh.elt,2) == 4)  % tetra
+        fprintf(fid,'%d %d %d %d %d  %d %d %d %d\n',i,4,2,0,1,mesh.elt(i,:));
     end
 end
-
-% Verify elements ending
-str = fgets(fid);
-if ~contains(str,'$EndElements')
-    error('mshReadMsh.m : unavailable case');
-end
-
-% Only keep higher element 
-ord = sum(elt>0,2);
-dim = max(ord);
-elt = elt(ord==dim,1:dim);
+fprintf(fid,'%s\n','$EndElements');
 
 % Close file
 fclose(fid);
+disp([filename,' created.']);
 end
