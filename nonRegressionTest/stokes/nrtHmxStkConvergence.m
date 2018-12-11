@@ -39,7 +39,7 @@ addpath('../../openMsh')
 addpath('../../openHmx')
 
 % Parameters
-N   = 2.^(6:9)
+N   = 2.^(6:8)
 x0  = [1 2 0.5];
 rad = [5 3 2];
 err = zeros(2,length(N));
