@@ -18,7 +18,7 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshMmg.m                                   |
+%|    #    |   FILE       : nrtMmgRefine.m                                |
 %|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 25.11.2018                                    |
@@ -37,17 +37,17 @@ addpath('../../openMsh')
 addpath('../../openMmg')
 
 
-%%% 2D refinment
+%%% 2D surface
 N    = 100;
 hmin = 0.02;
 hmax = 0.05;
 
-% Mesh unit sphere
+% Mesh unit square
 mesh = mshSquare(N,[1 1]);
 mesh.stp
 
 % Mesh refinment
-meshMmg = mmg(mesh,hmin,hmax);
+meshMmg = mmg(mesh,[hmin,hmax]);
 meshMmg.stp
     
 % Graphical representation
@@ -68,7 +68,7 @@ grid on
 title('Mmg')
 
 
-%%% 3D surface refinment
+%%% 3D surface
 N    = 100;
 hmin = 0.1;
 hmax = 0.2;
@@ -78,7 +78,7 @@ mesh = mshSphere(N,1);
 mesh.stp
 
 % Mesh refinment
-meshMmg = mmg(mesh,hmin,hmax);
+meshMmg = mmg(mesh,[hmin,hmax]);
 meshMmg.stp
     
 % Graphical representation
@@ -99,17 +99,17 @@ grid on
 title('Mmg')
 
 
-%%% 2D volume rafinment
+%%% 3D volume
 N    = 100;
 hmin = 0.05;
 hmax = 0.1;
 
-% Mesh unit sphere
+% Mesh unit cube
 mesh = mshCube(N,[1 1 1]);
 mesh.stp
 
 % Mesh refinment
-meshMmg = mmg(mesh,hmin,hmax);
+meshMmg = mmg(mesh,[hmin,hmax]);
 meshMmg.stp
 
 % Graphical representation

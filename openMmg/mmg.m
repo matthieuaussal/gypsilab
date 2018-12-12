@@ -1,4 +1,4 @@
-function mesh = mmg(mesh,hmin,hmax)
+function mesh = mmg(varargin)
 % Copyright (c) 20015-2018, Matthieu Aussal, Ecole Polytechnique       
 % LGPL Lesser General Public License v3.0. 
 % Remeshing using level-set from Mmg tools : https://www.mmgtools.org           
@@ -11,7 +11,8 @@ there = there(1:end-6);
 % Move to mmg directory
 cd(there)
 
-% Security
+% Check mesh (3D nodes, triangle or tetra) 
+mesh = varargin{1};
 if (size(mesh.vtx,2) ~= 3) || (size(mesh.elt,2) < 3) || (size(mesh.elt,2) > 4)
     error('mmg.m : unavailable case')
 end
@@ -44,14 +45,24 @@ else
     bin = [bin,' '];
 end
 
-% Convert input to command
+% Define temporary mesh files
 file = '-in original.msh -out refined.msh ';  % mesh temporary files 
-hmin = ['-hmin  ',num2str(hmin),' '];   % edge min
-hmax = ['-hmax  ',num2str(hmax),' '];   % edge max
-info = ['-v ',num2str(0),' ']; % 0 (no infos) to 6 (everything), 1 default 
+
+% Convert input to command
+if (nargin==1)
+    stp = mesh.stp;
+    opt = ['-hsiz ',num2str(stp(3)),' '];  
+elseif (nargin==2)
+    opt = ['-hmin  ',num2str(varargin{2}(1)),' -hmax  ',num2str(varargin{2}(2)),' '];   
+else
+    error('mmg.m : unavailable case');
+end
+    
+% Define verbose level : 0 (no infos), 1 default to 6 (everything)
+info = ['-v ',num2str(0),' ']; 
 
 % Execute mmg binaries
-command = [os,bin,file,hmin,hmax,info]
+command = [os,bin,file,opt,info];
 system(command);  
 
 % Read refined mesh
