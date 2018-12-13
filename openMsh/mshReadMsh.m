@@ -1,4 +1,4 @@
-function [vtx,elt] = mshReadMsh(filename)
+function [vtx,elt,data] = mshReadMsh(filename)
 %+========================================================================+
 %|                                                                        |
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
@@ -31,16 +31,34 @@ function [vtx,elt] = mshReadMsh(filename)
 
 % Open
 fid = fopen(filename,'r');
-if( fid==-1 )
+if (fid==-1)
     error('mshReadMsh.m : cant open the file');
 end
 
-% Read header -> nodes
+% Read file using keywords
 str = fgets(fid);
-while ~contains(str,'$Nodes')
+while ~(str==-1) 
+    if contains(str,'$Nodes')
+        vtx = readNodes(fid);
+    elseif contains(str,'$Elements')
+        elt = readElements(fid);
+    elseif contains(str,'$NodeData')
+        data = readNodesData(fid,size(vtx,1));
+    end
     str = fgets(fid);
 end
 
+% Close file
+fclose(fid);
+    
+% Only keep higher elements (tetra > triangle > edge > particles)
+ord = sum(elt>0,2);
+dim = max(ord);
+elt = elt(ord==dim,1:dim);
+end
+
+
+function vtx = readNodes(fid)
 % Nodes
 Nvtx = str2double(fgets(fid));
 vtx  = zeros(Nvtx,3);
@@ -54,20 +72,17 @@ str = fgets(fid);
 if ~contains(str,'$EndNodes')
     error('mshReadMsh.m : unavailable case');
 end
-
-% Nodes -> Elements
-str = fgets(fid);
-while ~contains(str,'$Elements')
-    str = fgets(fid);
 end
 
+
+function elt = readElements(fid)
 % Elements (up to tetra)
 Nelt = str2double(fgets(fid));
 elt  = zeros(Nelt,4);
 for i = 1:Nelt
     tmp = str2num(fgets(fid));
-    if (tmp(2) == 15) % particles
-        elt(i,1) = tmp(6);
+    if (tmp(2) == 15)    % particles
+        elt(i,1)   = tmp(6);
     elseif (tmp(2) == 1) % segment
         elt(i,1:2) = tmp(6:7);
     elseif (tmp(2) == 2) % triangles
@@ -82,12 +97,26 @@ str = fgets(fid);
 if ~contains(str,'$EndElements')
     error('mshReadMsh.m : unavailable case');
 end
+end
 
-% Only keep higher element 
-ord = sum(elt>0,2);
-dim = max(ord);
-elt = elt(ord==dim,1:dim);
 
-% Close file
-fclose(fid);
+function data = readNodesData(fid,Nvtx)
+% Go to Node Data
+str = fgets(fid);
+while ~contains(str,num2str(Nvtx))
+    str = fgets(fid);
+end
+
+% Nodes data
+data = zeros(Nvtx,1);
+for i = 1:Nvtx
+    tmp       = str2num(fgets(fid));
+    data(i,1) = tmp(2);
+end
+
+% Verify node data ending
+str = fgets(fid);
+if ~contains(str,'$EndNodeData')
+    error('mshReadMsh.m : unavailable case');
+end
 end

@@ -1,4 +1,4 @@
-function mshWriteMsh(filename,mesh)
+function mshWriteMsh(varargin)
 %+========================================================================+
 %|                                                                        |
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
@@ -28,6 +28,13 @@ function mshWriteMsh(filename,mesh)
 %| ( === ) |   SYNOPSIS   : Write mesh and data to msh format             |
 %|  `---'  |                (particle, edge, triangular and tetrahedral)  |
 %+========================================================================+
+
+% Input analysis
+filename = varargin{1};
+mesh     = varargin{2};
+if (nargin == 3)
+    data = varargin{3};
+end
 
 % Security
 if (size(mesh.vtx,2) ~= 3) || (size(mesh.elt,2) > 4)
@@ -65,6 +72,23 @@ for i = 1:size(mesh.elt,1)
     end
 end
 fprintf(fid,'%s\n','$EndElements');
+
+% Nodes data
+if (nargin == 3)
+    fprintf(fid,'%s\n','$NodeData');
+    fprintf(fid,'%d\n',1);        % number-of-string-tag # must be 1 for Mmg
+    fprintf(fid,'%s\n',filename); % string # name of the metric field
+    fprintf(fid,'%d\n',1);        % number-of-real-tags # must be 1 for Mmg
+    fprintf(fid,'%d\n',0);        % real # ignored value
+    fprintf(fid,'%d\n',3);        % number-of-integer-tags # must be 3 for Mmg  
+    fprintf(fid,'%d\n',0);        % ignored value
+    fprintf(fid,'%d\n',1);        % metric-type # type of metric ( 1:scalar, 3:vector, 9:tensor)
+    fprintf(fid,'%d\n',size(mesh.vtx,1));
+    for i = 1:size(mesh.vtx,1)
+        fprintf(fid,'%d %f\n',i,data(i,1));
+    end
+    fprintf(fid,'%s\n','$EndNodeData');
+end
 
 % Close file
 fclose(fid);

@@ -18,7 +18,7 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMmgRefine.m                                |
+%|    #    |   FILE       : nrtMmgAnisotropic.m                           |
 %|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 25.11.2018                                    |
@@ -38,47 +38,68 @@ addpath('../../openMmg')
 
 
 %%% 2D surface
-N    = 100;
-hmin = 0.02;
-hmax = 0.05;
+N = 100;
 
 % Mesh unit square
 mesh = mshSquare(N,[1 1]);
-mesh.stp
+
+% Homothetie
+mesh.vtx = 10+100*mesh.vtx;
+
+% Define anisotropic refinment
+X   = mesh.vtx;
+stp = mesh.stp
+in  = stp(3) * ones(size(X,1),1);
+in(abs(X(:,2))<=1) = 1;
 
 % Mesh refinment
-meshMmg = mmg(mesh,hmin,hmax);
+[meshMmg,out] = mmg(mesh,in);
 meshMmg.stp
     
 % Graphical representation
 figure
 
 subplot(1,2,1)
-plot(mesh)
+
+plot(mesh,'w')
+hold on
+plot(mesh,in)
+alpha(0.5)
 axis equal
 view(0,90)    
 grid on
 title('Original')
+colorbar
 
 subplot(1,2,2)
-plot(meshMmg)
+plot(meshMmg,'w')
+hold on
+plot(meshMmg,out)
+alpha(0.5)
 axis equal
 view(0,90)    
 grid on
 title('Mmg')
+colorbar
 
 
 %%% 3D surface
-N    = 100;
-hmin = 0.1;
-hmax = 0.2;
+N = 1000;
 
 % Mesh unit sphere
 mesh = mshSphere(N,1);
-mesh.stp
+
+% Homothetie
+mesh.vtx = 10+100*mesh.vtx;
+
+% Define anisotropic refinment
+X   = mesh.vtx;
+stp = mesh.stp
+in  = stp(3) * ones(size(X,1),1);
+in(abs(X(:,2))<=10) = 4;
 
 % Mesh refinment
-meshMmg = mmg(mesh,hmin,hmax);
+[meshMmg,out] = mmg(mesh,in);
 meshMmg.stp
     
 % Graphical representation
@@ -86,54 +107,72 @@ figure
 
 subplot(1,2,1)
 plot(mesh)
+hold on
+plot(mesh,in,'w')
 axis equal
 view(0,90)    
 grid on
 title('Original')
+colorbar
 
 subplot(1,2,2)
-plot(meshMmg)
+plot(meshMmg,'w')
+hold on
+plot(meshMmg,out)
 axis equal
 view(0,90)    
 grid on
 title('Mmg')
+colorbar
 
 
 %%% 3D volume
-N    = 100;
-hmin = 0.05;
-hmax = 0.1;
+N = 100;
 
 % Mesh unit cube
 mesh = mshCube(N,[1 1 1]);
-mesh.stp
+
+% Homothetie
+mesh.vtx = 10+100*mesh.vtx;
+
+% Define anisotropic refinment
+X   = mesh.vtx;
+stp = mesh.stp
+in  = stp(3) * ones(size(X,1),1);
+in(abs(X(:,3))<=5) = 5;
 
 % Mesh refinment
-meshMmg = mmg(mesh,hmin,hmax);
+[meshMmg,out] = mmg(mesh,in);
 meshMmg.stp
 
 % Graphical representation
 figure
 
 subplot(1,2,1)
-plot(mesh)
+plot(mesh.edg,'k')
+hold on
+plot(mesh,in)
+alpha(0.5)
 axis equal
-view(20,20)    
+view(10,10)    
 grid on
 title('Original')
-alpha(0.3)
+colorbar
 
 subplot(1,2,2)
-plot(meshMmg)
+plot(meshMmg.edg,'k')
+hold on
+plot(meshMmg,out)
+alpha(0.5)  
 axis equal
-view(20,20)    
+view(10,10)    
 grid on
 title('Mmg')
-alpha(0.3)
-    
+colorbar
 
     
 
 disp('~~> Michto gypsilab !')
+
 
 

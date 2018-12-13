@@ -1,4 +1,4 @@
-function mesh = mmg(varargin)
+function [mesh,val] = mmg(varargin)
 % Copyright (c) 20015-2018, Matthieu Aussal, Ecole Polytechnique       
 % LGPL Lesser General Public License v3.0. 
 % Remeshing using level-set from Mmg tools : https://www.mmgtools.org           
@@ -17,14 +17,41 @@ if (size(mesh.vtx,2) ~= 3) || (size(mesh.elt,2) < 3) || (size(mesh.elt,2) > 4)
     error('mmg.m : unavailable case')
 end
 
-% Write original mesh in .msh format
-mshWriteMsh('original.msh',mesh);
+% Centering mesh to origin
+ctr      = mean(mesh.vtx,1);
+mesh.vtx = mesh.vtx - ones(size(mesh.vtx,1),1)*ctr;
+
+% Normalize mesh (unitary for each direction)
+nrm      = mean( sqrt(sum(mesh.vtx.^2,2)) );
+mesh.vtx = (1/nrm) .* mesh.vtx;
+
+% Configuration values
+if (nargin == 1)   
+    stp  = mesh.stp;
+    hsiz = stp(3);
+elseif (nargin == 2)
+    hnod = (1/nrm) .* varargin{2};
+elseif (nargin == 3)
+    hmin = (1/nrm) .* varargin{2};
+    hmax = (1/nrm) .* varargin{3};  
+else
+    disp('mmg.m : unavailable case')
+end    
+    
+% Check configuration data and write original mesh in .msh format
+if (nargin == 1)
+    mshWriteMsh('original.msh',mesh);
+elseif (nargin == 2)
+    mshWriteMsh('original.msh',mesh,hnod);
+elseif (nargin == 3)
+    mshWriteMsh('original.msh',mesh);
+end
 
 % Operating system
 if ismac
     os = './mac_';
 elseif ispc
-    os = './win_';
+    os = 'win_';
 elseif isunix
     os = './uni_';
 else
@@ -38,7 +65,7 @@ elseif (size(mesh.elt,2) == 4)
     bin = 'mmg3d_O3';    
 end
 
-% Add extension for windows only
+% Add extension (for windows only)
 if ispc
     bin = [bin,'.exe '];
 else
@@ -50,10 +77,11 @@ file = '-in original.msh -out refined.msh ';  % mesh temporary files
 
 % Convert input to command
 if (nargin==1)
-    stp = mesh.stp;
-    opt = ['-hsiz ',num2str(stp(3)),' '];  
+    opt = ['-hsiz ',num2str(hsiz),' '];  
 elseif (nargin==2)
-    opt = ['-hmin  ',num2str(varargin{2}(1)),' -hmax  ',num2str(varargin{2}(2)),' '];   
+    opt = ' ';  
+elseif (nargin==3)
+    opt = ['-hmin  ',num2str(hmin),' -hmax  ',num2str(hmax),' '];   
 else
     error('mmg.m : unavailable case');
 end
@@ -66,7 +94,12 @@ command = [os,bin,file,opt,info];
 system(command);  
 
 % Read refined mesh
-mesh = msh('refined.msh');
+[vtx,elt,val] = mshReadMsh('refined.msh');
+
+% Update mesh
+vtx  = nrm*vtx + ones(size(vtx,1),1)*ctr;
+val  = nrm*val;
+mesh = msh(vtx,elt);
 
 % Clean meshes
 delete('original.msh')
