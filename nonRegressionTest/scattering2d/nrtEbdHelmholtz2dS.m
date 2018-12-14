@@ -24,7 +24,7 @@
 %|  ( # )  |   CREATION   : 25.11.2018                                    |
 %|  / 0 \  |   LAST MODIF :                                               |
 %| ( === ) |   SYNOPSIS   : Solve dirichlet scatering problem with single |
-%|  `---'  |                layer potential (H-Matrix & Ebd)                               |
+%|  `---'  |                layer potential (H-Matrix & Ebd)              |
 %+========================================================================+
 
 % Cleaning

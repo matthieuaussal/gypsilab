@@ -133,6 +133,7 @@ cd('../stokes');
 run('nrtHmxStkConvergence.m');
 run('nrtStkConvergence.m');
 run('nrtStkRadiation.m');
+run('translatingSphere/nrtStkTranslatingSphere.m');
 
 % End
 disp('~~> Non Regresion Test are done. Michto gypsilab !');
