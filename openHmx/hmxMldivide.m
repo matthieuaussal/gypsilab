@@ -64,7 +64,7 @@ if islower(Mh) && isa(Bh,'hmx')
     elseif (Mh.typ == 0) && (Bh.typ == 1) 
         Bh.dat = { hmxMldivide(Mh,Bh.dat{1}) , Bh.dat{2} };
         
-    % H-Matrix \ Full -> Unavailable
+    % H-Matrix \ Full -> Full
     elseif (Mh.typ == 0) && (Bh.typ == 2) 
         Bh.typ = 2;
         Bh.dat = hmxMldivide(Mh,Bh.dat);
@@ -118,7 +118,7 @@ elseif isupper(Mh) && isa(Bh,'hmx')
     elseif (Mh.typ == 0) && (Bh.typ == 1) 
         Bh.dat = { hmxMldivide(Mh,Bh.dat{1}) , Bh.dat{2} };
         
-    % H-Matrix \ Full -> Unavailable
+    % H-Matrix \ Full -> Full
     elseif (Mh.typ == 0) && (Bh.typ == 2) 
         Bh.typ = 2;
         Bh.dat = hmxMldivide(Mh,Bh.dat);
