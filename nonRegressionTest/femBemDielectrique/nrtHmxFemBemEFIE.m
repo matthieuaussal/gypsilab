@@ -162,7 +162,7 @@ RHS = [Y;zeros(size(D,1),1)];
 
 
 %%% SOLVE LINEAR PROBLEM
-disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
+disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM (SHUR) ~~~~~~~~~~~~~')
 
 % Factorization LU H-Matrix
 tic
@@ -182,6 +182,69 @@ SV   = @(V) A*V - B*(D\(C*V));
 J    = gmres(SV,Y,[],tol,100,Sm1V);
 E    = - D\(C*J);
 toc
+
+
+% %%% SOLVE LINEAR PROBLEM
+% disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM (CAT) ~~~~~~~~~~~~~')
+% 
+% % Convert sparse to H-Matrix
+% tic
+% Ch  = hmx(Eh.unk,Jh.unk,C,tol);
+% Dh  = hmx(Eh.unk,Eh.unk,D,tol);
+% toc
+% 
+% % Concatenation 
+% tic
+% LHS = [A B ; Ch Dh];
+% toc
+% figure
+% spy(LHS)
+% 
+% % LU factorization
+% tic
+% [Lh,Uh] = lu(LHS);
+% toc
+% figure
+% spy(Lh)
+% 
+% % Solve
+% tic
+% X = Uh \ (Lh \ RHS);
+% J = X(1:size(A,1));
+% E = X(size(A,1)+1:end);
+% toc
+% 
+% 
+% %%% SOLVE LINEAR PROBLEM
+% disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM (MANO) ~~~~~~~~~~~~~')
+% 
+% % Final unknowns
+% X   = [Jh.unk;Eh.unk];
+% I1  = (1:length(Jh.unk))'   ;
+% I2  = (length(Jh.unk)+1:length(X))';  
+% 
+% % Final operator
+% LHS     = hmx(X,X,tol);
+% LHS.typ = 0;
+% LHS.row = {I1 I1 I2 I2};
+% LHS.col = {I1 I2 I1 I2};
+% LHS.chd = {A,B,Ch,Dh};
+% figure
+% spy(LHS)
+% 
+% % LU factorization
+% tic
+% [Lh,Uh] = lu(LHS);
+% toc
+% figure
+% spy(Lh)
+% 
+% % Solve
+% tic
+% X = Uh \ (Lh \ RHS);
+% J = X(1:size(A,1));
+% E = X(size(A,1)+1:end);
+% toc
 
 
 %%% INFINITE SOLUTION
@@ -244,30 +307,3 @@ drawnow
 
 disp('~~> Michto gypsilab !')
 
-
-
-% % Final linear system
-% tic
-% Ch  = hmx(Eh.unk,Jh.unk,C,tol);
-% Dh  = hmx(Eh.unk,Eh.unk,D,tol);
-% toc
-% tic
-% LHS = [A B ; Ch Dh];
-% toc
-% figure
-% spy(LHS)
-% 
-% % LU factorization
-% tic
-% [Lh,Uh] = lu(LHS);
-% toc
-% 
-% figure
-% spy(Lh)
-% 
-% % Solve
-% tic
-% X = Uh \ (Lh \ RHS);
-% J = X(1:size(A,1));
-% E = X(size(A,1)+1:end);
-% toc

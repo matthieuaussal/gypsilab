@@ -1,5 +1,5 @@
 function [mesh,val] = mmg(varargin)
-% Copyright (c) 20015-2018, Matthieu Aussal, Ecole Polytechnique       
+% Copyright (c) 2018-2019, Matthieu Aussal, Ecole Polytechnique       
 % LGPL Lesser General Public License v3.0. 
 % Remeshing using level-set from Mmg tools : https://www.mmgtools.org           
 

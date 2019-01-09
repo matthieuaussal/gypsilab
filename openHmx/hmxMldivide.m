@@ -21,10 +21,10 @@ function Bh = hmxMldivide(Mh,Bh)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxMldivide.m                                 |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.51                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 14.01.2019                                    |
 %| ( === ) |   SYNOPSIS   : Solve Mh x = Bh with the rule                 |
 %|  `---'  |                Compr > Full > H-Matrix                       |
 %+========================================================================+
@@ -66,7 +66,8 @@ if islower(Mh) && isa(Bh,'hmx')
         
     % H-Matrix \ Full -> Unavailable
     elseif (Mh.typ == 0) && (Bh.typ == 2) 
-        error('hmxMldivide : unavailable case')
+        Bh.typ = 2;
+        Bh.dat = hmxMldivide(Mh,Bh.dat);
         
 
     % Compr \ --- -> ---
@@ -119,7 +120,8 @@ elseif isupper(Mh) && isa(Bh,'hmx')
         
     % H-Matrix \ Full -> Unavailable
     elseif (Mh.typ == 0) && (Bh.typ == 2) 
-        error('hmxMldivide : unavailable case')
+        Bh.typ = 2;
+        Bh.dat = hmxMldivide(Mh,Bh.dat);
         
 
     % Compr \ --- -> ---

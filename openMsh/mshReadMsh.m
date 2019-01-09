@@ -24,7 +24,7 @@ function [vtx,elt,data] = mshReadMsh(filename)
 %|    #    |   VERSION    : 0.42                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 31.12.2018                                    |
 %| ( === ) |   SYNOPSIS   : Read .msh files (particle, edge, triangular   |
 %|  `---'  |                and tetrahedral                               |
 %+========================================================================+
@@ -107,11 +107,15 @@ while ~contains(str,num2str(Nvtx))
     str = fgets(fid);
 end
 
+% Initialization with first row
+tmp       = str2num(fgets(fid));
+data      = zeros(Nvtx,length(tmp)-1);
+data(1,:) = tmp(2:end);
+
 % Nodes data
-data = zeros(Nvtx,1);
-for i = 1:Nvtx
+for i = 2:Nvtx
     tmp       = str2num(fgets(fid));
-    data(i,1) = tmp(2);
+    data(i,:) = tmp(2:end);
 end
 
 % Verify node data ending

@@ -21,7 +21,7 @@ function Mh = hmxMtimes(Ml,Mr)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxMtimes.m                                   |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.51                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
@@ -64,10 +64,11 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
         Mh.typ = 1;
         Mh.dat = {hmxMtimes(Ml,Mr.dat{1}) , Mr.dat{2}};
         
-    % H-Matrix * Full --> Unavailable
+    % H-Matrix * Full --> Full
     elseif (Ml.typ==0) && (Mr.typ==2)
-        error('hmxMtimes : unvailable case')
-        
+        Mh.typ = 2;
+        Mh.dat = hmxMtimes(Ml,Mr.dat);
+       
         
     % Compr * H-Matrix --> Compr
     elseif (Ml.typ==1) && (Mr.typ==0)
@@ -85,19 +86,26 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
         Mh.dat = {Ml.dat{1} , Ml.dat{2} * Mr.dat};
         
         
-    % Full * H-Matrix --> Unavailable
+    % Full * H-Matrix --> Full
     elseif (Ml.typ==2) && (Mr.typ==0)
-        error('hmxMtimes : unvailable case')
+        Mh.typ = 2;
+        Mh.dat = hmxMtimes(Ml.dat,Mr);
         
     % Full * Compr --> Compr
     elseif (Ml.typ==2) && (Mr.typ==1)
         Mh.typ = 1;
         Mh.dat = {Ml.dat*Mr.dat{1} , Mr.dat{2}};
         
-    % Full * Full --> Full
-    elseif (Ml.typ==2)
-        Mh.typ = 2;
-        Mh.dat = Ml.dat * Mr.dat;
+    % Full * Full --> Full or Compr
+    elseif (Ml.typ==2) && (Mr.typ==2)
+        if (min(size(Mh)) < 100)
+             Mh.typ = 2;
+             Mh.dat = Ml.dat * Mr.dat;
+        else
+             Mh.typ = 1;
+             [A,B]  = hmxQRSVD(Ml.dat,Mr.dat,Mh.tol);
+             Mh.dat = {A,B};
+        end
   
         
     % Unknown type    

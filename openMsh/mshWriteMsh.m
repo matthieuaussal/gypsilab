@@ -24,7 +24,7 @@ function mshWriteMsh(varargin)
 %|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 25.11.2018                                    |
-%|  / 0 \  |   LAST MODIF :                                               |
+%|  / 0 \  |   LAST MODIF : 31.12.2018                                    |
 %| ( === ) |   SYNOPSIS   : Write mesh and data to msh format             |
 %|  `---'  |                (particle, edge, triangular and tetrahedral)  |
 %+========================================================================+
@@ -75,6 +75,7 @@ fprintf(fid,'%s\n','$EndElements');
 
 % Nodes data
 if (nargin == 3)
+    n = length(data(1,:));        % 1:scalar, 3:vector, 9:tensor
     fprintf(fid,'%s\n','$NodeData');
     fprintf(fid,'%d\n',1);        % number-of-string-tag # must be 1 for Mmg
     fprintf(fid,'%s\n',filename); % string # name of the metric field
@@ -82,10 +83,18 @@ if (nargin == 3)
     fprintf(fid,'%d\n',0);        % real # ignored value
     fprintf(fid,'%d\n',3);        % number-of-integer-tags # must be 3 for Mmg  
     fprintf(fid,'%d\n',0);        % ignored value
-    fprintf(fid,'%d\n',1);        % metric-type # type of metric ( 1:scalar, 3:vector, 9:tensor)
-    fprintf(fid,'%d\n',size(mesh.vtx,1));
+    fprintf(fid,'%d\n',n);        % metric-type # type of metric  
+    fprintf(fid,'%d\n',size(mesh.vtx,1)); % number of metrics: must match with the number of nodes in the $Nodes field
     for i = 1:size(mesh.vtx,1)
-        fprintf(fid,'%d %f\n',i,data(i,1));
+        if (n == 1)
+            fprintf(fid,'%d %f\n',i,data(i,:));
+        elseif (n == 3)
+            fprintf(fid,'%d %f %f %f\n',i,data(i,:));
+        elseif (n == 9)
+            fprintf(fid,'%d %f %f %f %f %f %f %f %f %f\n',i,data(i,:));
+        else
+            error('mshWriteMsh.m : unavailable case');
+        end
     end
     fprintf(fid,'%s\n','$EndNodeData');
 end

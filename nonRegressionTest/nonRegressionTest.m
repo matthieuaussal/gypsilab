@@ -82,7 +82,9 @@ run('nrtHmxCompareLU.m');
 run('nrtHmxCompressorPartial.m');
 run('nrtHmxCompressorsBox.m');
 run('nrtHmxCompressorTotal.m');
+run('nrtHmxCriticalDimension.m');
 run('nrtHmxLowrank.m');
+run('nrtHmxNonSquare.m');
 
 % Scattering 2D
 cd('../scattering2d')
