@@ -21,10 +21,10 @@ function [A,B] = hmxQRSVD(A,B,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxQRSVD.m                                    |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.52                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.01.2019                                    |
 %| ( === ) |   SYNOPSIS   : QR factorization and SVD recompression for    |
 %|  `---'  |                low-rank matrices                             |
 %+========================================================================+
@@ -37,10 +37,14 @@ if ~isempty(A)
     [QB,RB] = qr(B.',0);
     
     % Singular value decomposition U*S*V = RA * RB.'
-    [U,S,V] = svd(RA * RB.','econ');
-    s       = diag(S);
+    try
+        [U,S,V] = svd(RA * RB.','econ');
+    catch
+        return
+    end
 
     % Compression rank
+    s = diag(S);
     n = sum( s./s(1) >= tol );
 
     % Recompression A = QA * U * S

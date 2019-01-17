@@ -21,10 +21,10 @@ function [A,B,flag] = hmxRSVD(varargin)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxRSVD.m                                     |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.52                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.01.2019                                    |
 %| ( === ) |   SYNOPSIS   : RSVD from Halko et al. 'finding structure with|
 %|  `---'  |                randomness'. Adapted from Antoine Liutkus.    |
 %+========================================================================+
@@ -65,15 +65,31 @@ else
 end
 
 % Randomized
-p  = min(2*rk,n);
-X  = randn(n,p,typ);
-Y  = MV(X);
-W1 = orth(Y);
-B  = VM(W1');
+p = min(2*rk,n);
+X = randn(n,p,typ);
+Y = MV(X);
+try
+    W1 = orth(Y);
+catch
+    A    = [];
+    B    = [];
+    flag = 0;
+    return
+end
+B = VM(W1');
 
 % Truncated SVD
-[W2,S,V] = svd(B,'econ');
-U        = W1*W2;
+try
+    [W2,S,V] = svd(B,'econ');
+catch
+    A    = [];
+    B    = [];
+    flag = 0;
+    return
+end
+
+% Product 
+U = W1*W2;
 
 % Rank with fixed accuracy 
 if (numel(S) ~= 0)

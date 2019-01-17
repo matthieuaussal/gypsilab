@@ -81,6 +81,7 @@ run('nrtHmxBuilderFem.m');
 run('nrtHmxCompareLU.m');
 run('nrtHmxCompressorPartial.m');
 run('nrtHmxCompressorsBox.m');
+run('nrtHmxCompressorSingular');
 run('nrtHmxCompressorTotal.m');
 run('nrtHmxCriticalDimension.m');
 run('nrtHmxLowrank.m');

@@ -1,8 +1,6 @@
-function [A,B,flag] = hmxSVD(M,tol)
-%%+========================================================================+
+%+========================================================================+
 %|                                                                        |
-%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
-%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
+%|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -20,58 +18,51 @@ function [A,B,flag] = hmxSVD(M,tol)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxSVD.m                                      |
+%|    #    |   FILE       : nrtHmxCompressorSingular.m                    |
 %|    #    |   VERSION    : 0.52                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.01.2019                                    |
-%| ( === ) |   SYNOPSIS   : SVD compression for full matrix               |
+%|  ( # )  |   CREATION   : 01.01.2019                                    |
+%|  / 0 \  |   LAST MODIF :                                               |
+%| ( === ) |   SYNOPSIS   : SVD-based compressors for singular matrix     |
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% Empty matrix
-if isempty(M)
-    A = [];
-    B = [];
+clear all
+close all
+clc
 
-else
-    % Singular value decomposition
-    try
-        [U,S,V] = svd(M,'econ');
-    catch
-        A    = [];
-        B    = [];
-        flag = 0;
-        return
-    end
-    
-    % Rank estimation at machine precision
-    s   = diag(S);
-    acc = max(size(M)) * eps(max(s));
-    rk  = sum(s > acc);
-    
-    % No rank default
-    if (rk == length(s))
-        A    = [];
-        B    = [];
-        flag = 0;
-        
-    % Rank default
-    else
-        % Compression rank
-        n = sum( s./s(1) >= tol );
-        
-        % Precision not reached
-        if (n*sum(size(M)) > numel(M))
-            A    = [];
-            B    = [];
-            flag = 0;
-            
-        % Compression
-        else
-            A    = U(:,1:n);
-            B    = S(1:n,1:n)*V(:,1:n)';
-            flag = 1;
-        end
-    end
+% Library path
+addpath('../../openHmx')
+
+% Precision
+tol = 1e-3;
+
+% Read singular matrix
+load('singular.mat');
+size(M)
+rank(M)
+
+% Standard SVD
+try
+    [U,S,V] = svd(M);
+catch
+    disp('SVD did not converge')
 end
+
+% H-Matrix SVD 
+[~,~,flag] = hmxSVD(M,tol);
+flag 
+
+% H-Matrix RSVD 
+[~,~,flag] = hmxRSVD(M,tol,64);
+flag 
+
+% QR recompression
+[A,B] = hmxQRSVD(M,eye(64),tol);
+
+
+
+
+disp('~~> Michto gypsilab !')
+
+
