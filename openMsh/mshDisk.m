@@ -54,7 +54,7 @@ if (max(abs(X-tmp)) > 1e-12)
 end
    
 % Delaunay triangulation
-DT = delaunayTriangulation(x,y);
+DT = delaunayTriangulation(X(:,1),X(:,2));
 
 % Final mesh
 elt  = DT.ConnectivityList;
