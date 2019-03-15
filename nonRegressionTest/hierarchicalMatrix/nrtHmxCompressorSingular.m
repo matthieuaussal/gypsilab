@@ -31,8 +31,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openHmx')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Precision
 tol = 1e-3;

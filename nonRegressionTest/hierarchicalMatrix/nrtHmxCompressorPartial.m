@@ -31,9 +31,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
-addpath('../../openHmx')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Fibonacci sphere 
 N    = 1e3;

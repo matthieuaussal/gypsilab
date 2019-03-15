@@ -36,11 +36,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openMsh')
-addpath('../../openHmx')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Wave number and frequency
 k = 1

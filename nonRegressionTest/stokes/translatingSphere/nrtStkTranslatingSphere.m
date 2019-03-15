@@ -39,10 +39,8 @@ clear
 close all
 clc
 
-addpath('../../../openMsh');
-addpath('../../../openFem');
-addpath('../../../openDom');
-addpath('../../../openHmx');
+% Gypsilab path
+run('../../../addpathGypsilab.m')
 
 % PHYSICAL PARAMETERS
 W = 2; % Translational velocity of the sphere - z component

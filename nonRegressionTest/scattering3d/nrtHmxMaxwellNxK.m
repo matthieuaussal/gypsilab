@@ -33,11 +33,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openHmx')
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Parameters
 N   = 1e3

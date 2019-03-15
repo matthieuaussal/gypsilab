@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtMshClean.m                                 |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.53                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2019                                    |
 %| ( === ) |   SYNOPSIS   : Clean tetrahedral mesh                        |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -32,8 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Load mesh
 load tetmesh

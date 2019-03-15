@@ -32,11 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
-addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openHmx')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DEFINITIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Dimensions

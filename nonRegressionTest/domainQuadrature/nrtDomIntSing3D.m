@@ -33,9 +33,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
-addpath('../../openDom')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Reference mesh (triangle)
 vtx  = 1.0 * [0 0 0 ; 1 0 0 ; 0 1 0];

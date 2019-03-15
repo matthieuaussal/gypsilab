@@ -32,9 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
-addpath('../../openFem')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Create a 2D and a 3D mesh
 m1 = mshCube(100,[1 1 1]);

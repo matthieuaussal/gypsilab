@@ -32,8 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Initialize 3D mesh with tetra
 Nvtx  = 1e3;

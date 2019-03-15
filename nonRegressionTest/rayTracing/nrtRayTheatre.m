@@ -32,9 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
-addpath('../../openRay')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Parameters
 Xsrc  = [0 8 1.7];

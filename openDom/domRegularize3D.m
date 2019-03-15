@@ -22,10 +22,10 @@ function Ms = domRegularize3D(data)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domRegularize3D.m                             |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   VERSION    : 0.53                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2019                                    |
 %| ( === ) |   SYNOPSIS   : Finite element regularization matrix for      |
 %|  `---'  |                singularities with Laplace kernel             |
 %+========================================================================+
@@ -72,8 +72,8 @@ end
 Nx = size(X,1);
 
 % Rangesearch with max(|edge|)_Y
-[Ielt,Relt] = rangesearch(X,ctr,1.1*stp(2));                  %%% DEBUG %%%
-Mx          = cell(Nelt,1);
+[Ielt,Relt] = rangeSearch(X,ctr,1.1*stp(2));                  %%% DEBUG %%%
+Mx = cell(Nelt,1);
 
 
 %%% RIGHT INTEGRATION WITH REGULARIZATION

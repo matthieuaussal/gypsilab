@@ -33,10 +33,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Mesh sphere
 mesh = mshSphere(1e3,1);

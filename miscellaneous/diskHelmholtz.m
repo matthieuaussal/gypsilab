@@ -1,7 +1,7 @@
 function u = diskHelmholtz(name,bndCond,rho,k,X) 
 % Copyright (c) 2018, M. Aussal &  M. Averseng, Ecole Polytechnique       
 % GNU General Public License v3.0. 
-% Computation of analytic field for helmoltz disk scatering
+% Computation of analytic field for helmoltz disk scattering
 
 % Spherical data
 [theta,r] = cart2pol(X(:,1),X(:,2));

@@ -32,8 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openRay')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Parameters
 Nray = 1e5

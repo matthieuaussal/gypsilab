@@ -33,10 +33,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 disp('---- 2D problems --');
 % Meshes

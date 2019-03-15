@@ -1,7 +1,7 @@
 function u = sphereHelmholtz(name,bndCond,rho,k,X) 
 % Copyright (c) 20015-2017, Matthieu Aussal, Ecole Polytechnique       
 % GNU General Public License v3.0. 
-% Computation of analytic field for helmoltz spherical scatering
+% Computation of analytic field for helmoltz spherical scattering
 
 % Sign convention
 if k <= 0
@@ -34,7 +34,7 @@ if strcmp(name,'inf')
     n = 0;
     Pn = legendre(n,cos(theta));
     add = alpha(n,k*rho) .* Pn(1,:);
-    while norm(add,'inf') > 1e-10
+    while norm(add,'inf') > 1e-12
         u = u + add;
         n = n + 1;
         Pn = legendre(n,cos(theta));
@@ -45,7 +45,7 @@ if strcmp(name,'inf')
 % Finite spherical radiation
 elseif strcmp(name,'bnd') || strcmp(name,'dom')
     n = 0;
-    while abs(alpha(n,k*max(r))) > 1e-10
+    while abs(alpha(n,k*max(r))) > 1e-12
         Pn = legendre(n,cos(theta));
         u = u + (1i)^n * (2*n+1) .* ...
             (alpha(n,k*rho).*hsph(n,k*r)) .* Pn(1,:); %

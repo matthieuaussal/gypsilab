@@ -21,10 +21,10 @@ function mesh = mshClean(mesh,dst)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : mshClean.m                                    |
-%|    #    |   VERSION    : 0.42                                          |
+%|    #    |   VERSION    : 0.53                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 21.06.2018                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2019                                    |
 %| ( === ) |   SYNOPSIS   : Clean mesh                                    |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -34,7 +34,7 @@ if isempty(dst)
     [~,I,J] = unique(single(mesh.vtx),'rows','stable');
 else
     % Range search for specified close distance 
-    [J,D] = rangesearch(mesh.vtx,mesh.vtx,dst);
+    [J,D] = rangeSearch(mesh.vtx,mesh.vtx,dst);
     M     = rangeMatrix(J,D);
     M     = (M>0);
     if ~issymmetric(M)

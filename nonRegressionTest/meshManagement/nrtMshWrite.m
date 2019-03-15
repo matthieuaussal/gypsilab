@@ -19,9 +19,9 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtMshWrite.m                                 |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   VERSION    : 0.53                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 25.11.2018                                    |
+%|  ( # )  |   CREATION   : 14.03.2018                                    |
 %|  / 0 \  |   LAST MODIF :                                               |
 %| ( === ) |   SYNOPSIS   : Mesh readers and writer                       |
 %|  `---'  |                                                              |
@@ -32,8 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 
 %%% Particles mesh

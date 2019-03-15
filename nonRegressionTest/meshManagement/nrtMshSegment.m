@@ -32,8 +32,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 % Create mesh
 Nvtx = 21;

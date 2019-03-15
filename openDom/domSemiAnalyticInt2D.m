@@ -22,10 +22,10 @@ function [logR,rlogR,gradlogR] = domSemiAnalyticInt2D(X,S,n,tau)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : domSemiAnalyticInt2D.m                        |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   VERSION    : 0.53                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Martin Averseng             |
 %|  ( # )  |   CREATION   : 25.11.2018                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 14.03.2019                                    |
 %| ( === ) |   SYNOPSIS   : Semi-analytic integration on segment for a set|
 %|  `---'  |                of particles                                  |
 %+========================================================================+

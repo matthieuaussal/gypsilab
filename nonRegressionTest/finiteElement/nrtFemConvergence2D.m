@@ -33,10 +33,8 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openDom')
-addpath('../../openFem')
-addpath('../../openMsh')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
 errL2P1 = []; errH1P1 = errL2P1; errL2P2 = []; errH1P2 = errL2P2; h = [];
 Uex = @(x) cos(x(:,1)).*cos(x(:,2))/3;

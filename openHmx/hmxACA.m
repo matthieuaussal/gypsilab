@@ -161,11 +161,8 @@ while (sqrt(An2)*sqrt(Bn2) > tol*sqrt(Rn2)) || (norm(ref,2) > tol*nrm)
     u   = B(:,n)'*B(:,1:n-1);
     v   = A(:,n)'*A(:,1:n-1);
     AB  = v*u.';
-    u   = B(:,1:n-1)'*B(:,n);
-    v   = A(:,1:n-1)'*A(:,n);
-    BA  = u.'*v;
-    Rn2 = Rn2 + AB + BA + An2*Bn2;
-
+    Rn2 = Rn2 + 2*real(AB) + An2*Bn2;
+    
     % Update reference
     ref = ref - A(Ix,n).*B(Iy,n);
     
