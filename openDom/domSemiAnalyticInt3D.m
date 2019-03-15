@@ -59,7 +59,7 @@ for i = 1:3
     omega = omega + acos( (ca(:,i)-ca(:,ip1).*ca(:,ip2)) ./ (sa(:,ip1).*sa(:,ip2)) );
 end
 omega = omega.*sign(h);
-omega(abs(h)<=1e-12) = 0;
+omega(abs(h)<=1e-8) = 0;
 
 % Output initialization
 Rm1      = -h.*omega;
@@ -85,15 +85,15 @@ for ia = 1:3
            (zX0S(:,iap1) - ps.*tau(ia,3))] ;
     ah = sqrt(sum(xnu.^2,2));
     
-    % Integration of 1/r on the edge - general case h>1e-12
+    % Integration of 1/r on the edge - general case h>1e-8
     intaRm1 = asinh(psp1./ah) - asinh(ps./ah);
     
     % Integration of 1/r on the edge - singular case 
-    im = (nrmX0S(:,iap1)-abs(ps) < 1e-12);
+    im = (nrmX0S(:,iap1)-abs(ps) < 1e-8);
     intaRm1(im) = 0;
-    il = logical((ps>1e-12) .* (psp1>1e-12) .* im);    % particles on the left of the edge
+    il = logical((ps>1e-8) .* (psp1>1e-8) .* im);    % particles on the left of the edge
     intaRm1(il) = log(nrmX0S(il,iap2)./nrmX0S(il,iap1));
-    ir = logical((ps<-1e-12) .* (psp1<-1e-12) .* im);  % paticles of the right of the edge
+    ir = logical((ps<-1e-8) .* (psp1<-1e-8) .* im);  % paticles of the right of the edge
     intaRm1(ir) = -log(nrmX0S(ir,iap2)./nrmX0S(ir,iap1)); 
     
     % terme Cn (terme dependant de la position du point d'observation / arete)

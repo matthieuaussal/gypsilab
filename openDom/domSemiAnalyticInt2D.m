@@ -43,7 +43,7 @@ a  = XA*tau';
 b  = XB*tau';  
 
 % Check distance to (AB)
-bool = (abs(d)>1e-12);
+bool = (abs(d)>1e-8);
 
 % Initialization
 logR = zeros(Nx,1);
@@ -91,7 +91,7 @@ end
 
 function y = xlog(x)
 y    = x.*log(abs(x));
-I    = (abs(x)<1e-12); 
+I    = (abs(x)<1e-8); 
 y(I) = 0;
 end
 
