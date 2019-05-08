@@ -1,8 +1,6 @@
-function [bool,Xdim,Ydim] = hmxFar(Mh)
 %+========================================================================+
 %|                                                                        |
-%|         OPENHMX - LIBRARY FOR H-MATRIX COMPRESSION AND ALGEBRA         |
-%|           openHmx is part of the GYPSILAB toolbox for Matlab           |
+%|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -20,47 +18,93 @@ function [bool,Xdim,Ydim] = hmxFar(Mh)
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : hmxFar.m                                      |
-%|    #    |   VERSION    : 0.54                                          |
+%|    #    |   FILE       : nrtHmxCriticalForm.m                          |
+%|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
-%| ( === ) |   SYNOPSIS   : H-Matrix far boolean                          |
+%|  ( # )  |   CREATION   : 01.05.2019                                    |
+%|  / 0 \  |   LAST MODIF :                                               |
+%| ( === ) |   SYNOPSIS   : Build particles H-Matrix for critical geometry|
 %|  `---'  |                                                              |
 %+========================================================================+
 
-% Particles box X
-X        = Mh.pos{1};
-Xmin     = min(X,[],1);
-Xmax     = max(X,[],1);
-Xctr     = 0.5*(Xmin+Xmax);
-Xdgl     = Xmax-Xmin;
-[~,Xdim] = max(Xdgl);
+% Nettoyage
+clear all
+close all
+clc
 
-% Particles box Y
-Y        = Mh.pos{2};
-Ymin     = min(Y,[],1);
-Ymax     = max(Y,[],1);
-Yctr     = 0.5*(Ymin+Ymax);
-Ydgl     = Ymax-Ymin;
-[~,Ydim] = max(Ydgl);
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
-% Distance admissibility following principal axis (1/2 box)
-XYctr = Yctr-Xctr;
-XYdgl = Xdgl+Ydgl;
-bool  = sum( (abs(XYctr)>=0.75*XYdgl) & (abs(XYctr)>=0.75*mean(XYdgl)) );
+% Dimensions
+N = 1000;
 
-% Angle following distance axe regarding from X
-U     = [ Y(:,1)-Xctr(:,1) , Y(:,2)-Xctr(:,2) , Y(:,3)-Xctr(:,3)];
-V     = Yctr - Xctr;    
-alpha = acosd((U*V')./( sqrt(sum(U.^2,2)) .* sqrt(sum(V.^2,2))) );
+% Accuracy
+tol = 1e-3;
 
-% Angle following distance axe regarding from Y
-U    = [ X(:,1)-Yctr(:,1) , X(:,2)-Yctr(:,2) , X(:,3)-Yctr(:,3)];
-V    = Xctr - Yctr;    
-beta = acosd((U*V')./( sqrt(sum(U.^2,2)) .* sqrt(sum(V.^2,2))) );
+% Meshes
+mesh = mshSquare(N,[1 1]);
+N    = size(mesh.vtx,1);
 
-% Add angular admissibility following translation axis (1/2 box)
-theta = 30; % acosd(2/sqrt(5))
-bool  = bool & (max(alpha)<=theta) & (max(beta)<=theta);
+% Particles
+X      = mesh.vtx;
+Y      = mesh.vtx;
+Y(:,1) = Y(:,1) + 1;
+Y(:,2) = Y(:,2) + 0;
+Y(:,3) = Y(:,3) + 0.2;
+
+% Wave number or frequency (Hz)
+k = 5;
+f = (k*340)/(2*pi);
+
+% Green kernel -> exp(1i*k*r)/r
+rxy   = @(X,Y) sqrt( (X(:,1)-Y(:,1)).^2 + (X(:,2)-Y(:,2)).^2 + (X(:,3)-Y(:,3)).^2 );
+green = @(X,Y) exp(1i*k*rxy(X,Y))./(rxy(X,Y)+1e-8) .* (rxy(X,Y)>1e-8) + ...
+    (sqrt(N)+1i*k) .* (rxy(X,Y)<=1e-8);
+
+% Charges
+V = -1+2*rand(N,1);
+
+% Spatial representation of particles
+figure
+plot(msh(X),'b')
+hold on
+plot(msh(Y),'r')
+view(45,45)
+axis equal 
+
+% Full product
+tic
+ref = zeros(N,1);
+for i = 1:N
+    ref(i) = green(X(i,:),Y).' * V;
 end
+toc
+
+% Admissibility
+isfar = hmxFar(hmx(X,Y,tol))
+
+% Compression
+[A,B] = hmxACA(X,Y,green,tol);
+size(A)
+sol = A * (B * V);
+norm(ref-sol)/norm(ref)
+
+% H-Matrix
+Mh  = hmx(X,Y,green,tol);
+sol = Mh * V;
+norm(ref-sol)/norm(ref)
+
+% Graphical representation
+figure
+spy(Mh)
+
+
+
+
+
+disp('~~> Michto gypsilab !')
+
+
+
+
+

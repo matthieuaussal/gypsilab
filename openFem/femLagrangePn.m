@@ -22,10 +22,10 @@ function M = femLagrangePn(fe,domain)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femLagrangePn.m                               |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.55                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
 %| ( === ) |   SYNOPSIS   : Lagrange finite element matrix (P0,P1,P2)     |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -377,6 +377,39 @@ elseif strcmp(fe.opr,'n*[psi]')
     M{2} = spdiags(nrm(:,2),0,m,m) * uqm;
     M{3} = spdiags(nrm(:,3),0,m,m) * uqm;
 
+
+%%% QUADRATURE * DQM
+elseif strcmp(fe.opr,'q*[psi]')
+    % Finite element
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = '[psi]';
+    uqm     = tmp.uqm(domain);
+    
+    % Quadrature
+    qud = domain.qud;
+    
+    % Dot product
+    m    = size(qud,1);
+    M{1} = spdiags(qud(:,1),0,m,m) * uqm;
+    M{2} = spdiags(qud(:,2),0,m,m) * uqm;
+    M{3} = spdiags(qud(:,3),0,m,m) * uqm;
+
+    
+%%% QUADRATURE dot NORMALS * DQM
+elseif strcmp(fe.opr,'qdotn*[psi]')
+    % Finite element
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = '[psi]';
+    uqm     = tmp.uqm(domain);
+    
+    % Quadrature and normals
+    qud = domain.qud;
+    nrm = domain.qudNrm;
+    
+    % Dot product
+    m = size(nrm,1);
+    M = spdiags(sum(qud.*nrm,2),0,m,m) * uqm;
+
     
 %%%% NORMAL x DQM
 elseif strcmp(fe.opr,'nxgrad[psi]')
@@ -399,7 +432,7 @@ elseif strcmp(fe.opr,'nxgrad[psi]')
         ip2  = mod(ip1,3) + 1;
         M{i} = N{ip1} * uqm{ip2} - N{ip2} * uqm{ip1};
     end
-    
+      
     
 %%% GRADIENT (j)
 elseif strcmp(fe.opr(1:end-1),'grad[psi]')
@@ -431,6 +464,24 @@ elseif strcmp(fe.opr(1:end-1),'n*[psi]')
     % Dot product (j)
     m = size(N,1);
     M = spdiags(N(:,j),0,m,m) * uqm;
+    
+    
+%%% QUADRATURE * DQM (j)
+elseif strcmp(fe.opr(1:end-1),'q*[psi]')
+    % Component
+    j = str2double(fe.opr(end));
+    
+    % Finite element
+    tmp     = fem(fe.msh,fe.typ);
+    tmp.opr = '[psi]';
+    uqm     = tmp.uqm(domain);
+    
+    % Quadrature (component j)
+    qud = domain.qud;
+    
+    % Dot product (j)
+    m = size(qud,1);
+    M = spdiags(qud(:,j),0,m,m) * uqm;
     
     
 %%%% NORMAL x DQM (j)

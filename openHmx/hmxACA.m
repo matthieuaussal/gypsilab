@@ -14,7 +14,7 @@ function [A,B,flag] = hmxACA(varargin)
 %| later,  http://www.gnu.org/licenses). For private use, dual licencing  |
 %| is available, please contact us to activate a "pay for remove" option. |
 %| CONTACT   : matthieu.aussal@polytechnique.edu                          |
-%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
+%| WEBSITE   : www.cmap.polytechnique.fr/~aussal/gypsilab                 |
 %|                                                                        |
 %| Please acknowledge the gypsilab toolbox in programs or publications in |
 %| which you use it.                                                      |

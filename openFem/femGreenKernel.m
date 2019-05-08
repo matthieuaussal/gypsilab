@@ -22,10 +22,10 @@ function Gxy = femGreenKernel(X,Y,green,k)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femGreenKernel.m                              |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   VERSION    : 0.55                                          |
 %|   _#_   |   AUTHOR(S)  : M. Aussal & F. Alouges & M. Averseng          |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
 %| ( === ) |   SYNOPSIS   : Usefull green kernel functions                |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -53,8 +53,20 @@ end
 if strcmp(green,'[1/r]')
     Gxy = 1./Rxy;   
     
+elseif strcmp(green,'dx[1/r]')
+    Gxy = - 1 ./ (Rxy.^3);
+    
+elseif strcmp(green,'dy[1/r]')
+    Gxy = 1 ./ (Rxy.^3);
+    
 elseif strcmp(green,'[exp(ikr)/r]')
     Gxy = exp(1i*k*Rxy)./Rxy;          
+    
+elseif strcmp(green,'dx[exp(ikr)/r]')
+    Gxy = (1i*k - 1./Rxy) .* exp(1i*k.*Rxy) ./ (Rxy.^2);
+
+elseif strcmp(green,'dy[exp(ikr)/r]')
+    Gxy = - (1i*k - 1./Rxy) .* exp(1i*k.*Rxy) ./ (Rxy.^2);
 
 elseif strcmp(green(1:end-1),'gradx[1/r]')    
     j = str2double(green(end));

@@ -22,10 +22,10 @@ classdef fem
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : fem.m                                         |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   VERSION    : 0.55                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
 %| ( === ) |   SYNOPSIS   : Finite element class definition               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -122,7 +122,22 @@ methods
             fe.opr = ['n*[psi]',num2str(varargin{2})];
         end
     end
+
+    % QUADRATURE TIMES BASIS FUNCTION
+    function fe = qtimes(varargin)
+        fe = varargin{1};
+        if (nargin == 1)
+            fe.opr = 'q*[psi]';
+        else
+            fe.opr = ['q*[psi]',num2str(varargin{2})];
+        end
+    end
     
+    % QUADRATURE DOT NORMAL OF THE BASIS FUNCTION
+    function fe = qdotn(fe)
+        fe.opr = 'qdotn*[psi]';
+    end
+
     % NORMAL WEDGE BASIS FUNCTION
     function fe = nx(varargin)
         fe = varargin{1};

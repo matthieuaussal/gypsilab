@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nonRegressionTest.m                           |
-%|    #    |   VERSION    : 0.53                                          |
+%|    #    |   VERSION    : 0.55                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2019                                    |
+%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
 %| ( === ) |   SYNOPSIS   : run all non regression test                   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -87,6 +87,7 @@ run('nrtHmxCompressorsBox.m');
 run('nrtHmxCompressorSingular');
 run('nrtHmxCompressorTotal.m');
 run('nrtHmxCriticalDimension.m');
+run('nrtHmxCriticalForm.m');
 run('nrtHmxLowrank.m');
 run('nrtHmxNonSquare.m');
 
@@ -98,6 +99,8 @@ run('nrtHmxHelmholtz2dS.m');
 run('nrtHmxHelmholtz2dD.m');
 run('nrtHmxHelmholtz2dDt.m');
 run('nrtHmxHelmholtz2dH.m');
+run('nrtHmxHelmholtz2dBWdir.m');
+run('nrtHmxHelmholtz2dBWneu.m');
 
 % Scattering 3D
 cd('../scattering3d')
@@ -105,6 +108,7 @@ run('nrtHelmholtzCalderon.m')
 run('nrtHelmholtzSDrad.m');
 run('nrtHmxHelmholtzS.m');
 run('nrtHmxHelmholtzD.m');
+run('nrtHmxHelmholtzDxy.m');
 run('nrtHmxHelmholtzDt.m');
 run('nrtHmxHelmholtzH.m');
 run('nrtHmxHelmholtzBWdir.m');
@@ -140,6 +144,10 @@ run('nrtHmxStkConvergence.m');
 run('nrtStkConvergence.m');
 run('nrtStkRadiation.m');
 run('translatingSphere/nrtStkTranslatingSphere.m');
+
+% Vibro-acoustic
+cd('../vibroAcoustic');
+run('nrtHmxVibroSlab2d.m');
 
 % End
 disp('~~> Non Regresion Test are done. Michto gypsilab !');

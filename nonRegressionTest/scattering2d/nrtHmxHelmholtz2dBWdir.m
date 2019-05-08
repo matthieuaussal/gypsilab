@@ -18,7 +18,7 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtHmxHelmholtz2dH.m                          |
+%|    #    |   FILE       : nrtHmxHelmholtz2dBWdir.m                      |
 %|    #    |   VERSION    : 0.50                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Martin Averseng             |
 %|  ( # )  |   CREATION   : 25.11.2018                                    |
@@ -98,28 +98,39 @@ sigma = dom(mesh,gss);
 u = fem(mesh,typ);
 v = fem(mesh,typ);
 
+% Coupling coeff
+beta = 1i*k*0.5;
+
 % Mass matrix
 Id = integral(sigma,u,v);
 
-% Finite element boundary operator --> 
-% k^2 * \int_Sx \int_Sy n.psi(x) G(x,y) n.psi(y) dx dy 
-% - \int_Sx \int_Sy nxgrad(psi(x)) G(x,y) nxgrad(psi(y)) dx dy 
+% Finite element boundary operator --> \int_Sx \int_Sy psi(x)' G(x,y) psi(y) dx dy 
 tic
-H = 1i/4 .* (k^2 * integral(sigma,sigma,ntimes(u),Gxy,ntimes(v),tol) ...
-    - integral(sigma,sigma,nxgrad(u),Gxy,nxgrad(v),tol));
+S = (1i/4) .* integral(sigma,sigma,u,Gxy,v,tol);
 toc
 
 % Regularization
 tic
-Hr = -1/(2*pi) .*  (k^2 * regularize(sigma,sigma,ntimes(u),'[log(r)]',ntimes(v)) ...
-    - regularize(sigma,sigma,nxgrad(u),'[log(r)]',nxgrad(v)));
+Sr  = -1/(2*pi) .* regularize(sigma,sigma,u,'[log(r)]',v);
 toc
 
-% Operator [H]
-LHS = H + Hr;
+% Finite element boundary operator --> \int_Sx \int_Sy psi(x)' dnyG(x,y) psi(y) dx dy 
+tic
+D = (1i/4) .* integral(sigma,sigma,u,dyGxy,ntimes(v),tol);
+toc
 
-% Finite element incident wave trace --> \int_Sx psi(x) dnx(pw(x)) dx
-RHS = - ( - integral(sigma,ntimes(u),gradxPW));
+% Regularization
+tic
+Dr = -1/(2*pi) .* regularize(sigma,sigma,u,'grady[log(r)]',ntimes(v));
+toc
+
+% Final operator [1i*k*beta*S - (Id/2 + D)]
+tic
+LHS  = beta.*(S+Sr) - (0.5*Id + (D+Dr));
+toc
+
+% Finite element incident wave trace --> \int_Sx psi(x)' pw(x) dx
+RHS = - integral(sigma,u,PW);
 
 % Structure
 figure
@@ -139,10 +150,13 @@ spy(Lh)
 subplot(2,2,4)
 spy(Uh)
 
-% Solve linear system  [H] mu = - dnP0
+% Solve linear system  [BW] mu = P0
 tic
 mu = Uh \ (Lh \ RHS); % LHS \ RHS;
 toc
+
+% Jump for derivative
+lambda = beta * mu;
 
 
 %%% INFINITE SOLUTION
@@ -153,69 +167,29 @@ theta = 2*pi/1e3 .* (1:1e3)';
 nu    = [sin(theta),cos(theta),zeros(size(theta))];
 
 % Green kernel function
-xdoty   = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3); 
-Ginf{1} = @(X,Y) (-1i*k*X(:,1)) .* exp(-1i*k*xdoty(X,Y));
-Ginf{2} = @(X,Y) (-1i*k*X(:,2)) .* exp(-1i*k*xdoty(X,Y));
-Ginf{3} = @(X,Y) (-1i*k*X(:,3)) .* exp(-1i*k*xdoty(X,Y));
+xdoty        = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3); 
+Ginf         = @(X,Y) exp(-1i*k*xdoty(X,Y));
+gradyGinf{1} = @(X,Y) (-1i*k*X(:,1)) .* exp(-1i*k*xdoty(X,Y));
+gradyGinf{2} = @(X,Y) (-1i*k*X(:,2)) .* exp(-1i*k*xdoty(X,Y));
+gradyGinf{3} = @(X,Y) (-1i*k*X(:,3)) .* exp(-1i*k*xdoty(X,Y));
+
+% Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
+Sinf = 1i/4 * integral(nu,sigma,Ginf,v);
 
 % Finite element infinite operator --> \int_Sy dny(exp(ik*nu.y)) * psi(y) dx
-Dinf = 1i/4 .* integral(nu,sigma,Ginf,ntimes(v)) ;
+Dinf = 1i/4 .* integral(nu,sigma,gradyGinf,ntimes(v)) ;
 
 % Finite element radiation  
-sol = - Dinf * mu;
+sol = Sinf * lambda - Dinf * mu;
 
 % Analytical solution
-ref = diskHelmholtz('inf','neu',1,k,nu); 
+ref = diskHelmholtz('inf','dir',1,k,nu); 
 norm(ref-sol,2)/norm(ref,2)
 norm(ref-sol,'inf')/norm(ref,'inf')
 
 % Graphical representation
 figure
 plot(theta,log(abs(sol)),'b',theta,log(abs(ref)),'--r')
-
-
-%%% DOMAIN SOLUTION
-disp('~~~~~~~~~~~~~ RADIATION ~~~~~~~~~~~~~')
-
-% Finite element radiative operator --> \int_Sy dnyG(x,y) psi(y) dy 
-tic
-Ddom = 1i/4 .* integral(radiat.vtx,sigma,dyGxy,ntimes(v),tol);
-toc
-
-% Regularization
-tic
-Dreg = -1/(2*pi) .* regularize(radiat.vtx,sigma,'grady[log(r)]',ntimes(v));
-Ddom = Ddom + Dreg;
-toc
-
-% Domain solution
-Psca = - Ddom * mu;
-Pinc = PW(radiat.vtx);
-Pdom = Psca + Pinc;
-
-% Annulation mesh interieure
-r             = sqrt(sum(radiat.vtx.^2,2));
-Pdom(r<=1.01) = Pinc(r<=1.01);
-
-% Graphical representation
-figure
-plot(radiat,abs(Pdom))
-axis equal
-title('Total field solution')
-colorbar
-
-
-%%% ANAYTICAL SOLUTIONS FOR COMPARISONS
-% Analytical solution
-Pdom = diskHelmholtz('dom','neu',1,k,radiat.vtx) + PW(radiat.vtx);
-
-% Solution representation
-figure
-plot(radiat,abs(Pdom))
-axis equal;
-title('Analytical solution')
-colorbar
-view(0,90)
 
 
 
