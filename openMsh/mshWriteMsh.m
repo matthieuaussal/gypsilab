@@ -62,13 +62,13 @@ fprintf(fid,'%s\n','$Elements');
 fprintf(fid,'%d\n',size(mesh.elt,1));
 for i = 1:size(mesh.elt,1)
     if (size(mesh.elt,2) == 1)  % particle
-        fprintf(fid,'%d %d %d %d %d  %d\n',i,15,2,0,1,mesh.elt(i,:));
+        fprintf(fid,'%d %d %d %d %d  %d\n',i,15,2,mesh.col(i),0,mesh.elt(i,:));
     elseif (size(mesh.elt,2) == 2)  % segment
-        fprintf(fid,'%d %d %d %d %d  %d %d\n',i,1,2,0,1,mesh.elt(i,:));
+        fprintf(fid,'%d %d %d %d %d  %d %d\n',i,1,2,mesh.col(i),0,mesh.elt(i,:));
     elseif (size(mesh.elt,2) == 3)  % triangle
-        fprintf(fid,'%d %d %d %d %d  %d %d %d\n',i,2,2,0,1,mesh.elt(i,:));
+        fprintf(fid,'%d %d %d %d %d  %d %d %d\n',i,2,2,mesh.col(i),0,mesh.elt(i,:));
     elseif (size(mesh.elt,2) == 4)  % tetra
-        fprintf(fid,'%d %d %d %d %d  %d %d %d %d\n',i,4,2,0,1,mesh.elt(i,:));
+        fprintf(fid,'%d %d %d %d %d  %d %d %d %d\n',i,4,2,mesh.col(i),0,mesh.elt(i,:));
     end
 end
 fprintf(fid,'%s\n','$EndElements');
@@ -78,7 +78,7 @@ if (nargin == 3)
     n = length(data(1,:));        % 1:scalar, 3:vector, 9:tensor
     fprintf(fid,'%s\n','$NodeData');
     fprintf(fid,'%d\n',1);        % number-of-string-tag # must be 1 for Mmg
-    fprintf(fid,'%s\n',filename); % string # name of the metric field
+    fprintf(fid,'%s:metric\n',filename); % string # name of the metric field
     fprintf(fid,'%d\n',1);        % number-of-real-tags # must be 1 for Mmg
     fprintf(fid,'%d\n',0);        % real # ignored value
     fprintf(fid,'%d\n',3);        % number-of-integer-tags # must be 3 for Mmg  

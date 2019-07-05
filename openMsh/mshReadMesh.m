@@ -49,18 +49,27 @@ end
 
 % Support only triangular elements
 str = fgets(fid);
-if ~strcmp(str(1:9),'Triangles')
+if strcmp(str(1:9),'Triangles') 
+    Nelt = str2double(fgets(fid));
+    elt  = zeros(Nelt,4);
+    for i = 1:Nelt
+        elt(i,:) = str2num(fgets(fid));
+    end
+    col = elt(:,4);
+    elt = elt(:,1:3); 
+    
+elseif strcmp(str(1:10),'Tetrahedra')
+    Nelt = str2double(fgets(fid));
+    elt  = zeros(Nelt,5);
+    for i = 1:Nelt
+        elt(i,:) = str2num(fgets(fid));
+    end
+    col = elt(:,5);
+    elt = elt(:,1:4);
+    
+else
     error('mshReadMesh : unavailable case');
 end
-
-% Elements and colours 
-Nelt = str2double(fgets(fid));
-elt  = zeros(Nelt,4);
-for i = 1:Nelt
-    elt(i,:) = str2num(fgets(fid));
-end
-col = elt(:,4);
-elt = elt(:,1:3);
 
 % Close file
 fclose(fid);

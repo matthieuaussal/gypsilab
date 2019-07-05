@@ -1,6 +1,8 @@
+function [mesh1,mesh2] = mshSplit(mesh,X0,U)
 %+========================================================================+
 %|                                                                        |
-%|            This script uses the GYPSILAB toolbox for Matlab            |
+%|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
+%|           openMsh is part of the GYPSILAB toolbox for Matlab           |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2018.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -18,84 +20,33 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMshClean.m                                 |
-%|    #    |   VERSION    : 0.53                                          |
+%|    #    |   FILE       : mshSplit.m                                    |
+%|    #    |   VERSION    : 0.51                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2019                                    |
-%| ( === ) |   SYNOPSIS   : Clean tetrahedral mesh                        |
-%|  `---'  |                                                              |
+%|  ( # )  |   CREATION   : 14.03.2019                                    |
+%|  / 0 \  |   LAST MODIF : 21.06.2019                                    |
+%| ( === ) |   SYNOPSIS   : Split mesh with planar cut                    |
+%|  `---'  |                (to be clearly improved)                      |
 %+========================================================================+
 
-% Cleaning
-clear all
-close all
-clc
+% Normalize direction
+N = U./norm(U);
 
-% Gypsilab path
-run('../../addpathGypsilab.m')
+% Split mesh
+lambda = (mesh.ctr-ones(length(mesh),1)*X0) * N';
+ind    = (lambda>0);
+mesh1  = mesh.sub(ind);
+mesh2  = mesh.sub(~ind);
 
-% Load mesh
-load tetmesh
+% Extract free boundary
+bound  = mesh1.bnd;
+mu     = (bound.vtx-ones(size(bound.vtx,1),1)*X0) * N';
 
-% Build mesh
-mesh1 = msh(X,tet);
+% Move upper boundary
+[~,IA] = intersect(msh(mesh1.vtx),msh(bound.vtx));
+mesh1.vtx(IA,:) = mesh1.vtx(IA,:) - mu*N;
 
-% Graphical representation
-figure
-plot(mesh1)
-axis equal
-view(45,45)
-
-% Add vertices to tetrahedral mesh
-tmp = [zeros(10,3) ; 10*rand(10,3)];
-tet = tet + size(tmp,1);
-X   = [tmp ; X ; 10*rand(20,3)];
-
-% Build and clean mesh
-mesh2 = msh(X,tet);
-
-% Test mesh egality
-~isequal(mesh1,mesh2)
-
-% Graphical representation
-figure
-plot(mesh2)
-axis equal
-view(45,45)
-
-% Colours
-mesh = mshSquare(20,[1 1]);
-ctr  = mesh.ctr;
-mesh.col(ctr(:,1)<0)  = 1;    
-mesh.col(ctr(:,1)>=0) = 2;
-
-% Graphical representation
-figure
-plot(mesh)
-axis equal
-view(45,45)
-
-% Sub-meshing with small translation 
-delta     = 1e-2;
-mesh1     = mesh.sub(mesh.col==1);
-mesh2     = mesh.sub(mesh.col==2);
-mesh2.vtx = mesh2.vtx + delta;
-meshT     = union(mesh1,mesh2);
-
-% Graphical representation
-figure
-plot(meshT)
-axis equal
-view(45,45)
-
-% Clean with specified range
-stp   = mesh.stp;
-meshT = clean(meshT,0.5*stp(1));
-
-
-
-
-disp('~~> Michto gypsilab !')
-
-
+% Move lower boundary
+[~,IA] = intersect(msh(mesh2.vtx),msh(bound.vtx));
+mesh2.vtx(IA,:) = mesh2.vtx(IA,:) - mu*N;
+end

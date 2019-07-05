@@ -1,4 +1,4 @@
-function [vtx,elt,data] = mshReadMsh(filename)
+function [vtx,elt,col,data] = mshReadMsh(filename)
 %+========================================================================+
 %|                                                                        |
 %|                 OPENMSH - LIBRARY FOR MESH MANAGEMENT                  |
@@ -41,7 +41,7 @@ while ~(str==-1)
     if contains(str,'$Nodes')
         vtx = readNodes(fid);
     elseif contains(str,'$Elements')
-        elt = readElements(fid);
+        [elt,col] = readElements(fid);
     elseif contains(str,'$NodeData')
         data = readNodesData(fid,size(vtx,1));
     end
@@ -55,6 +55,7 @@ fclose(fid);
 ord = sum(elt>0,2);
 dim = max(ord);
 elt = elt(ord==dim,1:dim);
+col = col(ord==dim);
 end
 
 
@@ -75,12 +76,16 @@ end
 end
 
 
-function elt = readElements(fid)
-% Elements (up to tetra)
+function [elt,col] = readElements(fid)
+% Initialize
 Nelt = str2double(fgets(fid));
 elt  = zeros(Nelt,4);
+col  = zeros(Nelt,1);
+
+% Elements (up to tetra)
 for i = 1:Nelt
-    tmp = str2num(fgets(fid));
+    tmp    = str2num(fgets(fid));
+    col(i) = tmp(4);
     if (tmp(2) == 15)    % particles
         elt(i,1)   = tmp(6);
     elseif (tmp(2) == 1) % segment

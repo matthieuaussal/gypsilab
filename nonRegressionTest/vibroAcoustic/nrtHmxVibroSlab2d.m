@@ -43,7 +43,7 @@ tol = 1e-3
 e = 0.5
 
 % Frequency
-f = 900:1000:10000
+f = 900:500:4000
 
 % Incident direction (from bottom)
 X0  = [0 1 0];
@@ -54,9 +54,9 @@ c0   = 1500;         % celerity     (m.s-1)
 k0   = 2*pi/c0.*f;   % wave-number  (m-1)
 lam0 = c0./f;        % wave-length  (m)
     
-% Interior domain (steel)
-rhoS = 8000;                                   % density                             (kg.m3)
-cL   = 6000;                                   % celerity of longitudinal waves      (m.s-1)
+% Interior domain (different from water)
+rhoS = 2*rho0;                                 % density                             (kg.m3)
+cL   = 2*c0;                                   % celerity of longitudinal waves      (m.s-1)
 kL   = 2*pi.*f./cL;                            % wave-number of longitudinal waves   (m-1)
 lamL = real(cL)./f;                            % wavelength of longitudinal waves    (m)
 cT   = 0;                                      % celerity of transverse waves        (m.s-1)

@@ -18,13 +18,13 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtMmgOptim.m                                 |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   FILE       : nrtMshTransfo.m                               |
+%|    #    |   VERSION    : 0.52                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 25.11.2018                                    |
-%|  / 0 \  |   LAST MODIF :                                               |
-%| ( === ) |   SYNOPSIS   : Remeshing mesh using Mmg platform             |
-%|  `---'  |                https://www.mmgtools.org/                     |
+%|  ( # )  |   CREATION   : 14.03.2019                                    |
+%|  / 0 \  |   LAST MODIF : 21.06.2019                                    |
+%| ( === ) |   SYNOPSIS   : Elementar geometry operations                 |
+%|  `---'  |                                                              |
 %+========================================================================+
 
 % Cleaning
@@ -32,111 +32,55 @@ clear all
 close all
 clc
 
-% Library path
-addpath('../../openMsh')
-addpath('../../openMmg')
+% Gypsilab path
+run('../../addpathGypsilab.m')
 
+% Create mesh
+Nvtx = 1e3;
+L    = [1 1];
+mesh = mshSquare(Nvtx,L);
 
-%%% 2D surface
-N = 100;
+% Translation
+mesh2 = translate(mesh,[1 1 1]);
+mesh2.col(:) = 1;
 
-% Mesh unit square
-mesh = mshSquare(N,[1 1]);
-
-% Move points
-mesh.vtx(:,1) = 10*mesh.vtx(:,1); 
-mesh.stp
-
-% Mesh refinment
-meshMmg = mmg(mesh);
-meshMmg.stp
-    
-% Graphical representation
-figure
-
-subplot(1,2,1)
-plot(mesh)
-axis equal
-view(0,90)    
-grid on
-title('Original')
-
-subplot(1,2,2)
-plot(meshMmg)
-axis equal
-view(0,90)    
-grid on
-title('Mmg')
-
-
-%%% 3D surface
-N = 100;
-
-% Mesh unit sphere
-mesh = mshSphere(N,1);
-
-% Move points
-mesh.vtx(:,1) = 5*mesh.vtx(:,1); 
-mesh.stp
-
-% Mesh refinment
-meshMmg = mmg(mesh);
-meshMmg.stp
-    
-% Graphical representation
-figure
-
-subplot(1,2,1)
-plot(mesh)
-axis equal
-view(0,90)    
-grid on
-title('Original')
-
-subplot(1,2,2)
-plot(meshMmg)
-axis equal
-view(0,90)    
-grid on
-title('Mmg')
-
-
-%%% 3D volume
-N    = 100;
-
-% Mesh unit cube
-mesh = mshCube(N,[1 1 1]);
-
-% Move points
-mesh.vtx(:,1) = 10*mesh.vtx(:,1); 
-mesh.stp
-
-% Mesh refinment
-meshMmg = mmg(mesh);
-meshMmg.stp
+% Rotation
+mesh3 = mesh;
+mesh3 = rotate(mesh3,[1 0 0],pi/4);
+mesh3 = rotate(mesh3,[0 1 0],pi);
+mesh3 = rotate(mesh3,[0 0 1],pi/2);
+mesh3.col(:) = 2;
 
 % Graphical representation
 figure
-
-subplot(1,2,1)
 plot(mesh)
 axis equal
-view(20,20)    
-grid on
-title('Original')
-alpha(0.3)
+hold on
+plotNrm(mesh,'r')
+plot(mesh2)
+plot(mesh3)
+plotNrm(mesh3,'r')
+view(45,45)
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
 
-subplot(1,2,2)
-plot(meshMmg)
+% Planar split
+mesh          = mshSphere(Nvtx,1);
+[mesh1,mesh2] = split(mesh,[0 0 0.7],[1 1 1]);
+
+% Graphical representation
+figure
+hold on
+plot(mesh1,'r')
+plot(mesh2,'y')
 axis equal
-view(20,20)    
-grid on
-title('Mmg')
-alpha(0.3)
-    
+view(45,45)
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
 
-    
+
+
 
 disp('~~> Michto gypsilab !')
-
-

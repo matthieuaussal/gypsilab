@@ -127,5 +127,20 @@ figure
 plot(bound)
 colorbar
 
+% Clean degenerated mesh
+mesh6 = mesh;
+ind   = (mesh6.vtx(:,1)>0);
+mesh6.vtx(ind,1) = 0;
+mesh6 = clean(mesh6,1e-6);
+setdiff(mesh6,mesh1)
+
+% Clean degenerated particle mesh
+vtx = mesh.vtx;
+vtx(vtx(:,1)>0,1) = 0;
+mesh7 = msh(vtx);
+mesh7 = clean(mesh7,1e-6);
+setdiff(mesh7,msh(mesh1.vtx))
+
+
 
 disp('~~> Michto gypsilab !')

@@ -156,5 +156,13 @@ hold off
 % Boundary of the boundary
 bound.bnd
 
+% Clean degenerated mesh
+mesh6 = mesh;
+ind   = (mesh6.vtx(:,1)>0);
+mesh6.vtx(ind,1) = 0;
+mesh6 = clean(mesh6,1e-6);
+mesh6 = mesh6.sub(mesh6.ndv>0);
+setdiff(mesh6,mesh1)
+
 
 disp('~~> Michto gypsilab !')

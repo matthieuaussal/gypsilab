@@ -132,43 +132,6 @@ for i = 1:n
 end
 B.Ml = cell2mat(B.Ml);
 
-
-% V = rand(length(u),1);
-% ref = B.Ml * (B.Mr * V);
-
-
-% % Collocation mass operator
-% Id = integral(sigma,u,u);
-% 
-% % Collocation boundary operator
-% S = cteGxy .* integral(sigma,sigma,u,Gxy,u,tol) + ...
-%     cteG0  .* regularize(sigma,sigma,u,G0,u);
-% 
-% % Collocation boundary operator
-% D = cteGxy .* integral(sigma,sigma,u,gradyGxy,ntimes(u),tol) + ...
-%     cteG0  .* regularize(sigma,sigma,u,gradyG0,ntimes(u));
-% 
-% % Final operator Brackage-Werner : [1i*k*beta*S - (Id/2 + D)]
-% B.Mr = beta.*S - (0.5*Id + D);
-% 
-% % Coupling to FEM
-% B.Ml = cell(n,1);
-% for i = 1:n
-%     B.Ml{i} = integral(sigma,ntimes(U,i),u) / Id;
-% end
-% B.Ml = cell2mat(B.Ml);
-% 
-% 
-% 
-% % sol = B.Ml * (Id \ (B.Mr * V));
-% % 
-% % norm(ref-sol)/norm(ref)
-% % norm(ref-sol,'inf')/norm(ref,'inf')
-% % 
-% % 
-% % 
-% % pouet
-
 %%%%%%%%%%%%%%%%%%%%%%%%%% ELASTO-ACOUSTIC (A21) %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Initialization

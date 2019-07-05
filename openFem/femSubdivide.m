@@ -71,13 +71,15 @@ for i = 1:Nsub
     femSub{i}     = fem;
     femSub{i}.msh = meshSub;
     
-    % Dirichlet condition for non valid dof
-    dir       = setdiff( msh(femSub{i}.dof) , msh(dof(Isub{i},:)) );
-    femSub{i} = dirichlet(femSub{i},dir);
+    % Dirichlet condition for boundary dof
+    dir = setdiff( msh(femSub{i}.dof) , msh(dof(Isub{i},:)) );
+    if (size(dir,1)>0)
+        femSub{i} = dirichlet(femSub{i},dir);
+    end
     
     % Security
     if (length(femSub{i}) ~= length(Isub{i}))
-        error('domainDecomposition.m : unavailable case');
+        error('femSubdivide.m : unavailable case');
     end
 
     % Graphical representation
@@ -86,7 +88,7 @@ for i = 1:Nsub
         figure(fig)
         hold on
         plot(tmp,'b')
-%         plot(msh(femSub{i}.unk),'b')
+        plot(tmp.bnd,'r')
         plot(setdiff(meshSub,tmp),'w')        
         axis equal
     end

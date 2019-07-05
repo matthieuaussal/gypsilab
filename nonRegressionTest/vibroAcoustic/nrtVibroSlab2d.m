@@ -40,7 +40,7 @@ run('../../addpathGypsilab.m')
 e = 0.5
 
 % Frequency
-f = 900:1000:10000
+f = 900:500:4000
 
 % Incident direction (from bottom)
 X0  = [0 1 0];

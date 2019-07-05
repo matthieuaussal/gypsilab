@@ -21,10 +21,10 @@ classdef msh
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : msh.m                                         |
-%|    #    |   VERSION    : 0.50                                          |
+%|    #    |   VERSION    : 0.53                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 21.06.2019                                    |
 %| ( === ) |   SYNOPSIS   : Mesh class definition                         |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -44,7 +44,7 @@ methods
             file = varargin{1}; 
             ext  = file(end-2:end);
             if strcmp(ext,'msh')
-                [mesh.vtx,mesh.elt] = mshReadMsh(file);
+                [mesh.vtx,mesh.elt,mesh.col] = mshReadMsh(file);
             elseif strcmp(ext,'ply')
                 [mesh.vtx,mesh.elt] = mshReadPly(file);
             elseif strcmp(ext,'stl')
@@ -361,6 +361,13 @@ methods
         meshC     = msh(vtxC,eltC,colC);
     end    
     
+    % ISMEMBER
+    function [IA,IB] = ismember(meshA,meshB)
+        A       = sgn(meshA);
+        B       = sgn(meshB);
+        [IA,IB] = ismember(A,B,'rows');
+    end
+    
     % FUNCTION
     function mesh = fct(mesh,fct)
         mesh.vtx = fct(mesh.vtx);
@@ -379,6 +386,26 @@ methods
         RPE      = randperm(length(mesh));
         mesh.elt = mesh.elt(RPE,:);
         mesh.col = mesh.col(RPE,:);
+    end
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%% TRANSFORMATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % TRANSLATION
+    function mesh = translate(mesh,U)
+        mesh.vtx = mesh.vtx + ones(size(mesh.vtx,1),1)*U;
+    end
+    
+    % ROTATION
+    function mesh = rotate(mesh,U,phi)
+        N        = U./norm(U);
+        mesh.vtx = cos(phi) * mesh.vtx + ...
+            (1-cos(phi)) .* ((mesh.vtx*N')*N) + ...
+            sin(phi) .* cross(ones(size(mesh.vtx,1),1)*N,mesh.vtx,2);
+    end
+    
+    % SPLIT
+    function [mesh1,mesh2] = split(mesh,X0,U)
+        [mesh1,mesh2] = mshSplit(mesh,X0,U);
     end
 end
 end

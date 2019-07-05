@@ -44,6 +44,7 @@ run('nrtMshRead.m');
 run('nrtMshRefine.m');
 run('nrtMshSegment.m');
 run('nrtMshSquare.m');
+run('nrtMshTransfo.m');
 run('nrtMshWrite.m');
 
 % Domain quadrature
@@ -147,6 +148,7 @@ run('translatingSphere/nrtStkTranslatingSphere.m');
 
 % Vibro-acoustic
 cd('../vibroAcoustic');
+run('nrtVibroSlab2d.m');
 run('nrtHmxVibroSlab2d.m');
 
 % End
