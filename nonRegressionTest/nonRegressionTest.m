@@ -22,7 +22,7 @@
 %|    #    |   VERSION    : 0.55                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : run all non regression test                   |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -80,6 +80,7 @@ run('nrtFemWave2D.m');
 % Hierarchical matrices
 cd('../hierarchicalMatrix')
 run('nrtHmxAlgebra.m');
+run('nrtHmxBEMConvergence.m');
 run('nrtHmxBuilder.m');
 run('nrtHmxBuilderFem.m');
 run('nrtHmxCompareLU.m');
@@ -91,6 +92,14 @@ run('nrtHmxCriticalDimension.m');
 run('nrtHmxCriticalForm.m');
 run('nrtHmxLowrank.m');
 run('nrtHmxNonSquare.m');
+
+% Fast & Free memory Method
+cd('../fastFreeMemory')
+run('nrtFfmBuilder.m');
+run('nrtFfmBuilderFem.m');
+run('nrtFfmHelmholtzBWdir.m');
+run('nrtFfmHelmholtzBWneu.m');
+run('nrtFfmMaxwellCFIEpec.m');
 
 % Scattering 2D
 cd('../scattering2d')

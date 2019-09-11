@@ -22,10 +22,10 @@ classdef fem
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : fem.m                                         |
-%|    #    |   VERSION    : 0.55                                          |
+%|    #    |   VERSION    : 0.60                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 01.05.2019                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : Finite element class definition               |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -93,6 +93,11 @@ methods
         
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% OPERATORS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % RESTRICTION OF THE BASIS FUNCTION 
+    function fe = rest(fe,i)
+        fe.opr = ['[psi]',num2str(i)];
+    end
+    
     % CURL OF THE BASIS FUNCTION
     function fe = curl(fe)
         fe.opr = 'curl[psi]';

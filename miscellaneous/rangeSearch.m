@@ -88,7 +88,7 @@ else
         Rxy2 = A(ix,:) * B(iy,:)';
         
         % Extract close data
-        Rxy2 = (Rxy2<r^2) .* Rxy2;
+        Rxy2 = abs((Rxy2<r^2) .* Rxy2);
         
         % Range search
         [idx,jdx,val] = find(Rxy2);

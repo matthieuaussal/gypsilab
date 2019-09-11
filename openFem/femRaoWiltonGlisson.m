@@ -22,10 +22,10 @@ function M = femRaoWiltonGlisson(fe,domain)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : femRaoWiltonGlisson.m                         |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.60                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : RWG finite element matrix                     |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -122,6 +122,18 @@ if size(fe.msh.elt,2)==3 % Triangular elements
         M = sparse(idx(:),jdx(:),val(:),Nqud,Ndof);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% RESTRICTION TO Ith COMPONENT
+    elseif strcmp(fe.opr(1:5),'[psi]')
+        % Finite element
+        tmp     = fem(fe.msh,fe.typ);
+        tmp.opr = '[psi]';
+        uqm     = tmp.uqm(domain);
+        
+        % Restriction
+        ind     = str2double(fe.opr(end));
+        M       = uqm{ind};
+
+        
         %%%% NORMAL x DQM
     elseif strcmp(fe.opr,'nx[psi]')
         % Finite element

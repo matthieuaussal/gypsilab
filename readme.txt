@@ -2,7 +2,7 @@
 |   '&`   |                                                              |
 |    #    |               THE GYPSILAB TOOLBOX FOR MATLAB                |
 |    #    |                                                              |
-|   _#_   |                         VERSION - 0.50                       |
+|   _#_   |                         VERSION - 0.60                       |
 |  ( # )  |                                                              |
 |  / 0 \  |               matthieu.aussal@polytechnique.edu              |
 | ( === ) |           www.cmap.polytechnique.fr/~aussal/gypsilab         |
@@ -15,7 +15,7 @@ with a high-level programming language, it gives a useful framework for
 fast prototyping. Initially designed for numerical acoustics, many physics 
 problems can also be addressed. 
 
-   Gypsilab is divided in few libraries :
+   Gypsilab is divided in various libraries :
  
  - OpenMSH : Library for mesh management
 Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
@@ -29,10 +29,13 @@ Copyright Matthieu Aussal & Francois Alouges (c) 2018 - Ecole Polytechnique
  - OpenHmX : Library for H-Matrix computation and algebra.
 Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
 
+ - OpenFfm : Library for Fast and Free Memory convolution with Green kernel.
+Copyright Matthieu Aussal (c) 2019 - Ecole Polytechnique
+
  - OpenRay : Library for tri-dimensional ray-tracing.
 Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
 
- - OpenEbd : Library for bi-dimensional convolution with green kernel.
+ - OpenEbd : Library for bi-dimensional convolution with Green kernel.
 Copyright Martin Averseng (c) 2018 - Ecole Polytechnique
 https://github.com/MartinAverseng/EBD
 
