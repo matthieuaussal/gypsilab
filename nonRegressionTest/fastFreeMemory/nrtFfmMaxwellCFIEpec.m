@@ -1,7 +1,6 @@
 %+========================================================================+
 %|                                                                        |
-%|         OPENFFM - LIBRARY FOR FAST AND FREE MEMORY CONVOLUTION         |
-%|           openFfm is part of the GYPSILAB toolbox for Matlab           |
+%|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2019.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -19,13 +18,13 @@
 %| which you use it.                                                      |
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
-%|    #    |   FILE       : nrtFfmMaxwellCFIEpec.m                        |
-%|    #    |   VERSION    : 0.6                                           |
-%|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
+%|    #    |   FILE       : nrtFfmMaxwellCFIEpec.m                           |
+%|    #    |   VERSION    : 0.61                                          |
+%|   _#_   |   AUTHOR(S)  : Matthieu Aussal & Francois Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
-%| ( === ) |   SYNOPSIS   : Non regression test for BEM resolution of     |
-%|  `---'  |                a spherical pec scattering problem            |
+%| ( === ) |   SYNOPSIS   : Solve PEC scatering problem with CFIE         |
+%|  `---'  |                                                              |
 %+========================================================================+
 
 % Cleaning
@@ -41,7 +40,7 @@ N    = 1e3
 tol  = 1e-3
 typ  = 'RWG'
 gss  = 3
-beta = 0.5
+beta = 0.5;
 
 % Spherical mesh
 sphere = mshSphere(N,1);
@@ -82,6 +81,10 @@ view(0,10)
 %%% PREPARE OPERATOR
 disp('~~~~~~~~~~~~~ PREPARE OPERATOR ~~~~~~~~~~~~~')
 
+% Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
+Gxy = '[exp(ikr)/r]';
+Hxy = {'grady[exp(ikr)/r]1','grady[exp(ikr)/r]2','grady[exp(ikr)/r]3'};
+
 % Finite elements
 u = fem(sphere,'RWG');
 v = fem(sphere,'RWG');
@@ -89,25 +92,36 @@ v = fem(sphere,'RWG');
 % Finite element mass matrix --> \int_Sx psi(x)' psi(x) dx
 Id = integral(sigma,u,v);
 
-% EFIE
+% Finite element boundary operator
 tic
-Tr = 1i*k/(4*pi) * regularize(sigma, sigma, u, '[1/r]', u) ...
-      - 1i/(4*pi*k)*regularize(sigma, sigma, div(u), '[1/r]', div(u));
+T = 1i*k/(4*pi)*integral(sigma, sigma, v, Gxy, k, u, tol) ...
+    - 1i/(4*pi*k)*integral(sigma, sigma, div(v), Gxy, k, div(u), tol) ;
 toc
 
-% MFIE
+% Regularization
 tic
-nxKr = 1/(4*pi) * regularize(sigma, sigma, nx(u), 'grady[1/r]', u);
+Tr = 1i*k/(4*pi)*regularize(sigma, sigma, v, '[1/r]', u) ...
+      - 1i/(4*pi*k)*regularize(sigma, sigma, div(v), '[1/r]', div(u));
+T  = T + Tr; 
 toc
 
-% Close operator
-LHSc = (-beta)*Tr + (1-beta)*(0.5*Id - nxKr);
+% Finite element boundary operator
+tic
+nxK = 1/(4*pi) * integral(sigma, sigma, nx(v), Hxy, k, u, tol); 
+toc
+
+% Regularization
+tic
+nxKr = 1/(4*pi) * regularize(sigma, sigma, nx(v), 'grady[1/r]', u);
+nxK  = nxK + nxKr;
+toc
 
 % Left hand side
-LHS = @(V) MVpec(sigma,u,k,beta,tol,V) + LHSc*V;
+LHS  = - beta * T  + (1-beta) * (0.5*Id - nxK);
+LHSr = - beta * Tr + (1-beta) * (0.5*Id - nxKr);
 
 % Right hand side
-RHS = beta*integral(sigma,u,PWE) - (1-beta)*integral(sigma,nx(u),PWH);
+RHS = beta*integral(sigma,v,PWE) - (1-beta)*integral(sigma,nx(v),PWH);
 
 
 %%% SOLVE LINEAR PROBLEM
@@ -115,31 +129,13 @@ disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
 % ILU preconditionner
 tic
-[L,U] = ilu(LHSc);
+[L,U] = ilu(LHSr);
 toc
 
 % Iterative solver
 tic
-J = mgcr(LHS,RHS,[],tol,1000,L,U);
+J = mgcr(@(V) LHS*V,RHS,[],tol,1000,L,U);
 toc
-
-
-%%% SURFACIC RADIATION
-disp('~~~~~~~~~~~~~ SURFACIC RADIATION ~~~~~~~~~~~~~')
-
-% Mesh Interpolation
-Jmsh = feval(u,J,sphere);
-V    = sqrt(sum(real(cell2mat(Jmsh)).^2,2));
-
-% Graphical representation
-figure
-plot(sphere)
-hold on
-plot(sphere,V)
-axis equal
-title('|J| surfacic')
-xlabel('X');   ylabel('Y');   zlabel('Z');
-colorbar
 
 
 %%% INFINITE SOLUTION
@@ -151,11 +147,10 @@ theta = 2*pi/1e3 .* (1:Ninf)';
 nu    = [sin(theta),zeros(size(theta)),cos(theta)];
 
 % Green kernel function
-xdoty = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3); 
-Ginf  = @(X,Y) exp(-1i*k*xdoty(X,Y));
+Ginf = '[exp(-ikxy)]';
 
 % Finite element infinite operator --> \int_Sy exp(ik*nu.y) * psi(y) dx
-Tinf = integral(nu,sigma,Ginf,v);
+Tinf = integral(nu,sigma,Ginf,k,v,tol);
 sol  = 1i*k/(4*pi)*cross(nu, cross([Tinf{1}*J, Tinf{2}*J, Tinf{3}*J], nu));
 
 % Radiation infinie de reference, convention e^(+ikr)/r
@@ -191,6 +186,23 @@ subplot(1,2,2)
 plot(theta,real(sol),'--b', theta,imag(sol),'--r', theta, real(refInf),':b', theta,imag(refInf),':r');
 drawnow
 
+
+%%% SURFACIC RADIATION
+disp('~~~~~~~~~~~~~ SURFACIC RADIATION ~~~~~~~~~~~~~')
+
+% Mesh Interpolation
+Jmsh = feval(u,J,sphere);
+V    = sqrt(sum(real(cell2mat(Jmsh)).^2,2));
+
+% Graphical representation
+figure
+plot(sphere)
+hold on
+plot(sphere,V)
+axis equal
+title('|J| surfacic')
+xlabel('X');   ylabel('Y');   zlabel('Z');
+colorbar
 
 
 

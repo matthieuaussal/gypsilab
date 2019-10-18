@@ -2,7 +2,7 @@
 |   '&`   |                                                              |
 |    #    |               THE GYPSILAB TOOLBOX FOR MATLAB                |
 |    #    |                                                              |
-|   _#_   |                         VERSION - 0.60                       |
+|   _#_   |                         VERSION - 0.61                       |
 |  ( # )  |                                                              |
 |  / 0 \  |               matthieu.aussal@polytechnique.edu              |
 | ( === ) |           www.cmap.polytechnique.fr/~aussal/gypsilab         |
@@ -30,6 +30,12 @@ Copyright Matthieu Aussal & Francois Alouges (c) 2018 - Ecole Polytechnique
 Copyright Matthieu Aussal (c) 2018 - Ecole Polytechnique
 
  - OpenFfm : Library for Fast and Free Memory convolution with Green kernel.
+Copyright Matthieu Aussal (c) 2019 - Ecole Polytechnique
+
+ - OpenBmm : Library for Block matrix algebra.
+Copyright Matthieu Aussal (c) 2019 - Ecole Polytechnique
+
+ - OpenOpr : Library for usual BEM operators with H-Matrix compression.
 Copyright Matthieu Aussal (c) 2019 - Ecole Polytechnique
 
  - OpenRay : Library for tri-dimensional ray-tracing.

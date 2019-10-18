@@ -1,7 +1,6 @@
 %+========================================================================+
 %|                                                                        |
-%|         OPENFFM - LIBRARY FOR FAST AND FREE MEMORY CONVOLUTION         |
-%|           openFfm is part of the GYPSILAB toolbox for Matlab           |
+%|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2019.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -20,9 +19,9 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtFfmBuilderFem.m                            |
-%|    #    |   VERSION    : 0.6                                           |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  ( # )  |   CREATION   : 14.03.2019                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : Non regression test for convolution using     |
 %|  `---'  |                arbitrary kenel integral galerkin formulation |
@@ -91,28 +90,17 @@ tic
 ref = M * V;
 toc
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% H-MATRIX PRODUCT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-disp('~~~~~~~~~~~~~ H-MATRIX PRODUCT ~~~~~~~~~~~~~')
-
-% H-Matrix
-tic
-Mh = integral(Xdom,Ydom,Xfem,Gxy,Yfem,tol); 
-toc
-
-% H-Matrix-vector product
-tic
-sol = Mh * V;
-toc
-
-% Error
-norm(ref-sol)/norm(ref)
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FFM PRODUCT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('~~~~~~~~~~~~~ FFM PRODUCT ~~~~~~~~~~~~~')
 
-% FFM product
+% FFM
 tic
-sol = integral(Xdom,Ydom,Xfem,green,k,Yfem,tol,V); 
+Mv = integral(Xdom,Ydom,Xfem,green,k,Yfem,tol); 
+toc
+
+% FFM Matrix-vector product
+tic
+sol = Mv * V;
 toc
 
 % Error

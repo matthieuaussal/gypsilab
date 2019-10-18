@@ -6,7 +6,7 @@ classdef mmg < handle
 % Remeshing using Mmg tools : https://www.mmgtools.org             
 
 properties 
-    % EDGE 
+    % Edge 
     Aniso    = [];   % AUTOMATIC ANISOTROPY
     Optim    = [];   % AUTOMATIC MESH IMPROVEMENT
     Hgrad    = [];   % MAXIMAL RATIO BETEEN 2 ADJACENT EDGES
@@ -29,13 +29,14 @@ properties
     Verbose = [];    % VERBOSITY
     Options = [];    % PRINT OPTIONS DEFINITION
     
-    % Mesh and size map
+    % Mesh data
     Mesh    = [];    % MESH OBJECT FROM GYPSILAB (vtx, elt, col)
+    Req     = [];    % REQUIRED ENTITIES AT ELEMENTS
     Map     = [];    % SIZE MAP AT VERTICES
 end
 
 methods
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRUCTOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRUCTOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     function obj = mmg(varargin)
         % Initialize
         if (nargin==0)
@@ -55,7 +56,7 @@ methods
     end
     
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ACCESSORS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% EDGES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function aniso(mmg)
         mmg.Aniso = '-A';
     end
@@ -88,6 +89,8 @@ methods
         mmg.Hausd  = ['-hausd ',num2str(val)];
     end
     
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ADAPTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function nofem(mmg)
         mmg.Nofem = '-nofem';
     end
@@ -112,6 +115,8 @@ methods
         mmg.Angle = ['-ar ',num2str(val)];
     end
     
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GENERAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function memory(mmg,val)
         mmg.Memory = ['-m ',num2str(val)];
     end
@@ -123,96 +128,25 @@ methods
     function options(mmg)
         mmg.Options = '-h ';
     end
-        
-    function mesh(mmg,msh)
-        mmg.Mesh = msh;
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MESH DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function mesh(mmg,val)
+        mmg.Mesh = val;
     end
     
-    function map(mmg,map)
-        mmg.Map = map;
+    function req(mmg,val)
+        mmg.Req = val;
+    end
+    
+    function map(mmg,val)
+        mmg.Map = val;
     end
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% RUN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function [mesh,val] = run(mmg)
-        % Current and mmg directory
-        here  = pwd;
-        there = which('mmg.m');
-        there = there(1:end-6);
-        
-        % Move to mmg directory
-        cd(there)
-
-        % Check mesh (3D nodes, triangle or tetra, colours are int)
-        mesh = mmg.Mesh;
-        if (size(mesh.vtx,2) ~= 3) || (size(mesh.elt,2) < 3) || (size(mesh.elt,2) > 4) 
-            error('mmg.m : unavailable case, please use 3D vertices.')
-        end
-        
-        % Check colours are int
-        if (norm(mesh.col-floor(mesh.col),'inf') > 1e-12) || (min(mesh.col)<0)
-            error('mmg.m : only integer values for colours.')
-        end
-        
-        % Write original mesh in .msh format
-        if isempty(mmg.Map)
-            mshWriteMsh('original.msh',mesh);
-        else
-            mshWriteMsh('original.msh',mesh,mmg.Map);
-        end
-            
-        % Operating system
-        if ismac
-            os = './mac_';
-        elseif ispc
-            os = 'win_';
-        elseif isunix
-            os = './uni_';
-        else
-            disp('mmg.m : unavailable case')
-        end
-        
-        % Element form
-        if (size(mesh.elt,2) == 3)
-            bin = 'mmgs_O3';
-        elseif (size(mesh.elt,2) == 4)
-            bin = 'mmg3d_O3';
-        end
-        
-        % Add extension (for windows only)
-        if ispc
-            bin = [bin,'.exe '];
-        else
-            bin = [bin,' '];
-        end
-        
-        % Define temporary mesh files
-        file = '-in original.msh -out refined.msh ';
-        
-        % Convert input to command
-        field = fieldnames(mmg);
-        opt   = '';
-        for i = 1:length(field)
-            cmd = getfield(mmg,field{i});
-            if ~isempty(cmd) && ~strcmp(field{i},'Mesh') && ~strcmp(field{i},'Map')
-                opt = [opt,cmd,' '];
-            end                
-        end
-        
-        % Execute mmg binaries
-        command = [os,bin,file,opt];
-        system(command);
-        
-        % Read refined mesh
-        [vtx,elt,col,val] = mshReadMsh('refined.msh');
-        mesh = msh(vtx,elt,col);
-        
-        % Clean meshes
-        delete('original.msh')
-        delete('refined.msh')
-        
-        % Back to current directory
-        cd(here)
+    function mesh = run(mmg)
+        mesh = mmgRun(mmg);
     end
 end
 end

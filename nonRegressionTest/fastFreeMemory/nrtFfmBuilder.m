@@ -1,7 +1,6 @@
 %+========================================================================+
 %|                                                                        |
-%|         OPENFFM - LIBRARY FOR FAST AND FREE MEMORY CONVOLUTION         |
-%|           openFfm is part of the GYPSILAB toolbox for Matlab           |
+%|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2019.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -20,9 +19,9 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtFfmBuilder.m                               |
-%|    #    |   VERSION    : 0.6                                           |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
-%|  ( # )  |   CREATION   : 14.03.2017                                    |
+%|  ( # )  |   CREATION   : 14.03.2019                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : Non regression test for convolution using     |
 %|  `---'  |                arbitrary kenel with X and Y random sample    |
@@ -52,19 +51,19 @@ green = '[exp(ikr)/r]'
 tol = 1e-3
 
 % Receivers positions
-Nx = 1e4
+Nx = 1e3
 X  = -1 + 2*rand(Nx,3,type);
 X  = unit(X);
 
 % Emmiters positions
-Ny = 2e4
+Ny = 2e3
 Y  = -1 + 2*rand(Ny,3,type);
 
 % Wave number
 k = 5
 
 % Potential 
-V = -(1+1i) + 2*(rand(Ny,1,type) + 1i*rand(Ny,1,type));
+V = -(1+1i) + 2*(rand(Ny,2,type) + 1i*rand(Ny,2,type));
 
 % Graphical representation
 figure
@@ -81,22 +80,27 @@ ind  = 1:ceil(Nx/Nt):Nx;
 Xloc = X(ind,:);
 
 % Full and exact matrix-vector product on randomized indices
-ref = zeros(length(ind),1,type);
+ref = zeros(length(ind),size(V,2),type);
 for i = 1:length(ind)
-    ref(i) = ffmGreenKernel(Xloc(i,:),Y,green,k).' * V;
+    ref(i,:) = ffmGreenKernel(Xloc(i,:),Y,green,k).' * V;
 end
 toc
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% FFM PRODUCT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 disp('~~~~~~~~~~~~~ FFM PRODUCT ~~~~~~~~~~~~~')
 
-% Matrix-vector product
+% Fast and free memory
 tic
-MVffm = ffmProduct(X,Y,V,green,k,tol);
+Mv = ffm(X,Y,green,k,tol);
+toc
+
+% Matrix vector product
+tic
+sol = Mv * V;
 toc
 
 % Compare to randomized indices values
-norm(ref-MVffm(ind))/norm(ref)
+norm(ref-sol(ind,:))/norm(ref)
 
 
 

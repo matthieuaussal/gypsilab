@@ -21,7 +21,7 @@ function MV = ffmInteractionsSparse(X,Xbox,Y,Ybox,V,Ibox,green,k,edg,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : ffmInteractionsSparse.m                       |
-%|    #    |   VERSION    : 0.6                                           |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
@@ -152,7 +152,7 @@ b   = xy + b;
 Tyq = (ones(Nq,1)*(b-a)/2).*Xq + ones(Nq,1)*(b+a)/2;
 
 % Noyaux de green avec compression aux interpolants
-[TA,TB,flag] = ffmACA(Txq,Tyq,green,k,tol/10);
+[TA,TB,flag] = hmxACA(Txq,Tyq,green,k,tol/10);
 
 % Calcul direct si necessaire
 if ~flag

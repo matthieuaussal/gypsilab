@@ -1,7 +1,6 @@
 %+========================================================================+
 %|                                                                        |
-%|         OPENFFM - LIBRARY FOR FAST AND FREE MEMORY CONVOLUTION         |
-%|           openFfm is part of the GYPSILAB toolbox for Matlab           |
+%|            This script uses the GYPSILAB toolbox for Matlab            |
 %|                                                                        |
 %| COPYRIGHT : Matthieu Aussal (c) 2017-2019.                             |
 %| PROPERTY  : Centre de Mathematiques Appliquees, Ecole polytechnique,   |
@@ -20,12 +19,12 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtFfmHelmholtzBWneu.m                        |
-%|    #    |   VERSION    : 0.6                                           |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
-%| ( === ) |   SYNOPSIS   : Non regression test for BEM resolution of     |
-%|  `---'  |                a spherical neumann scattering problem        |
+%| ( === ) |   SYNOPSIS   : Solve neumann scatering problem with          |
+%|  `---'  |                Brackage-Werner formulation                   |
 %+========================================================================+
 
 % Cleaning
@@ -37,31 +36,29 @@ clc
 run('../../addpathGypsilab.m')
 
 % Parameters
-Nddl = 1e3
-tol  = 1e-3
-Ninf = 1e2
-X0   = [0 0 -1]
+N   = 1e3
+tol = 1e-3
+typ = 'P1'
+gss = 3
+X0  = [0 0 -1]
 
 % Spherical mesh
-mesh = mshSphere(Nddl,1);
-
-% Graphical representation
+sphere = mshSphere(N,1);
+sigma  = dom(sphere,gss);    
 figure
-plot(mesh)
+plot(sphere)
 axis equal
 
-% Frequency adjusted to maximum edge size
-stp = mesh.stp;
-k   = 1/stp(2);
-c   = 340;
-f   = (k*c)/(2*pi);
-disp(['Frequency : ',num2str(f),' Hz']);
+% Radiative mesh
+square     = mshSquare(5*N,[5 5]);
+square.vtx = [square.vtx(:,1) zeros(size(square.vtx,1),1) square.vtx(:,2)];
+hold on
+plot(square)
 
-% Domain
-sigma = dom(mesh,3);    
-
-% Finite elements
-u = fem(mesh,'P1');
+% Frequency adjusted to maximum esge size
+stp = sphere.stp;
+k   = 1/stp(2)
+f   = (k*340)/(2*pi)
 
 % Incident wave
 PW         = @(X) exp(1i*k*X*X0');
@@ -70,13 +67,12 @@ gradxPW{2} = @(X) 1i*k*X0(2) .* PW(X);
 gradxPW{3} = @(X) 1i*k*X0(3) .* PW(X);
 
 % Incident wave representation
-hold on
-plot(mesh,real(PW(mesh.vtx)))
+plot(sphere,real(PW(sphere.vtx)))
+plot(square,real(PW(square.vtx)))
 title('Incident wave')
 xlabel('X');   ylabel('Y');   zlabel('Z');
 hold off
-% view(10,80)
-view(0,0)
+view(0,10)
 % camlight
 % material dull
 % lighting phong
@@ -85,116 +81,76 @@ view(0,0)
 %%% PREPARE OPERATORS
 disp('~~~~~~~~~~~~~ PREPARE OPERATORS ~~~~~~~~~~~~~')
 
+% Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
+Gxy      = '[exp(ikr)/r]';
+gradyGxy = {'grady[exp(ikr)/r]1','grady[exp(ikr)/r]2','grady[exp(ikr)/r]3'};
+
+% Finite elements
+u = fem(sphere,typ);
+v = fem(sphere,typ);
+
 % Coupling coeff
 beta = 1i*k;
 
 % Finite element mass matrix --> \int_Sx psi(x)' psi(x) dx
-Id = integral(sigma,u,u);
+Id = integral(sigma,u,v);
 
-% Finite element boundary regularzation --> \int_Sx \int_Sy psi(x)' G(x,y) psi(y) dx dy 
+% Finite element boundary operator --> 
+% k^2 * \int_Sx \int_Sy n.psi(x) G(x,y) n.psi(y) dx dy 
+% - \int_Sx \int_Sy nxgrad(psi(x)) G(x,y) nxgrad(psi(y)) dx dy 
 tic
-Hr = 1/(4*pi) .* (k^2 * regularize(sigma,sigma,ntimes(u),'[1/r]',ntimes(u)) ...
-    - regularize(sigma,sigma,nxgrad(u),'[1/r]',nxgrad(u)));
+Hr = 1/(4*pi) .* (k^2 * regularize(sigma,sigma,ntimes(u),'[1/r]',ntimes(v)) ...
+    - regularize(sigma,sigma,nxgrad(u),'[1/r]',nxgrad(v)));
+H  = 1/(4*pi) .* (k^2 * integral(sigma,sigma,ntimes(u),Gxy,k,ntimes(v),tol) ...
+    - integral(sigma,sigma,nxgrad(u),Gxy,k,nxgrad(v),tol)) + Hr;
 toc
 
-% Finite element boundary regularization --> \int_Sx \int_Sy psi(x)' dny G(x,y) psi(y) dx dy 
+% Finite element boundary operator --> \int_Sx \int_Sy psi(x)' dny G(x,y) psi(y) dx dy 
 tic
-Dtr = 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(u)).';
+Dtr = 1/(4*pi) .* regularize(sigma,sigma,u,'grady[1/r]',ntimes(v)).';
+Dt  = 1/(4*pi) .* integral(sigma,sigma,u,gradyGxy,k,ntimes(v),tol).' + Dtr;
 toc
 
-% Close operator : [1i*k*beta*(-Id/2 + Dt) - H]
-LHSc = beta.*(-0.5*Id + Dtr) - Hr;
+% Final operator [1i*k*beta*(-Id/2 + Dt) - H]
+tic
+LHS  = beta.*(-0.5*Id + Dt) - H;
+toc
 
-% Left hand side
-LHS = @(V) MVneu(sigma,u,k,beta,tol,V) + LHSc*V;
-
-% Finite element incident wave trace --> \int_Sx psi(x)' pw(x) dx
+% Finite element incident wave trace --> \int_Sx psi(x) dnx(pw(x)) dx
 RHS = - integral(sigma,ntimes(u),gradxPW);
 
 
 %%% SOLVE LINEAR PROBLEM
 disp('~~~~~~~~~~~~~ SOLVE LINEAR PROBLEM ~~~~~~~~~~~~~')
 
-% LU factorization for preconditionning
+% Preconditionneur ILU
 tic
-[L,U] = ilu(LHSc);
+[L,U] = ilu(beta.*(-0.5*Id + Dtr) - Hr);
 toc
 
-% Solve using iteratve solver
+% Solve linear system : [H + 1i*k*beta*(Id/2 - Dt)] = -dnP0
 tic
-mu     = mgcr(LHS,RHS,[],tol,100,L,U);
+mu = mgcr(@(V) LHS*V,RHS,[],tol,100,L,U);
+toc
+
+% Jump for derivative
 lambda = beta * mu;
-toc
-
-
-%%% DOMAIN SOLUTION
-disp('~~~~~~~~~~~~~ RADIATION ~~~~~~~~~~~~~')
-
-% Green kernel function --> G(x,y) = exp(ik|x-y|)/|x-y| 
-Gxy      = '[exp(ikr)/r]';
-gradyGxy = {'grady[exp(ikr)/r]1','grady[exp(ikr)/r]2','grady[exp(ikr)/r]3'};
-
-% Mass matrix
-Id = integral(sigma,u,u);
-
-% Single layer
-tic
-Slambda = integral(sigma,sigma,u,Gxy,k,u,tol,lambda);
-Slambda = Slambda + regularize(sigma,sigma,u,'[1/r]',u) * lambda;
-Slambda = 1/(4*pi) .* Slambda;
-toc
-
-% Double layer
-tic
-Dmu = integral(sigma,sigma,u,gradyGxy,k,ntimes(u),tol,mu);
-Dmu = Dmu + regularize(sigma,sigma,u,'grady[1/r]',ntimes(u)) * mu;
-Dmu = 1/(4*pi) .* Dmu + 0.5*(Id*mu);
-toc
-
-% Boundary solution
-Psca = Id \ (Slambda - Dmu);
-Pinc = PW(u.dof);
-Ptot = Pinc + Psca;
-
-% Graphical representation
-figure
-plot(mesh,abs(Ptot))
-axis equal
-title('Total field solution')
-colorbar
-view(0,0)
-
-
-%%% ANAYTICAL SOLUTIONS FOR COMPARISONS
-% Analytical solution
-Ptot = sphereHelmholtz('dom','neu',1,k,1.001*mesh.vtx) + PW(mesh.vtx);
-
-% Solution representation
-figure
-plot(mesh,abs(Ptot))
-axis equal
-title('Analytical solution')
-colorbar
-% view(0,10)
 
 
 %%% INFINITE SOLUTION
 disp('~~~~~~~~~~~~~ INFINITE RADIATION ~~~~~~~~~~~~~')
 
 % Plane waves direction
-theta = 2*pi/Ninf .* (1:Ninf)';
+theta = 2*pi/1e3 .* (1:1e3)';
 nu    = [sin(theta),zeros(size(theta)),cos(theta)];
 
 % Green kernel function
-xdoty        = @(X,Y) X(:,1).*Y(:,1) + X(:,2).*Y(:,2) + X(:,3).*Y(:,3); 
-Ginf         = @(X,Y) 1/(4*pi) .* exp(-1i*k*xdoty(X,Y));
-gradxGinf{1} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,1)) .* exp(-1i*k*xdoty(X,Y));
-gradxGinf{2} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,2)) .* exp(-1i*k*xdoty(X,Y));
-gradxGinf{3} = @(X,Y) 1/(4*pi) .* (-1i*k*X(:,3)) .* exp(-1i*k*xdoty(X,Y));
+Ginf      = '[exp(-ikxy)]';
+gradxGinf = {'gradx[exp(-ikxy)]1','gradx[exp(-ikxy)]2','gradx[exp(-ikxy)]3'};
 
 % Finite element infinite operators
-Sinf = integral(nu,sigma,Ginf,u);
-Dinf = integral(nu,sigma,gradxGinf,ntimes(u));
+Sinf = 1/(4*pi) .* integral(nu,sigma,Ginf,k,v,tol);
+Dinf = 1/(4*pi) .* integral(nu,sigma,gradxGinf,k,ntimes(v),tol);
 
 % Finite element radiation  
 sol = Sinf*lambda - Dinf*mu;
@@ -209,7 +165,78 @@ figure
 plot(theta,log(abs(sol)),'b',theta,log(abs(ref)),'--r')
 
 
+%%% DOMAIN SOLUTION
+disp('~~~~~~~~~~~~~ RADIATION ~~~~~~~~~~~~~')
+
+% Finite element mass matrix --> \int_Sx psi(x)' psi(x) dx
+Id = integral(sigma,u,v);
+
+% Finite element boundary operator --> \int_Sx \int_Sy psi(x)' G(x,y) psi(y) dx dy 
+tic
+Sbnd = 1/(4*pi) .* (integral(sigma,sigma,u,Gxy,k,v,tol) + ...
+    regularize(sigma,sigma,u,'[1/r]',v));
+toc
+
+% Finite element boundary operator --> \int_Sx \int_Sy psi(x)' dny G(x,y) psi(y) dx dy 
+tic
+Dbnd = 1/(4*pi) .* (integral(sigma,sigma,u,gradyGxy,k,ntimes(v),tol) + ...
+    regularize(sigma,sigma,u,'grady[1/r]',ntimes(v)));
+toc
+
+% Boundary solution
+Psca = Id\(Sbnd*lambda - (0.5*Id*mu + Dbnd*mu));
+Pinc = PW(u.dof);
+Pbnd = Pinc + Psca;
+
+% Finite element radiative operator --> \int_Sy G(x,y) psi(y) dy 
+tic
+Sdom = 1/(4*pi) .* (integral(square.vtx,sigma,Gxy,k,v,tol) + ...
+    regularize(square.vtx,sigma,'[1/r]',v));
+toc
+
+% Finite element radiative operator --> \int_Sx \int_Sy psi(x)' grady(G(x,y)) ny.psi(y) dx dy 
+tic
+Ddom = 1/(4*pi) .* ( integral(square.vtx,sigma,gradyGxy,k,ntimes(v),tol) + ...
+    regularize(square.vtx,sigma,'grady[1/r]',ntimes(v)) );
+toc
+
+% Domain solution
+Psca = Sdom*lambda - Ddom*mu;
+Pinc = PW(square.vtx);
+Pdom = Pinc + Psca;
+
+% Annulation sphere interieure
+r             = sqrt(sum(square.vtx.^2,2));
+Pdom(r<=1.01) = Pinc(r<=1.01);
+
+% Graphical representation
+figure
+plot(sphere,abs(Pbnd))
+axis equal;
+hold on
+plot(square,abs(Pdom))
+title('Total field solution')
+colorbar
+hold off
+view(0,10)
+
+
+%%% ANAYTICAL SOLUTIONS FOR COMPARISONS
+% Analytical solution
+Pbnd = sphereHelmholtz('dom','neu',1,k,1.001*sphere.vtx) + PW(sphere.vtx);
+Pdom = sphereHelmholtz('dom','neu',1,k,square.vtx) + PW(square.vtx);
+
+% Solution representation
+figure
+plot(sphere,abs(Pbnd))
+axis equal;
+hold on
+plot(square,abs(Pdom))
+title('Analytical solution')
+colorbar
+hold off
+view(0,10)
+
+
 
 disp('~~> Michto gypsilab !')
-
-

@@ -120,7 +120,7 @@ tic
 [A,B] = hmxACA(Msp,tol);
 toc
 size(A)
-norm(M-A*B,'fro')/norm(M,'fro')
+% norm(M-A*B,'fro')/norm(M,'fro')   % to be debbugged
 
 % Compression RSVD low-rank
 disp('------> SPARSE RSVD')

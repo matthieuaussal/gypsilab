@@ -95,11 +95,17 @@ run('nrtHmxNonSquare.m');
 
 % Fast & Free memory Method
 cd('../fastFreeMemory')
+run('nrtFfmAlgebra.m');
 run('nrtFfmBuilder.m');
 run('nrtFfmBuilderFem.m');
 run('nrtFfmHelmholtzBWdir.m');
 run('nrtFfmHelmholtzBWneu.m');
 run('nrtFfmMaxwellCFIEpec.m');
+
+% Block matrix
+cd('../blockMatrix')
+run('nrtBmmAlgebra.m');
+run('nrtBmmStokesConv.m');
 
 % Scattering 2D
 cd('../scattering2d')
@@ -159,6 +165,10 @@ run('translatingSphere/nrtStkTranslatingSphere.m');
 cd('../vibroAcoustic');
 run('nrtVibroSlab2d.m');
 run('nrtHmxVibroSlab2d.m');
+
+% Operators
+cd('../operators');
+run('nrtOprValidation');
 
 % End
 disp('~~> Non Regresion Test are done. Michto gypsilab !');

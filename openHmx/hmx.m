@@ -21,10 +21,10 @@ classdef hmx
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmx.m                                         |
-%|    #    |   VERSION    : 0.51                                          |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 25.11.2018                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : H-Matrix class definition and functions       |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -130,6 +130,7 @@ methods
         end
     end    
     
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%% VISUALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % STRUCTURE VISUALISATION
     function spy(Mh)
@@ -157,6 +158,8 @@ methods
     function M = sparse(varargin)
         if (nargin == 1)
             M = hmxSparse(varargin{1});
+        elseif (nargin == 2)
+            M = hmxSparsify(varargin{1},varargin{2});
         else
             M = hmxSparseSub(varargin{1},varargin{2},varargin{3});
         end

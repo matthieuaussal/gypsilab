@@ -19,10 +19,10 @@
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : nrtHmxAlgebra.m                               |
-%|    #    |   VERSION    : 0.41                                          |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
-%|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
+%|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
 %| ( === ) |   SYNOPSIS   : Evaluate each hmx class function              |
 %|  `---'  |                                                              |
 %+========================================================================+
@@ -176,6 +176,23 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 
 tic
 sol = sparse(Ih);
+toc
+ref = I;
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+disp(' ')
+
+
+%%% Sparse conversion
+disp('~~~~~~~~~~~~~ SPARSIFICATION ~~~~~~~~~~~~~')
+tic
+sol = sparse(double(Mh),sparse(M));
+toc
+ref = double(M);
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+sol = sparse(Ih,I);
 toc
 ref = I;
 norm(ref-sol,'inf')/norm(ref,'inf')

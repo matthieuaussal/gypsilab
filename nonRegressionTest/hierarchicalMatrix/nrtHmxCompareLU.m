@@ -36,7 +36,7 @@ clc
 run('../../addpathGypsilab.m')
 
 % Parameters
-Nvtx = 1e4;
+Nvtx = 1e3;
 L    = [1 0.1 0.1];
 
 % Cube mesh

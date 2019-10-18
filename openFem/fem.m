@@ -22,7 +22,7 @@ classdef fem
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : fem.m                                         |
-%|    #    |   VERSION    : 0.60                                          |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal & François Alouges            |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |

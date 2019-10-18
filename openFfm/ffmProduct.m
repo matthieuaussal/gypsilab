@@ -21,7 +21,7 @@ function MV = ffmProduct(X,Y,V,green,k,tol)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : ffmProduct.m                                  |
-%|    #    |   VERSION    : 0.6                                           |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 05.09.2019                                    |
@@ -42,7 +42,16 @@ if isempty(k)
 end
 
 % Produit Matrice-Vecteur
-MV = zeros(Nx,1,class(V));
+if strcmp(green,'[exp(-ikxy)]')
+    MV = ffmNufft(k.*X,Y,V,-1,tol);
+    return
+elseif strcmp(green(1:end-1),'gradx[exp(-ikxy)]')  
+    j  = str2double(green(end));
+    MV = (-1i*k*X(:,j)) .* ffmNufft(k.*X,Y,V,-1,tol);
+    return
+else
+    MV = zeros(Nx,1,class(V));
+end
 
 % Definition des boites
 Xmin = min(X);

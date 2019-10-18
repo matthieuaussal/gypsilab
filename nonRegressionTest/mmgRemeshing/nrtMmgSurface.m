@@ -28,7 +28,7 @@ I   = 10*stp(3)/max(abs(I)) .* I;
 Z = zeros(size(I));
 U = ones(size(I));
 I = 1./(I.^2);
-I = [I,Z,Z,Z,I,Z,Z,Z,1e6*U];
+I = [I,Z,I,Z,Z,1e6*U];
 
 % Graphical representation
 figure
@@ -61,13 +61,13 @@ colorbar
 % noswap(refine)
 % angle(refine,90)
 % memory(refine,1e3)
-% verbose(refine,0)
+verbose(refine,0)
 % options(refine)
 % refine.mesh(mesh)
 map(refine,I)
 
 % options(refine)
-[mesh2,val] = run(refine);
+mesh2 = run(refine);
 
 % Graphical representation
 figure
