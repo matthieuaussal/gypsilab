@@ -91,7 +91,7 @@ end
 
 function y = xlog(x)
 y    = x.*log(abs(x));
-I    = (abs(x)<1e-8); 
+I    = (abs(x)<1e-15); 
 y(I) = 0;
 end
 
