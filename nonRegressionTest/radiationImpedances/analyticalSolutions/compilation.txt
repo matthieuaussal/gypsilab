@@ -1,0 +1,8 @@
+gfortran -c param.f
+gfortran -c oblfcnCoefMod.f
+gfortran -c MyModules.f90 -llapack -lblas 
+gfortran -c Compute_impedance.f90 -llapack -lblas 
+
+gfortran -o Compute_impedance  Compute_impedance.o param.o oblfcnCoefMod.o MyModules.o -llapack -lblas
+
+./Compute_impedance

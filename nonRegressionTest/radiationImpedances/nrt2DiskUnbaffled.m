@@ -32,7 +32,6 @@ clear all
 close all
 clc
 
-
 % Gypsilab path
 run('../../addpathGypsilab.m')
 
@@ -128,8 +127,8 @@ V0(ctr(:,3)==z1max) = v0;
 disp('Solving...')
 
 % Prepare impedance
-Z11      = cell(size(K));
-Z12      = cell(size(K));
+Z11 = cell(size(K));
+Z21 = cell(size(K));
 
 % Parallel loop on k
 tic
@@ -176,7 +175,7 @@ parfor l = 1:length(K)
     
     % Impedances Zij = \frac{Fi}{si*vj}  (v1=v0, v2=0)
     Z11{l} = 1i*k * Fz1/(sum(disk1.ndv)*v0);
-    Z12{l} = 1i*k * Fz2/(sum(disk1.ndv)*v0);
+    Z21{l} = 1i*k * Fz2/(sum(disk1.ndv)*v0);
     
     % Affichage
 %     figure
@@ -189,7 +188,7 @@ toc
 
 % Impedance finale avec conversion psi et surface
 Z11 = cell2mat(Z11);
-Z12 = cell2mat(Z12);
+Z21 = cell2mat(Z21);
 
 % Analytical impedance
 load(['ref',name,'.mat']);
@@ -199,24 +198,28 @@ load(['ref',name,'.mat']);
 % Real part
 figure(2)
 subplot(2,1,1)
-plot(Zref.ka,real(Zref.z),'-k')
+plot(Zref.ka1,real(Zref.z11),'-k')
 hold on
 plot(K*a1,real(Z11),'xk')
+plot(Zref.ka1,real(Zref.z21),'--k')
+plot(K*a1,real(Z21),'+k')
 grid on 
-legend({'Analytic','Numeric'},'Location','NorthWest')
-xlabel('Non-dimensional frequency ka')
+legend({'Analytic Z_{11}','Numeric Z_{11}','Analytic Z_{21}','Numeric Z_{21}'},'Location','NorthWest','FontSize',7)
+xlabel('Non-dimensional frequency ka_1')
 ylabel('Re(Z/Z_0)')
 set(gca,'XTick',0:pi/2:3*pi)
 set(gca,'XTickLabel',{'0','\pi/2','\pi','3\pi/2','2\pi','5\pi/2','3\pi'})
 
 % Imaginary part
 subplot(2,1,2)
-plot(Zref.ka,imag(Zref.z),'-k')
+plot(Zref.ka1,imag(Zref.z11),'-k')
 hold on
 plot(K*a1,-imag(Z11),'xk')
+plot(Zref.ka1,imag(Zref.z21),'--k')
+plot(K*a1,-imag(Z21),'+k')
 grid on 
-legend({'Analytic','Numeric'},'Location','SouthWest')
-xlabel('Non-dimensional frequency ka')
+legend({'Analytic Z_{11}','Numeric Z_{11}','Analytic Z_{21}','Numeric Z_{21}'},'Location','SouthWest','FontSize',7)
+xlabel('Non-dimensional frequency ka_1')
 ylabel('Im(Z/Z_0)')
 set(gca,'XTick',0:pi/2:3*pi)
 set(gca,'XTickLabel',{'0','\pi/2','\pi','3\pi/2','2\pi','5\pi/2','3\pi'})
@@ -228,7 +231,4 @@ print('-dpng','-r300',['fig',name])
 
 
 disp('~~> Michto gypsilab !')
-
-
-
 
