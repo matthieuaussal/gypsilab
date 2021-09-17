@@ -21,11 +21,11 @@ function Ml = hmxTimes(Ml,Mr)
 %|________________________________________________________________________|
 %|   '&`   |                                                              |
 %|    #    |   FILE       : hmxTimes.m                                    |
-%|    #    |   VERSION    : 0.40                                          |
+%|    #    |   VERSION    : 0.61                                          |
 %|   _#_   |   AUTHOR(S)  : Matthieu Aussal                               |
 %|  ( # )  |   CREATION   : 14.03.2017                                    |
 %|  / 0 \  |   LAST MODIF : 14.03.2018                                    |
-%| ( === ) |   SYNOPSIS   : Scalar product with H-Matrix                  |
+%| ( === ) |   SYNOPSIS   : Broadcast product with H-Matrix               |
 %|  `---'  |                                                              |
 %+========================================================================+
 
@@ -35,22 +35,54 @@ if isa(Ml,'hmx') && isa(Mr,'hmx')
     warning('hmxTimes.m : H-Matrix terms multiplication not yet implemented')
    
 
-%%% scal .* H-Matrix -> H-Matrix
+%%% Matrix .* H-Matrix -> H-Matrix
 elseif isa(Mr,'hmx') 
-    Ml = hmxTimes(Mr,Ml);
+    % H-Matrix (recursion)
+    if (Mr.typ == 0)
+        for i = 1:4
+            if (numel(Ml)==1)
+                Mr.chd{i} = hmxTimes(Ml,Mr.chd{i});
+            elseif (isvector(Ml))
+                Mr.chd{i} = hmxTimes(Ml(Mr.row{i}),Mr.chd{i});
+            else
+                error('hmxTimes.m : unavailable case')
+            end
+        end
+        
+    % Compressed leaf
+    elseif (Mr.typ == 1)
+        Mr.dat{1} = Ml .* Mr.dat{1};
+        
+    % Full leaf
+    elseif (Mr.typ == 2)
+        Mr.dat = Ml .* Mr.dat;
+
+    % Unknown type
+    else
+        error('hmxTimes.m : unavailable case')
+    end
+    
+    % Change H-matrix
+    Ml = Mr;
 
     
-%%% H-Matrix .* scal -> H-Matrix
+%%% H-Matrix .* Matrix -> H-Matrix
 elseif isa(Ml,'hmx') 
     % H-Matrix (recursion)
     if (Ml.typ == 0)
         for i = 1:4
-            Ml.chd{i} = hmxTimes(Ml.chd{i},Mr);
+            if (numel(Mr)==1)
+                Ml.chd{i} = hmxTimes(Ml.chd{i},Mr);
+            elseif (isvector(Mr))
+                Ml.chd{i} = hmxTimes(Ml.chd{i},Mr(Ml.col{i}));            
+            else
+                error('hmxTimes.m : unavailable case')
+            end
         end
         
     % Compressed leaf
     elseif (Ml.typ == 1)
-        Ml.dat{1} = Ml.dat{1} .* Mr;
+        Ml.dat{2} = Ml.dat{2} .* Mr;
         
     % Full leaf
     elseif (Ml.typ == 2)
