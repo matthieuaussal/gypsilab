@@ -385,6 +385,27 @@ norm(ref-sol,'inf')/norm(ref,'inf')
 disp(' ')
 
 
+%%% Scalar product
+disp('~~~~~~~~~~~~~ BROADCAST PRODUCT ~~~~~~~~~~~~~')
+S = rand(Nx,1);
+T = rand(1,Ny);
+tic
+tmp = (S .* Mh .* T);
+toc
+sol = tmp * V;
+ref = (S .* M .* T) * V;
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+tic
+tmp = (S .* Ih .* T);
+toc
+sol = tmp * double(V);
+ref = (S .* I .* T) * V;
+norm(ref-sol,'inf')/norm(ref,'inf')
+
+disp(' ')
+
+
 %%% Uminus
 disp('~~~~~~~~~~~~~ UMINUS ~~~~~~~~~~~~~')
 tic
